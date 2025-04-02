@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -19,6 +20,13 @@ export default {
 		},
 		extend: {
 			colors: {
+				// Custom color palette for Money Flow Guardian
+				'finance-blue': '#1A365D',
+				'finance-teal': '#2C7A7B',
+				'finance-gold': '#D69E2E',
+				'finance-gray': '#4A5568',
+				'finance-light': '#EDF2F7',
+				
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
