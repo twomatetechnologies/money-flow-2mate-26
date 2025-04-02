@@ -12,6 +12,7 @@ import SIPInvestments from "./pages/SIPInvestments";
 import Insurance from "./pages/Insurance";
 import Gold from "./pages/Gold";
 import Reports from "./pages/Reports";
+import AuditTrail from "./pages/AuditTrail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/insurance" element={<Insurance />} />
             <Route path="/gold" element={<Gold />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/audit" element={<AuditTrail />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

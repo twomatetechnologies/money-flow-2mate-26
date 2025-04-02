@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
   ChevronLeft, ChevronRight, Home, PieChart, Banknote, 
-  GanttChart, FileText, Award, ScrollText
+  GanttChart, FileText, Award, ScrollText, History
 } from 'lucide-react';
 
 interface NavItemProps {
@@ -64,6 +64,7 @@ export function Sidebar() {
           <NavItem to="/insurance" icon={<FileText size={18} />} label="Insurance" collapsed={collapsed} />
           <NavItem to="/gold" icon={<Award size={18} />} label="Gold" collapsed={collapsed} />
           <NavItem to="/reports" icon={<ScrollText size={18} />} label="Reports" collapsed={collapsed} />
+          <NavItem to="/audit" icon={<History size={18} />} label="Audit Trail" collapsed={collapsed} />
         </nav>
       </div>
       <div className="border-t p-3">
