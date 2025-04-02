@@ -1,11 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { StockHolding } from '@/types';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 interface StockFormProps {
@@ -27,6 +26,22 @@ const StockForm = ({ isOpen, onClose, onSubmit, initialData, mode }: StockFormPr
       sector: ''
     }
   });
+
+  // Reset form with initialData values when they change or mode changes
+  useEffect(() => {
+    if (initialData && mode === 'edit') {
+      form.reset(initialData);
+    } else if (mode === 'create') {
+      form.reset({
+        symbol: '',
+        name: '',
+        quantity: 0,
+        averageBuyPrice: 0,
+        currentPrice: 0,
+        sector: ''
+      });
+    }
+  }, [initialData, mode, form]);
 
   const handleSubmit = (data: Partial<StockHolding>) => {
     // Calculate derived values
