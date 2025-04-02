@@ -1,13 +1,11 @@
 
-import React, { useEffect, useState } from 'react';
-import { getNetWorth, getStocks, getFixedDeposits, getSIPInvestments, getGoldInvestments } from '@/services/mockData';
-import { NetWorthData, StockHolding, FixedDeposit, SIPInvestment, GoldInvestment } from '@/types';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getNetWorth, getStocks, getFixedDeposits, getSIPInvestments, getGoldInvestments, getInsurancePolicies } from '@/services/mockData';
+import { NetWorthData } from '@/types';
 import { 
   BarChart, 
   Bar, 
-  LineChart, 
-  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -22,31 +20,16 @@ import { format } from 'date-fns';
 
 const Reports = () => {
   const [netWorth, setNetWorth] = useState<NetWorthData | null>(null);
-  const [stocks, setStocks] = useState<StockHolding[]>([]);
-  const [fixedDeposits, setFixedDeposits] = useState<FixedDeposit[]>([]);
-  const [sipInvestments, setSipInvestments] = useState<SIPInvestment[]>([]);
-  const [goldInvestments, setGoldInvestments] = useState<GoldInvestment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [netWorthData, stocksData, fdData, sipData, goldData] = await Promise.all([
-          getNetWorth(),
-          getStocks(),
-          getFixedDeposits(),
-          getSIPInvestments(),
-          getGoldInvestments()
-        ]);
-
-        setNetWorth(netWorthData);
-        setStocks(stocksData);
-        setFixedDeposits(fdData);
-        setSipInvestments(sipData);
-        setGoldInvestments(goldData);
+        const data = await getNetWorth();
+        setNetWorth(data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching reports data:', error);
+        console.error('Error fetching net worth data:', error);
         setLoading(false);
       }
     };
@@ -62,56 +45,90 @@ const Reports = () => {
     );
   }
 
-  // Prepare data for the charts
-  const netWorthHistory = netWorth.history.map(item => ({
-    date: format(new Date(item.date), 'MMM yyyy'),
-    value: item.value
-  }));
-
-  const assetAllocation = [
+  // Prepare data for the pie chart
+  const pieData = [
     { name: 'Stocks', value: netWorth.breakdown.stocks },
     { name: 'Fixed Deposits', value: netWorth.breakdown.fixedDeposits },
-    { name: 'SIP Investments', value: netWorth.breakdown.sip },
+    { name: 'SIP', value: netWorth.breakdown.sip },
     { name: 'Gold', value: netWorth.breakdown.gold },
-    { name: 'Other Assets', value: netWorth.breakdown.other }
+    { name: 'Other', value: netWorth.breakdown.other },
   ];
 
-  // Calculate performance data
-  const stocksPerformance = stocks.map(stock => ({
-    name: stock.symbol,
-    value: ((stock.currentPrice - stock.averageBuyPrice) / stock.averageBuyPrice) * 100
-  })).sort((a, b) => b.value - a.value);
+  // Prepare data for the bar chart
+  const barData = netWorth.history.map(item => ({
+    date: format(new Date(item.date), 'MMM yyyy'),
+    Net_Worth: item.value
+  }));
 
-  const COLORS = ['#1A365D', '#2C7A7B', '#D69E2E', '#805AD5', '#4A5568'];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+  const formatTooltipValue = (value: number) => {
+    return `₹${value.toLocaleString()}`;
+  };
+
+  // Custom tooltip formatter for pie chart
+  const customPieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      return (
+        <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
+          <p className="font-bold">{data.name}</p>
+          <p>₹{data.value.toLocaleString()}</p>
+          <p>{((data.value / netWorth.total) * 100).toFixed(1)}%</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Custom tooltip formatter for bar chart
+  const customBarTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
+          <p className="font-bold">{payload[0].payload.date}</p>
+          <p>₹{payload[0].value.toLocaleString()}</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Financial Reports</h1>
         <p className="text-muted-foreground">
-          View detailed reports and analysis of your finances
+          View detailed reports of your financial portfolio
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-1">
         <Card className="finance-card">
           <CardHeader>
             <CardTitle>Net Worth History</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={netWorthHistory}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                <BarChart
+                  data={barData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
-                  <YAxis tickFormatter={(value) => `₹${(value / 1000)}k`} />
-                  <Tooltip formatter={(value) => [`₹${value.toLocaleString()}`, 'Value']} />
+                  <YAxis 
+                    tickFormatter={(value) => `₹${(value / 1000)}K`} 
+                  />
+                  <Tooltip content={customBarTooltip} />
                   <Legend />
-                  <Line type="monotone" dataKey="value" stroke="#1A365D" activeDot={{ r: 8 }} />
-                </LineChart>
+                  <Bar 
+                    dataKey="Net_Worth" 
+                    fill="#4f46e5" 
+                    name="Net Worth" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -122,65 +139,27 @@ const Reports = () => {
             <CardTitle>Asset Allocation</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={assetAllocation}
+                    data={pieData}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
+                    labelLine={true}
+                    outerRadius={150}
                     fill="#8884d8"
                     dataKey="value"
+                    nameKey="name"
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
                   >
-                    {assetAllocation.map((entry, index) => (
+                    {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`₹${value.toLocaleString()}`, 'Value']} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="finance-card md:col-span-2">
-          <CardHeader>
-            <CardTitle>Stock Performance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={stocksPerformance}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis tickFormatter={(value) => `${value}%`} />
-                  <Tooltip formatter={(value) => [`${value.toFixed(2)}%`, 'Return']} />
+                  <Tooltip content={customPieTooltip} />
                   <Legend />
-                  <Bar 
-                    dataKey="value" 
-                    name="Return %" 
-                    fill="#2C7A7B"
-                    shape={(props: any) => {
-                      const { x, y, width, height, value } = props;
-                      return (
-                        <rect 
-                          x={x} 
-                          y={value >= 0 ? y : y + height} 
-                          width={width} 
-                          height={Math.abs(height)} 
-                          fill={value >= 0 ? '#2C7A7B' : '#E53E3E'} 
-                          radius={[4, 4, 0, 0]}
-                        />
-                      );
-                    }}
-                  />
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
