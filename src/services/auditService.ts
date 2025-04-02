@@ -32,6 +32,31 @@ export const createAuditRecord = (
   return newRecord;
 };
 
+export const createImportAuditRecord = (
+  entityType: AuditRecord['entityType'],
+  count: number,
+  details: Record<string, any> = {}
+): AuditRecord => {
+  const newRecord: AuditRecord = {
+    id: uuidv4(),
+    entityId: 'import-' + new Date().getTime(),
+    entityType,
+    action: 'import',
+    timestamp: new Date(),
+    userId: CURRENT_USER_ID,
+    details: {
+      count,
+      ...details
+    },
+  };
+  
+  auditRecords.push(newRecord);
+  
+  console.log('Import audit record created:', newRecord);
+  
+  return newRecord;
+};
+
 export const getAuditRecordsForEntity = (
   entityId: string
 ): AuditRecord[] => {

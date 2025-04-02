@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { StockHolding } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +10,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { TrendingUp, TrendingDown, Plus, Pencil, Trash, History, Eye } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, Pencil, Trash, History, Eye, Import } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   AlertDialog,
@@ -32,6 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import StockForm from '@/components/stocks/StockForm';
+import StockImport from '@/components/stocks/StockImport';
 import AuditTrail from '@/components/common/AuditTrail';
 import { getStocks, createStock, updateStock, deleteStock, getStockById } from '@/services/crudService';
 import { getAuditRecordsForEntity } from '@/services/auditService';
@@ -41,6 +41,7 @@ const Stocks = () => {
   const [stocks, setStocks] = useState<StockHolding[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [currentStock, setCurrentStock] = useState<StockHolding | null>(null);
   const [stockToDelete, setStockToDelete] = useState<StockHolding | null>(null);
@@ -114,6 +115,36 @@ const Stocks = () => {
     }
   };
 
+  const handleImportClick = () => {
+    setIsImportOpen(true);
+  };
+
+  const handleImportStocks = async (stocksToImport: Partial<StockHolding>[]) => {
+    try {
+      const importedCount = stocksToImport.length;
+      
+      // Create each stock
+      for (const stock of stocksToImport) {
+        await createStock(stock as Omit<StockHolding, 'id' | 'lastUpdated'>);
+      }
+      
+      fetchStocks();
+      setIsImportOpen(false);
+      
+      toast({
+        title: "Success",
+        description: `Successfully imported ${importedCount} stocks`,
+      });
+    } catch (error) {
+      console.error('Error importing stocks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to import stocks",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleDeleteClick = (stock: StockHolding) => {
     setStockToDelete(stock);
   };
@@ -171,9 +202,14 @@ const Stocks = () => {
             Manage and track your stock investments
           </p>
         </div>
-        <Button onClick={handleAddStock}>
-          <Plus className="mr-2 h-4 w-4" /> Add Stock
-        </Button>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={handleImportClick}>
+            <Import className="mr-2 h-4 w-4" /> Import
+          </Button>
+          <Button onClick={handleAddStock}>
+            <Plus className="mr-2 h-4 w-4" /> Add Stock
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -283,6 +319,13 @@ const Stocks = () => {
         onSubmit={handleSubmitStock}
         initialData={currentStock || undefined}
         mode={formMode}
+      />
+
+      {/* Stock Import Dialog */}
+      <StockImport
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onImport={handleImportStocks}
       />
 
       {/* Delete Confirmation Dialog */}
