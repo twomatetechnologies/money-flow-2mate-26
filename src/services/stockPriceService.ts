@@ -53,6 +53,11 @@ export const startStockPriceMonitoring = async (alertThreshold: number) => {
   // In a real application, you might use a WebSocket or a market data API's own update mechanism
   const intervalId = setInterval(updateStockPrices, 30000);
   
-  // Return a function to stop monitoring
-  return () => clearInterval(intervalId);
+  // Return a function to stop monitoring - this is important for cleanup
+  return () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      console.log("Stock price monitoring stopped");
+    }
+  };
 };

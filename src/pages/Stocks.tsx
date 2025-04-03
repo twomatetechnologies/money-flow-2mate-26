@@ -72,11 +72,22 @@ const Stocks = () => {
     fetchStocks();
     
     // Start the stock price monitoring service
-    const stopMonitoring = startStockPriceMonitoring(settings.stockPriceAlertThreshold);
+    let stopMonitoringFn: (() => void) | undefined;
+    
+    // Using an async IIFE to properly handle the async function
+    (async () => {
+      try {
+        stopMonitoringFn = await startStockPriceMonitoring(settings.stockPriceAlertThreshold);
+      } catch (error) {
+        console.error('Error starting stock monitoring:', error);
+      }
+    })();
     
     // Clean up the interval when the component unmounts
     return () => {
-      stopMonitoring();
+      if (typeof stopMonitoringFn === 'function') {
+        stopMonitoringFn();
+      }
     };
   }, [settings.stockPriceAlertThreshold]);
 
