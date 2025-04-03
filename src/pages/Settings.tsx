@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from '@/components/ui/separator';
+import { InfoIcon } from 'lucide-react';
 
 const Settings = () => {
   const { settings, updateSettings } = useSettings();
@@ -69,14 +71,32 @@ const Settings = () => {
             </p>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="apiKey">Alpha Vantage API Key</Label>
+          <Separator className="my-4" />
+          
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="apiKey" className="text-lg font-medium">Live Stock Data API Key</Label>
+              <div className="rounded-full bg-blue-100 p-1">
+                <InfoIcon className="h-4 w-4 text-blue-600" />
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 p-3 rounded-md mb-3">
+              <p className="text-sm text-blue-700 mb-1">
+                Get real-time stock prices by adding your Alpha Vantage API key.
+              </p>
+              <p className="text-sm text-blue-700">
+                Without an API key, the application will use simulated data.
+              </p>
+            </div>
+            
             <Input 
               id="apiKey"
               type="text"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Enter your Alpha Vantage API key"
+              className="font-mono"
             />
             <p className="text-sm text-muted-foreground">
               <a 
@@ -91,7 +111,7 @@ const Settings = () => {
             </p>
           </div>
           
-          <Button onClick={handleSaveSettings}>Save Settings</Button>
+          <Button onClick={handleSaveSettings} className="mt-4">Save Settings</Button>
         </CardContent>
       </Card>
     </div>
