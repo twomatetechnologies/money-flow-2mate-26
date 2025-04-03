@@ -30,10 +30,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useSettings } from '@/contexts/SettingsContext';
 import StockForm from '@/components/stocks/StockForm';
 import StockImport from '@/components/stocks/StockImport';
 import AuditTrail from '@/components/common/AuditTrail';
 import { getStocks, createStock, updateStock, deleteStock, getStockById } from '@/services/crudService';
+import { startStockPriceMonitoring } from '@/services/stockPriceService';
 import { getAuditRecordsForEntity } from '@/services/auditService';
 import { AuditRecord } from '@/types/audit';
 
@@ -48,6 +50,7 @@ const Stocks = () => {
   const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [auditRecords, setAuditRecords] = useState<AuditRecord[]>([]);
   const { toast } = useToast();
+  const { settings } = useSettings();
 
   const fetchStocks = async () => {
     try {
@@ -67,7 +70,15 @@ const Stocks = () => {
 
   useEffect(() => {
     fetchStocks();
-  }, []);
+    
+    // Start the stock price monitoring service
+    const stopMonitoring = startStockPriceMonitoring(settings.stockPriceAlertThreshold);
+    
+    // Clean up the interval when the component unmounts
+    return () => {
+      stopMonitoring();
+    };
+  }, [settings.stockPriceAlertThreshold]);
 
   const totalValue = stocks.reduce((sum, stock) => sum + stock.value, 0);
   const totalInvestment = stocks.reduce(
