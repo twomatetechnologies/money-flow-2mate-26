@@ -75,9 +75,18 @@ export const getStockById = (id: string): StockHolding | null => {
 };
 
 // CRUD operations for Fixed Deposits
-export const createFixedDeposit = (fd: Omit<FixedDeposit, 'id'>): FixedDeposit => {
+export const createFixedDeposit = (fd: Partial<FixedDeposit>): FixedDeposit => {
+  // Set default values for any missing required fields
   const newFD: FixedDeposit = {
-    ...fd,
+    bankName: fd.bankName || 'Unknown Bank',
+    accountNumber: fd.accountNumber || 'XXXX' + Math.floor(Math.random() * 10000),
+    principal: fd.principal || 0,
+    interestRate: fd.interestRate || 0,
+    startDate: fd.startDate || new Date(),
+    maturityDate: fd.maturityDate || new Date(),
+    maturityAmount: fd.maturityAmount || 0,
+    isAutoRenew: fd.isAutoRenew || false,
+    notes: fd.notes || '',
     id: uuidv4()
   };
   
@@ -122,9 +131,18 @@ export const getFixedDepositById = (id: string): FixedDeposit | null => {
 };
 
 // CRUD operations for SIP Investments
-export const createSIP = (sip: Omit<SIPInvestment, 'id'>): SIPInvestment => {
+export const createSIP = (sip: Partial<SIPInvestment>): SIPInvestment => {
+  // Set default values for any missing required fields
   const newSIP: SIPInvestment = {
-    ...sip,
+    name: sip.name || 'Unnamed SIP',
+    type: sip.type || 'Mutual Fund',
+    amount: sip.amount || 0,
+    frequency: sip.frequency || 'Monthly',
+    startDate: sip.startDate || new Date(),
+    duration: sip.duration || 12,
+    currentValue: sip.currentValue || 0,
+    returns: sip.returns || 0,
+    returnsPercent: sip.returnsPercent || 0,
     id: uuidv4()
   };
   
