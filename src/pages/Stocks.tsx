@@ -35,7 +35,7 @@ import StockForm from '@/components/stocks/StockForm';
 import StockImport from '@/components/stocks/StockImport';
 import AuditTrail from '@/components/common/AuditTrail';
 import { getStocks, createStock, updateStock, deleteStock, getStockById } from '@/services/crudService';
-import { startStockPriceMonitoring } from '@/services/stockPriceService';
+import { startStockPriceMonitoring, simulateStockPriceUpdates } from '@/services/stockPriceService';
 import { getAuditRecordsForEntity } from '@/services/auditService';
 import { AuditRecord } from '@/types/audit';
 
@@ -77,9 +77,21 @@ const Stocks = () => {
     // Using an async IIFE to properly handle the async function
     (async () => {
       try {
+        // Try to use real API first
         stopMonitoringFn = await startStockPriceMonitoring(settings.stockPriceAlertThreshold);
+        console.log("Using real market data for stock prices");
       } catch (error) {
-        console.error('Error starting stock monitoring:', error);
+        // Fall back to simulation if API fails
+        console.error('Error starting real stock monitoring, falling back to simulation:', error);
+        stopMonitoringFn = await simulateStockPriceUpdates(settings.stockPriceAlertThreshold);
+        console.log("Using simulated market data for stock prices");
+        
+        // Show a toast notification about using simulated data
+        toast({
+          title: "Using Simulated Data",
+          description: "Could not connect to live market data. Using simulated stock prices instead.",
+          variant: "destructive",
+        });
       }
     })();
     

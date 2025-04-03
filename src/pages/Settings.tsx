@@ -12,15 +12,17 @@ const Settings = () => {
   const { settings, updateSettings } = useSettings();
   const { toast } = useToast();
   const [threshold, setThreshold] = React.useState(settings.stockPriceAlertThreshold);
+  const [apiKey, setApiKey] = React.useState(settings.stockApiKey || '');
 
   const handleSaveSettings = () => {
     updateSettings({
-      stockPriceAlertThreshold: threshold
+      stockPriceAlertThreshold: threshold,
+      stockApiKey: apiKey
     });
 
     toast({
       title: "Settings Saved",
-      description: `Stock price alert threshold updated to ${threshold}%`,
+      description: "Stock settings updated successfully",
     });
   };
 
@@ -64,6 +66,28 @@ const Settings = () => {
             </div>
             <p className="text-sm text-muted-foreground">
               You will be notified when a stock price changes by at least {threshold}%
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="apiKey">Alpha Vantage API Key</Label>
+            <Input 
+              id="apiKey"
+              type="text"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Enter your Alpha Vantage API key"
+            />
+            <p className="text-sm text-muted-foreground">
+              <a 
+                href="https://www.alphavantage.co/support/#api-key" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                Get a free API key
+              </a>
+              {' '}for real-time stock data. Leave empty to use simulated data.
             </p>
           </div>
           
