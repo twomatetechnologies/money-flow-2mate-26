@@ -18,11 +18,18 @@ import AuditTrail from "./pages/AuditTrail";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
-// Create a new QueryClient instance outside of component
-const queryClient = new QueryClient();
+// Create a QueryClient instance with appropriate configuration
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-const App = () => (
-  <React.StrictMode>
+const App = () => {
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <SettingsProvider>
@@ -47,7 +54,7 @@ const App = () => (
         </SettingsProvider>
       </TooltipProvider>
     </QueryClientProvider>
-  </React.StrictMode>
-);
+  );
+};
 
 export default App;
