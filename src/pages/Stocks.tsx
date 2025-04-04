@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { StockHolding } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,9 +39,12 @@ import { getStocks, createStock, updateStock, deleteStock, getStockById } from '
 import { startStockPriceMonitoring, simulateStockPriceUpdates } from '@/services/stockPriceService';
 import { getAuditRecordsForEntity } from '@/services/auditService';
 import { AuditRecord } from '@/types/audit';
+import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
+import FilterButton, { FilterOption } from '@/components/common/FilterButton';
 
 const Stocks = () => {
   const [stocks, setStocks] = useState<StockHolding[]>([]);
+  const [displayedStocks, setDisplayedStocks] = useState<StockHolding[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -52,10 +56,27 @@ const Stocks = () => {
   const { toast } = useToast();
   const { settings } = useSettings();
 
+  // Sorting state
+  const [currentSort, setCurrentSort] = useState<string | null>(null);
+  const [currentDirection, setCurrentDirection] = useState<SortDirection>(null);
+
+  // Filtering state
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
+
+  const sortOptions: SortOption[] = [
+    { label: 'Symbol', value: 'symbol' },
+    { label: 'Name', value: 'name' },
+    { label: 'Quantity', value: 'quantity' },
+    { label: 'Current Price', value: 'currentPrice' },
+    { label: 'Value', value: 'value' },
+    { label: 'Gain/Loss %', value: 'gainPercent' },
+  ];
+
   const fetchStocks = async () => {
     try {
       const data = await getStocks();
       setStocks(data);
+      setDisplayedStocks(data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching stocks:', error);
@@ -103,8 +124,32 @@ const Stocks = () => {
     };
   }, [settings.stockPriceAlertThreshold]);
 
-  const totalValue = stocks.reduce((sum, stock) => sum + stock.value, 0);
-  const totalInvestment = stocks.reduce(
+  // Apply sorting and filtering whenever the underlying data or sort/filter options change
+  useEffect(() => {
+    applyFiltersAndSort();
+  }, [stocks, currentSort, currentDirection, activeFilters]);
+
+  // Generate filter options based on available stocks
+  useEffect(() => {
+    if (stocks.length > 0) {
+      setFilterOptions([
+        {
+          id: 'performanceFilter',
+          label: 'Performance',
+          type: 'select',
+          options: [
+            { value: 'gainers', label: 'Gainers' },
+            { value: 'losers', label: 'Losers' },
+          ]
+        }
+      ]);
+    }
+  }, [stocks]);
+
+  const [filterOptions, setFilterOptions] = useState<FilterOption[]>([]);
+
+  const totalValue = displayedStocks.reduce((sum, stock) => sum + stock.value, 0);
+  const totalInvestment = displayedStocks.reduce(
     (sum, stock) => sum + stock.averageBuyPrice * stock.quantity,
     0
   );
@@ -219,6 +264,73 @@ const Stocks = () => {
     }
   };
 
+  const handleSortChange = (sortKey: string, direction: SortDirection) => {
+    setCurrentSort(direction ? sortKey : null);
+    setCurrentDirection(direction);
+  };
+
+  const handleFilterChange = (filterId: string, value: any) => {
+    setActiveFilters(prev => ({
+      ...prev,
+      [filterId]: value
+    }));
+  };
+
+  const handleClearFilters = () => {
+    setActiveFilters({});
+  };
+
+  // Calculate gainPercent for each stock for sorting/filtering
+  const calculateGainPercent = (stock: StockHolding) => {
+    return ((stock.currentPrice - stock.averageBuyPrice) / stock.averageBuyPrice) * 100;
+  };
+
+  // Function to apply both sorting and filtering
+  const applyFiltersAndSort = () => {
+    let result = [...stocks];
+    
+    // Apply filters
+    if (Object.keys(activeFilters).length > 0) {
+      Object.entries(activeFilters).forEach(([key, value]) => {
+        if (value) {
+          if (key === 'performanceFilter') {
+            if (value === 'gainers') {
+              result = result.filter(stock => 
+                calculateGainPercent(stock) > 0
+              );
+            } else if (value === 'losers') {
+              result = result.filter(stock => 
+                calculateGainPercent(stock) < 0
+              );
+            }
+          }
+        }
+      });
+    }
+    
+    // Apply sorting
+    if (currentSort && currentDirection) {
+      result.sort((a, b) => {
+        let aValue, bValue;
+        
+        // Special case for gain percent which is calculated
+        if (currentSort === 'gainPercent') {
+          aValue = calculateGainPercent(a);
+          bValue = calculateGainPercent(b);
+        } else {
+          aValue = a[currentSort as keyof StockHolding];
+          bValue = b[currentSort as keyof StockHolding];
+        }
+        
+        if (aValue < bValue) return currentDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return currentDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    
+    setDisplayedStocks(result);
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -278,6 +390,20 @@ const Stocks = () => {
       <Card className="finance-card">
         <CardHeader>
           <CardTitle>Your Stocks</CardTitle>
+          <div className="flex items-center gap-2 mt-2">
+            <FilterButton 
+              options={filterOptions} 
+              activeFilters={activeFilters}
+              onFilterChange={handleFilterChange}
+              onClearFilters={handleClearFilters}
+            />
+            <SortButton 
+              options={sortOptions}
+              currentSort={currentSort}
+              currentDirection={currentDirection}
+              onSortChange={handleSortChange}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -296,51 +422,59 @@ const Stocks = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {stocks.map((stock) => {
-                const gain = (stock.currentPrice - stock.averageBuyPrice) * stock.quantity;
-                const gainPercent = (gain / (stock.averageBuyPrice * stock.quantity)) * 100;
-                
-                return (
-                  <TableRow key={stock.id}>
-                    <TableCell className="font-medium">{stock.symbol}</TableCell>
-                    <TableCell>{stock.name}</TableCell>
-                    <TableCell className="text-right">{stock.quantity}</TableCell>
-                    <TableCell className="text-right">₹{stock.averageBuyPrice.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">₹{stock.currentPrice.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end">
-                        {stock.changePercent >= 0 ? (
-                          <TrendingUp className="h-4 w-4 mr-1 trend-up" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4 mr-1 trend-down" />
-                        )}
-                        <span className={stock.changePercent >= 0 ? 'trend-up' : 'trend-down'}>
-                          {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+              {displayedStocks.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-6 text-muted-foreground">
+                    No stocks found with the current filters
+                  </TableCell>
+                </TableRow>
+              ) : (
+                displayedStocks.map((stock) => {
+                  const gain = (stock.currentPrice - stock.averageBuyPrice) * stock.quantity;
+                  const gainPercent = (gain / (stock.averageBuyPrice * stock.quantity)) * 100;
+                  
+                  return (
+                    <TableRow key={stock.id}>
+                      <TableCell className="font-medium">{stock.symbol}</TableCell>
+                      <TableCell>{stock.name}</TableCell>
+                      <TableCell className="text-right">{stock.quantity}</TableCell>
+                      <TableCell className="text-right">₹{stock.averageBuyPrice.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">₹{stock.currentPrice.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end">
+                          {stock.changePercent >= 0 ? (
+                            <TrendingUp className="h-4 w-4 mr-1 trend-up" />
+                          ) : (
+                            <TrendingDown className="h-4 w-4 mr-1 trend-down" />
+                          )}
+                          <span className={stock.changePercent >= 0 ? 'trend-up' : 'trend-down'}>
+                            {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">₹{stock.value.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                        <span className={gain >= 0 ? 'trend-up' : 'trend-down'}>
+                          {gain >= 0 ? '+' : ''}₹{gain.toLocaleString()} ({gainPercent.toFixed(2)}%)
                         </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">₹{stock.value.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">
-                      <span className={gain >= 0 ? 'trend-up' : 'trend-down'}>
-                        {gain >= 0 ? '+' : ''}₹{gain.toLocaleString()} ({gainPercent.toFixed(2)}%)
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-center space-x-2">
-                        <Button variant="outline" size="icon" onClick={() => handleEditStock(stock)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="icon" onClick={() => handleDeleteClick(stock)}>
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="icon" onClick={() => handleViewAudit(stock.id)}>
-                          <History className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-center space-x-2">
+                          <Button variant="outline" size="icon" onClick={() => handleEditStock(stock)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={() => handleDeleteClick(stock)}>
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={() => handleViewAudit(stock.id)}>
+                            <History className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </CardContent>

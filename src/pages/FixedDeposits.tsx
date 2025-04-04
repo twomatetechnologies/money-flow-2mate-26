@@ -21,9 +21,12 @@ import AuditTrail from '@/components/common/AuditTrail';
 import { getAuditRecordsByType } from '@/services/auditService';
 import { useConfirm } from '@/hooks/useConfirm';
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
+import FilterButton, { FilterOption } from '@/components/common/FilterButton';
 
 const FixedDeposits = () => {
   const [fixedDeposits, setFixedDeposits] = useState<FixedDeposit[]>([]);
+  const [displayedDeposits, setDisplayedDeposits] = useState<FixedDeposit[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
@@ -33,15 +36,55 @@ const FixedDeposits = () => {
   const [auditRecords, setAuditRecords] = useState([]);
   const { toast } = useToast();
 
+  // Sorting state
+  const [currentSort, setCurrentSort] = useState<string | null>(null);
+  const [currentDirection, setCurrentDirection] = useState<SortDirection>(null);
+
+  // Filtering state
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
+
+  const sortOptions: SortOption[] = [
+    { label: 'Bank Name', value: 'bankName' },
+    { label: 'Principal', value: 'principal' },
+    { label: 'Interest Rate', value: 'interestRate' },
+    { label: 'Maturity Date', value: 'maturityDate' },
+    { label: 'Maturity Amount', value: 'maturityAmount' },
+  ];
+
+  const filterOptions: FilterOption[] = [
+    {
+      id: 'bankName',
+      label: 'Bank',
+      type: 'select',
+      options: Array.from(new Set(fixedDeposits.map(fd => fd.bankName)))
+        .map(bank => ({ value: bank, label: bank }))
+    },
+    {
+      id: 'maturityStatus',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'matured', label: 'Matured' }
+      ]
+    }
+  ];
+
   useEffect(() => {
     fetchFixedDeposits();
     fetchAuditRecords();
   }, []);
 
+  // Apply sorting and filtering whenever the underlying data or sort/filter options change
+  useEffect(() => {
+    applyFiltersAndSort();
+  }, [fixedDeposits, currentSort, currentDirection, activeFilters]);
+
   const fetchFixedDeposits = async () => {
     try {
       const data = await getFixedDeposits();
       setFixedDeposits(data);
+      setDisplayedDeposits(data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching fixed deposits:', error);
@@ -150,8 +193,67 @@ const FixedDeposits = () => {
     }
   };
 
-  const totalPrincipal = fixedDeposits.reduce((sum, fd) => sum + fd.principal, 0);
-  const totalMaturityAmount = fixedDeposits.reduce((sum, fd) => sum + fd.maturityAmount, 0);
+  const handleSortChange = (sortKey: string, direction: SortDirection) => {
+    setCurrentSort(direction ? sortKey : null);
+    setCurrentDirection(direction);
+  };
+
+  const handleFilterChange = (filterId: string, value: any) => {
+    setActiveFilters(prev => ({
+      ...prev,
+      [filterId]: value
+    }));
+  };
+
+  const handleClearFilters = () => {
+    setActiveFilters({});
+  };
+
+  // Function to apply both sorting and filtering
+  const applyFiltersAndSort = () => {
+    let result = [...fixedDeposits];
+    
+    // Apply filters
+    if (Object.keys(activeFilters).length > 0) {
+      Object.entries(activeFilters).forEach(([key, value]) => {
+        if (value) {
+          if (key === 'bankName') {
+            result = result.filter(fd => fd.bankName === value);
+          } else if (key === 'maturityStatus') {
+            const today = new Date();
+            if (value === 'matured') {
+              result = result.filter(fd => new Date(fd.maturityDate) <= today);
+            } else if (value === 'active') {
+              result = result.filter(fd => new Date(fd.maturityDate) > today);
+            }
+          }
+        }
+      });
+    }
+    
+    // Apply sorting
+    if (currentSort && currentDirection) {
+      result.sort((a, b) => {
+        let aValue = a[currentSort as keyof FixedDeposit];
+        let bValue = b[currentSort as keyof FixedDeposit];
+        
+        // Handle date comparisons
+        if (currentSort === 'startDate' || currentSort === 'maturityDate') {
+          aValue = new Date(aValue as string).getTime();
+          bValue = new Date(bValue as string).getTime();
+        }
+        
+        if (aValue < bValue) return currentDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return currentDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    
+    setDisplayedDeposits(result);
+  };
+
+  const totalPrincipal = displayedDeposits.reduce((sum, fd) => sum + fd.principal, 0);
+  const totalMaturityAmount = displayedDeposits.reduce((sum, fd) => sum + fd.maturityAmount, 0);
   const totalInterest = totalMaturityAmount - totalPrincipal;
 
   if (loading) {
@@ -207,6 +309,20 @@ const FixedDeposits = () => {
       <Card className="finance-card">
         <CardHeader>
           <CardTitle>Your Fixed Deposits</CardTitle>
+          <div className="flex items-center gap-2 mt-2">
+            <FilterButton 
+              options={filterOptions} 
+              activeFilters={activeFilters}
+              onFilterChange={handleFilterChange}
+              onClearFilters={handleClearFilters}
+            />
+            <SortButton 
+              options={sortOptions}
+              currentSort={currentSort}
+              currentDirection={currentDirection}
+              onSortChange={handleSortChange}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -225,7 +341,7 @@ const FixedDeposits = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {fixedDeposits.map((fd) => {
+              {displayedDeposits.map((fd) => {
                 const daysLeft = differenceInDays(new Date(fd.maturityDate), new Date());
                 
                 return (
@@ -249,6 +365,13 @@ const FixedDeposits = () => {
                   </TableRow>
                 );
               })}
+              {displayedDeposits.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-6 text-muted-foreground">
+                    No fixed deposits found with the current filters
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
