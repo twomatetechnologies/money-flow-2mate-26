@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,33 +18,36 @@ import AuditTrail from "./pages/AuditTrail";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
+// Create a new QueryClient instance outside of component
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <SettingsProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/stocks" element={<Stocks />} />
-              <Route path="/fixed-deposits" element={<FixedDeposits />} />
-              <Route path="/sip" element={<SIPInvestments />} />
-              <Route path="/insurance" element={<Insurance />} />
-              <Route path="/gold" element={<Gold />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/audit" element={<AuditTrail />} />
-              <Route path="/settings" element={<Settings />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </SettingsProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <SettingsProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/stocks" element={<Stocks />} />
+                <Route path="/fixed-deposits" element={<FixedDeposits />} />
+                <Route path="/sip" element={<SIPInvestments />} />
+                <Route path="/insurance" element={<Insurance />} />
+                <Route path="/gold" element={<Gold />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/audit" element={<AuditTrail />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </SettingsProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </React.StrictMode>
 );
 
 export default App;
