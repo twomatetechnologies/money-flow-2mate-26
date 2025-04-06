@@ -4,9 +4,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import { AuthGuard } from "./components/auth/AuthGuard";
+
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Stocks from "./pages/Stocks";
 import FixedDeposits from "./pages/FixedDeposits";
@@ -33,26 +37,34 @@ const App = () => {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <SettingsProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <Routes>
-                <Route element={<AppLayout />}>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/stocks" element={<Stocks />} />
-                  <Route path="/fixed-deposits" element={<FixedDeposits />} />
-                  <Route path="/sip" element={<SIPInvestments />} />
-                  <Route path="/insurance" element={<Insurance />} />
-                  <Route path="/gold" element={<Gold />} />
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/audit" element={<AuditTrail />} />
-                  <Route path="/settings" element={<Settings />} />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </TooltipProvider>
-          </SettingsProvider>
+          <AuthProvider>
+            <SettingsProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  
+                  {/* Protected routes */}
+                  <Route element={<AuthGuard />}>
+                    <Route element={<AppLayout />}>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/stocks" element={<Stocks />} />
+                      <Route path="/fixed-deposits" element={<FixedDeposits />} />
+                      <Route path="/sip" element={<SIPInvestments />} />
+                      <Route path="/insurance" element={<Insurance />} />
+                      <Route path="/gold" element={<Gold />} />
+                      <Route path="/reports" element={<Reports />} />
+                      <Route path="/audit" element={<AuditTrail />} />
+                      <Route path="/settings" element={<Settings />} />
+                    </Route>
+                  </Route>
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </TooltipProvider>
+            </SettingsProvider>
+          </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </React.StrictMode>

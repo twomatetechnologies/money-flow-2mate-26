@@ -1,4 +1,5 @@
-# Welcome to your Lovable project
+
+# Welcome to your Lovable project - Money Flow Guardian
 
 ## Project info
 
@@ -36,19 +37,40 @@ npm i
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Docker Support
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+This project includes Docker support for easy deployment and consistent development environments.
 
-**Use GitHub Codespaces**
+### Running with Docker
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```sh
+# Build and start the Docker container
+docker-compose up -d
+
+# Stop the container
+docker-compose down
+```
+
+The application will be available at http://localhost:8080
+
+### Using Docker for development
+
+For development with hot reload, uncomment the volume mounts in docker-compose.yml:
+
+```yaml
+volumes:
+  - ./src:/app/src
+  - ./public:/app/public
+```
+
+## Authentication
+
+The application includes a simple authentication system. To log in, use these credentials:
+
+- Email: user@example.com
+- Password: password
+
+For production use, it's recommended to integrate with a secure authentication provider.
 
 ## What technologies are used for this project?
 
@@ -59,10 +81,16 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- React Query
+- React Router
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/d10d97f2-402f-47c1-9500-49c45556eadc) and click on Share -> Publish.
+You have multiple options for deployment:
+
+1. Simply open [Lovable](https://lovable.dev/projects/d10d97f2-402f-47c1-9500-49c45556eadc) and click on Share -> Publish.
+
+2. Use Docker to deploy to any platform that supports Docker containers.
 
 ## Can I connect a custom domain to my Lovable project?
 

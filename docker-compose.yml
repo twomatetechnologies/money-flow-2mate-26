@@ -1,0 +1,16 @@
+
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    volumes:
+      # For development only - mount these directories for hot reloading
+      # - ./src:/app/src
+      # - ./public:/app/public
+      # For persistence of user data in local storage
+      - ./data:/data
