@@ -14,6 +14,8 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  isDevelopmentMode: boolean;
+  toggleDevelopmentMode: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,6 +23,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isDevelopmentMode, setIsDevelopmentMode] = useState<boolean>(() => {
+    // Check local storage for development mode setting or default to false
+    const storedMode = localStorage.getItem('developmentMode');
+    return storedMode ? JSON.parse(storedMode) : false;
+  });
 
   useEffect(() => {
     // Check if user is stored in localStorage on mount
@@ -78,12 +85,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const toggleDevelopmentMode = () => {
+    const newMode = !isDevelopmentMode;
+    setIsDevelopmentMode(newMode);
+    localStorage.setItem('developmentMode', JSON.stringify(newMode));
+    toast({
+      title: `${newMode ? 'Development' : 'Production'} Mode Activated`,
+      description: `Application is now running in ${newMode ? 'development' : 'production'} mode.`,
+    });
+  };
+
   const value = {
     user,
     loading,
     login,
     logout,
     isAuthenticated: !!user,
+    isDevelopmentMode,
+    toggleDevelopmentMode,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
