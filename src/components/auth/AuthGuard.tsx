@@ -1,8 +1,13 @@
 
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
+import React from "react";
 
-export const AuthGuard = () => {
+interface AuthGuardProps {
+  children: React.ReactNode;
+}
+
+export const AuthGuard = ({ children }: AuthGuardProps) => {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
@@ -17,5 +22,5 @@ export const AuthGuard = () => {
     return <Navigate to="/login" replace />;
   }
 
-  return <Outlet />;
+  return <>{children}</>;
 };

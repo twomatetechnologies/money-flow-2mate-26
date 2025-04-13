@@ -31,11 +31,14 @@ function App() {
           <Router>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/" element={
-                <AuthGuard>
-                  <AppLayout />
-                </AuthGuard>
-              }>
+              <Route
+                path="/"
+                element={
+                  <AuthGuard>
+                    <AppLayout />
+                  </AuthGuard>
+                }
+              >
                 <Route index element={<Dashboard />} />
                 <Route path="stocks" element={<Stocks />} />
                 <Route path="fixed-deposits" element={<FixedDeposits />} />
