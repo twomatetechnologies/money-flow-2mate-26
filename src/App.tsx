@@ -5,7 +5,7 @@ import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import { AuthProvider } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
-import { AppLayout } from './components/layout/AppLayout';
+import AppLayout from './components/layout/AppLayout';
 import { AuthGuard } from './components/auth/AuthGuard';
 import Dashboard from './pages/Dashboard';
 import Stocks from './pages/Stocks';

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const Sidebar = () => {
+const Sidebar = () => {
   const { isDevelopmentMode } = useAuth();
   
   return (
