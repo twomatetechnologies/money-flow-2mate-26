@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { getGoldInvestments, createGold, updateGold, deleteGold } from '@/services/crudService';
-import { GoldInvestment } from '@/types';
+import { GoldInvestment, FamilyMember } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Table, 
@@ -233,6 +234,58 @@ const Gold = () => {
   const totalGain = totalValue - totalInvestment;
   const percentGain = totalInvestment > 0 ? (totalGain / totalInvestment) * 100 : 0;
 
+  // Create a cache for family member components to avoid rerenders
+  const [familyMemberComponents, setFamilyMemberComponents] = useState<Record<string, React.ReactNode>>({});
+
+  // Function to get family member info that returns a component directly, not a promise
+  const getFamilyMemberInfo = async (id?: string) => {
+    if (!id) return '';
+    
+    if (familyMemberComponents[id]) {
+      return familyMemberComponents[id];
+    }
+    
+    try {
+      const member = await getFamilyMemberById(id);
+      if (member) {
+        const component = (
+          <div className="flex items-center">
+            <div 
+              className="w-3 h-3 rounded-full mr-1" 
+              style={{ backgroundColor: member.color }}
+            />
+            <span>{member.name}</span>
+          </div>
+        );
+        
+        // Update cache
+        setFamilyMemberComponents(prev => ({
+          ...prev,
+          [id]: component
+        }));
+        
+        return component;
+      }
+      return '';
+    } catch (error) {
+      console.error('Error fetching family member:', error);
+      return '';
+    }
+  };
+
+  // Pre-fetch all family member components
+  useEffect(() => {
+    const fetchAllFamilyMembers = async () => {
+      for (const gold of goldInvestments) {
+        if (gold.familyMemberId && !familyMemberComponents[gold.familyMemberId]) {
+          await getFamilyMemberInfo(gold.familyMemberId);
+        }
+      }
+    };
+    
+    fetchAllFamilyMembers();
+  }, [goldInvestments]);
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -350,26 +403,6 @@ const Gold = () => {
                 const gainPercent = (gold.purchasePrice * gold.quantity) > 0 ? 
                   (gain / (gold.purchasePrice * gold.quantity)) * 100 : 0;
                 
-                // Get family member info
-                const getFamilyMemberInfo = async (id?: string) => {
-                  if (!id) return '';
-                  try {
-                    const member = await getFamilyMemberById(id);
-                    return member ? (
-                      <div className="flex items-center">
-                        <div 
-                          className="w-3 h-3 rounded-full mr-1" 
-                          style={{ backgroundColor: member.color }}
-                        />
-                        <span>{member.name}</span>
-                      </div>
-                    ) : '';
-                  } catch (error) {
-                    console.error('Error fetching family member:', error);
-                    return '';
-                  }
-                };
-                
                 return (
                   <TableRow key={gold.id}>
                     <TableCell>
@@ -391,7 +424,7 @@ const Gold = () => {
                     </TableCell>
                     <TableCell>{gold.location || gold.notes || '-'}</TableCell>
                     <TableCell>
-                      {React.useMemo(() => getFamilyMemberInfo(gold.familyMemberId), [gold.familyMemberId])}
+                      {familyMemberComponents[gold.familyMemberId || ''] || '-'}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-1">
