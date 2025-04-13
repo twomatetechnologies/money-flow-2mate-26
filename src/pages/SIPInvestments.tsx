@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { getSIPInvestments, createSIP, updateSIP, deleteSIP } from '@/services/crudService';
 import { SIPInvestment } from '@/types';
@@ -20,7 +19,7 @@ import { useToast } from '@/components/ui/use-toast';
 import AuditTrail from '@/components/common/AuditTrail';
 import { getAuditRecordsByType } from '@/services/auditService';
 import { Badge } from '@/components/ui/badge';
-import { useConfirm } from '@/hooks/useConfirm';
+import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 const SIPInvestments = () => {
@@ -252,6 +251,7 @@ const SIPInvestments = () => {
                 <TableHead className="text-right">Duration</TableHead>
                 <TableHead className="text-right">Current Value</TableHead>
                 <TableHead className="text-right">Returns %</TableHead>
+                <TableHead>Owner</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -273,6 +273,9 @@ const SIPInvestments = () => {
                     <span className={sip.returnsPercent >= 0 ? 'trend-up' : 'trend-down'}>
                       {sip.returnsPercent >= 0 ? '+' : ''}{sip.returnsPercent.toFixed(2)}%
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <FamilyMemberDisplay memberId={sip.familyMemberId} />
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button variant="ghost" size="icon" onClick={() => openEditForm(sip)}>

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { getFixedDeposits, createFixedDeposit, updateFixedDeposit, deleteFixedDeposit } from '@/services/crudService';
 import { FixedDeposit } from '@/types';
@@ -19,7 +18,7 @@ import FixedDepositForm from '@/components/fixedDeposits/FixedDepositForm';
 import { useToast } from '@/components/ui/use-toast';
 import AuditTrail from '@/components/common/AuditTrail';
 import { getAuditRecordsByType } from '@/services/auditService';
-import { useConfirm } from '@/hooks/useConfirm';
+import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
 import FilterButton, { FilterOption } from '@/components/common/FilterButton';
@@ -337,6 +336,7 @@ const FixedDeposits = () => {
                 <TableHead className="text-right">Maturity Date</TableHead>
                 <TableHead className="text-right">Days Left</TableHead>
                 <TableHead className="text-right">Maturity Amount</TableHead>
+                <TableHead>Owner</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -354,6 +354,7 @@ const FixedDeposits = () => {
                     <TableCell className="text-right">{format(new Date(fd.maturityDate), 'dd MMM yyyy')}</TableCell>
                     <TableCell className="text-right">{daysLeft > 0 ? daysLeft : 'Matured'}</TableCell>
                     <TableCell className="text-right">₹{fd.maturityAmount.toLocaleString()}</TableCell>
+                    <TableCell><FamilyMemberDisplay memberId={fd.familyMemberId} /></TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="ghost" size="icon" onClick={() => openEditForm(fd)}>
                         <Pencil className="h-4 w-4" />
@@ -367,7 +368,7 @@ const FixedDeposits = () => {
               })}
               {displayedDeposits.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-6 text-muted-foreground">
                     No fixed deposits found with the current filters
                   </TableCell>
                 </TableRow>

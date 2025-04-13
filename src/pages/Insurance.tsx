@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { getInsurancePolicies, createInsurance, updateInsurance, deleteInsurance } from '@/services/crudService';
-import { InsurancePolicy, FamilyMember } from '@/types';
+import { InsurancePolicy } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Table, 
@@ -15,8 +14,9 @@ import {
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, Plus, Edit, Trash2, X } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import InsuranceForm from '@/components/insurance/InsuranceForm';
+import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import {
   Dialog,
   DialogContent,
@@ -37,7 +37,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
 import FamilyMemberFilter from '@/components/common/FamilyMemberFilter';
-import { getFamilyMemberById } from '@/services/familyService';
 
 const Insurance = () => {
   const [insurancePolicies, setInsurancePolicies] = useState<InsurancePolicy[]>([]);
@@ -239,58 +238,6 @@ const Insurance = () => {
     }
   }, 0);
 
-  // Create a cache for family member components to avoid rerenders
-  const [familyMemberComponents, setFamilyMemberComponents] = useState<Record<string, React.ReactNode>>({});
-
-  // Function to get family member info that returns a component directly, not a promise
-  const getFamilyMemberInfo = async (id?: string) => {
-    if (!id) return '';
-    
-    if (familyMemberComponents[id]) {
-      return familyMemberComponents[id];
-    }
-    
-    try {
-      const member = await getFamilyMemberById(id);
-      if (member) {
-        const component = (
-          <div className="flex items-center">
-            <div 
-              className="w-3 h-3 rounded-full mr-1" 
-              style={{ backgroundColor: member.color }}
-            />
-            <span>{member.name}</span>
-          </div>
-        );
-        
-        // Update cache
-        setFamilyMemberComponents(prev => ({
-          ...prev,
-          [id]: component
-        }));
-        
-        return component;
-      }
-      return '';
-    } catch (error) {
-      console.error('Error fetching family member:', error);
-      return '';
-    }
-  };
-
-  // Pre-fetch all family member components
-  useEffect(() => {
-    const fetchAllFamilyMembers = async () => {
-      for (const policy of insurancePolicies) {
-        if (policy.familyMemberId && !familyMemberComponents[policy.familyMemberId]) {
-          await getFamilyMemberInfo(policy.familyMemberId);
-        }
-      }
-    };
-    
-    fetchAllFamilyMembers();
-  }, [insurancePolicies]);
-
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -399,7 +346,7 @@ const Insurance = () => {
                     <TableCell className="text-right">{policy.frequency}</TableCell>
                     <TableCell className="text-right">{format(new Date(policy.endDate), 'dd MMM yyyy')}</TableCell>
                     <TableCell>
-                      {familyMemberComponents[policy.familyMemberId || ''] || '-'}
+                      <FamilyMemberDisplay memberId={policy.familyMemberId} />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-1">
