@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { StockHolding } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +40,7 @@ import { getAuditRecordsForEntity } from '@/services/auditService';
 import { AuditRecord } from '@/types/audit';
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
 import FilterButton, { FilterOption } from '@/components/common/FilterButton';
+import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 
 const Stocks = () => {
   const [stocks, setStocks] = useState<StockHolding[]>([]);
@@ -418,13 +418,14 @@ const Stocks = () => {
                 <TableHead className="text-right">Change</TableHead>
                 <TableHead className="text-right">Value</TableHead>
                 <TableHead className="text-right">Gain/Loss</TableHead>
+                <TableHead>Owner</TableHead>
                 <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {displayedStocks.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-6 text-muted-foreground">
                     No stocks found with the current filters
                   </TableCell>
                 </TableRow>
@@ -458,6 +459,7 @@ const Stocks = () => {
                           {gain >= 0 ? '+' : ''}₹{gain.toLocaleString()} ({gainPercent.toFixed(2)}%)
                         </span>
                       </TableCell>
+                      <TableCell><FamilyMemberDisplay memberId={stock.familyMemberId} /></TableCell>
                       <TableCell>
                         <div className="flex justify-center space-x-2">
                           <Button variant="outline" size="icon" onClick={() => handleEditStock(stock)}>
