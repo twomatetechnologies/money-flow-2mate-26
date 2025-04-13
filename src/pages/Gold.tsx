@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { getGoldInvestments, createGold, updateGold, deleteGold } from '@/services/crudService';
 import { GoldInvestment } from '@/types';
@@ -36,6 +35,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
+import FamilyMemberFilter from '@/components/common/FamilyMemberFilter';
+import { getFamilyMemberById } from '@/services/familyService';
 
 const Gold = () => {
   const [goldInvestments, setGoldInvestments] = useState<GoldInvestment[]>([]);
@@ -46,6 +47,7 @@ const Gold = () => {
   const [investmentsView, setInvestmentsView] = useState<GoldInvestment[]>([]);
   const [currentSort, setCurrentSort] = useState<string | null>(null);
   const [currentDirection, setCurrentDirection] = useState<SortDirection>(null);
+  const [selectedFamilyMember, setSelectedFamilyMember] = useState<string | null>(null);
   const { toast } = useToast();
 
   const sortOptions: SortOption[] = [
@@ -63,9 +65,18 @@ const Gold = () => {
 
   useEffect(() => {
     if (goldInvestments.length > 0) {
-      const sortedInvestments = [...goldInvestments];
+      let filteredInvestments = [...goldInvestments];
+      
+      // Apply family member filter
+      if (selectedFamilyMember) {
+        filteredInvestments = filteredInvestments.filter(
+          investment => investment.familyMemberId === selectedFamilyMember
+        );
+      }
+      
+      // Apply sort
       if (currentSort && currentDirection) {
-        sortedInvestments.sort((a, b) => {
+        filteredInvestments.sort((a, b) => {
           const fieldA = a[currentSort as keyof GoldInvestment];
           const fieldB = b[currentSort as keyof GoldInvestment];
           
@@ -89,9 +100,10 @@ const Gold = () => {
           return 0;
         });
       }
-      setInvestmentsView(sortedInvestments);
+      
+      setInvestmentsView(filteredInvestments);
     }
-  }, [goldInvestments, currentSort, currentDirection]);
+  }, [goldInvestments, currentSort, currentDirection, selectedFamilyMember]);
 
   const fetchGoldInvestments = async () => {
     try {
@@ -194,6 +206,10 @@ const Gold = () => {
   const handleSortChange = (value: string, direction: SortDirection) => {
     setCurrentSort(direction ? value : null);
     setCurrentDirection(direction);
+  };
+  
+  const handleFamilyMemberFilter = (memberId: string | null) => {
+    setSelectedFamilyMember(memberId);
   };
 
   const getGoldTypeColor = (type: string) => {
@@ -298,7 +314,11 @@ const Gold = () => {
       <Card className="finance-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Your Gold Investments</CardTitle>
-          <div>
+          <div className="flex items-center space-x-2">
+            <FamilyMemberFilter 
+              selectedMemberId={selectedFamilyMember}
+              onSelect={handleFamilyMemberFilter}
+            />
             <SortButton
               options={sortOptions}
               currentSort={currentSort}
@@ -320,6 +340,7 @@ const Gold = () => {
                 <TableHead className="text-right">Current Value</TableHead>
                 <TableHead className="text-right">Gain/Loss</TableHead>
                 <TableHead>Location/Notes</TableHead>
+                <TableHead>Owner</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -328,6 +349,26 @@ const Gold = () => {
                 const gain = (gold.currentPrice - gold.purchasePrice) * gold.quantity;
                 const gainPercent = (gold.purchasePrice * gold.quantity) > 0 ? 
                   (gain / (gold.purchasePrice * gold.quantity)) * 100 : 0;
+                
+                // Get family member info
+                const getFamilyMemberInfo = async (id?: string) => {
+                  if (!id) return '';
+                  try {
+                    const member = await getFamilyMemberById(id);
+                    return member ? (
+                      <div className="flex items-center">
+                        <div 
+                          className="w-3 h-3 rounded-full mr-1" 
+                          style={{ backgroundColor: member.color }}
+                        />
+                        <span>{member.name}</span>
+                      </div>
+                    ) : '';
+                  } catch (error) {
+                    console.error('Error fetching family member:', error);
+                    return '';
+                  }
+                };
                 
                 return (
                   <TableRow key={gold.id}>
@@ -349,6 +390,9 @@ const Gold = () => {
                       </span>
                     </TableCell>
                     <TableCell>{gold.location || gold.notes || '-'}</TableCell>
+                    <TableCell>
+                      {React.useMemo(() => getFamilyMemberInfo(gold.familyMemberId), [gold.familyMemberId])}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-1">
                         <Button variant="ghost" size="icon" onClick={() => openEditDialog(gold)}>

@@ -1,79 +1,179 @@
 
-import React from 'react';
-import { useLocation } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import { 
-  Home, 
-  TrendingUp, 
-  Landmark, 
-  PiggyBank, 
-  Shield, 
-  GalleryThumbnails,
-  FileBarChart, 
-  History,
-  Settings
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { NavLink } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import {
+  BarChart,
+  Coins,
+  DollarSign,
+  Heart,
+  Home,
+  Package,
+  ScrollText,
+  Settings,
+  Shield,
+  TrendingUp,
+  Users
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface SidebarLinkProps {
-  href: string;
-  icon: React.ElementType;
-  children: React.ReactNode;
-}
-
-const SidebarLink = ({ href, icon: Icon, children }: SidebarLinkProps) => {
-  const location = useLocation();
-  const isActive = location.pathname === href;
-
+const Sidebar = () => {
+  const { isDevelopmentMode } = useAuth();
+  
   return (
-    <Link
-      to={href}
-      className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-base transition-all hover:text-primary",
-        isActive ? "bg-accent text-primary" : "text-muted-foreground"
-      )}
-    >
-      <Icon className="h-5 w-5" />
-      <span>{children}</span>
-    </Link>
-  );
-};
-
-export const Sidebar = () => {
-  return (
-    <div className="hidden border-r bg-card md:block md:w-64 p-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="mb-6 px-4 text-lg font-semibold">Finance Tracker</h2>
-        <nav className="space-y-1">
-          <SidebarLink href="/" icon={Home}>Dashboard</SidebarLink>
-          <SidebarLink href="/stocks" icon={TrendingUp}>Stocks</SidebarLink>
-          <SidebarLink href="/fixed-deposits" icon={Landmark}>Fixed Deposits</SidebarLink>
-          <SidebarLink href="/sip" icon={PiggyBank}>SIP Investments</SidebarLink>
-          <SidebarLink href="/insurance" icon={Shield}>Insurance</SidebarLink>
-          <SidebarLink href="/gold" icon={GalleryThumbnails}>Gold</SidebarLink>
-          <SidebarLink href="/reports" icon={FileBarChart}>Reports</SidebarLink>
-          <SidebarLink href="/audit" icon={History}>Audit Trail</SidebarLink>
-          <SidebarLink href="/settings" icon={Settings}>Settings</SidebarLink>
+    <aside className="hidden md:flex h-screen sticky top-0 w-56 flex-col border-r bg-background">
+      <div className="px-3 py-2 h-16 flex items-center border-b">
+        <h2 className="text-lg font-semibold">Money Flow Guardian</h2>
+      </div>
+      <div className="flex-1 overflow-auto py-2">
+        <nav className="grid gap-1 px-2">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <Home className="h-4 w-4" />
+            <span>Dashboard</span>
+          </NavLink>
+          <NavLink
+            to="/stocks"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <TrendingUp className="h-4 w-4" />
+            <span>Stocks</span>
+          </NavLink>
+          <NavLink
+            to="/fixed-deposits"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <Package className="h-4 w-4" />
+            <span>Fixed Deposits</span>
+          </NavLink>
+          <NavLink
+            to="/sip-investments"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <BarChart className="h-4 w-4" />
+            <span>SIP Investments</span>
+          </NavLink>
+          <NavLink
+            to="/insurance"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <Shield className="h-4 w-4" />
+            <span>Insurance</span>
+          </NavLink>
+          <NavLink
+            to="/gold"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <Coins className="h-4 w-4" />
+            <span>Gold</span>
+          </NavLink>
+          <NavLink
+            to="/family-members"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <Users className="h-4 w-4" />
+            <span>Family Members</span>
+          </NavLink>
+          <NavLink
+            to="/reports"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <ScrollText className="h-4 w-4" />
+            <span>Reports</span>
+          </NavLink>
         </nav>
       </div>
-    </div>
+      <div className="border-t p-4">
+        <nav className="grid gap-1">
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </NavLink>
+          {isDevelopmentMode && (
+            <NavLink
+              to="/audit-trail"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                  isActive
+                    ? "bg-muted text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-primary"
+                )
+              }
+            >
+              <ScrollText className="h-4 w-4" />
+              <span>Audit Trail</span>
+            </NavLink>
+          )}
+        </nav>
+      </div>
+    </aside>
   );
 };
 
-export const SidebarSettings = () => {
-  const location = useLocation();
-  const isActive = location.pathname === '/settings';
-
-  return (
-    <Link 
-      to="/settings"
-      className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-base transition-all hover:text-primary",
-        isActive ? "bg-accent text-primary" : "text-muted-foreground"
-      )}
-    >
-      <Settings className="h-5 w-5" />
-      <span>Settings</span>
-    </Link>
-  );
-};
+export default Sidebar;

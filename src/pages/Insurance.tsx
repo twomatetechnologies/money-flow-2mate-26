@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { getInsurancePolicies, createInsurance, updateInsurance, deleteInsurance } from '@/services/crudService';
 import { InsurancePolicy } from '@/types';
@@ -36,6 +35,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
+import FamilyMemberFilter from '@/components/common/FamilyMemberFilter';
+import { getFamilyMemberById } from '@/services/familyService';
 
 const Insurance = () => {
   const [insurancePolicies, setInsurancePolicies] = useState<InsurancePolicy[]>([]);
@@ -46,6 +47,7 @@ const Insurance = () => {
   const [policiesView, setPoliciesView] = useState<InsurancePolicy[]>([]);
   const [currentSort, setCurrentSort] = useState<string | null>(null);
   const [currentDirection, setCurrentDirection] = useState<SortDirection>(null);
+  const [selectedFamilyMember, setSelectedFamilyMember] = useState<string | null>(null);
   const { toast } = useToast();
 
   const sortOptions: SortOption[] = [
@@ -62,9 +64,18 @@ const Insurance = () => {
 
   useEffect(() => {
     if (insurancePolicies.length > 0) {
-      const sortedPolicies = [...insurancePolicies];
+      let filteredPolicies = [...insurancePolicies];
+      
+      // Apply family member filter
+      if (selectedFamilyMember) {
+        filteredPolicies = filteredPolicies.filter(
+          policy => policy.familyMemberId === selectedFamilyMember
+        );
+      }
+      
+      // Apply sort
       if (currentSort && currentDirection) {
-        sortedPolicies.sort((a, b) => {
+        filteredPolicies.sort((a, b) => {
           const fieldA = a[currentSort as keyof InsurancePolicy];
           const fieldB = b[currentSort as keyof InsurancePolicy];
           
@@ -88,9 +99,10 @@ const Insurance = () => {
           return 0;
         });
       }
-      setPoliciesView(sortedPolicies);
+      
+      setPoliciesView(filteredPolicies);
     }
-  }, [insurancePolicies, currentSort, currentDirection]);
+  }, [insurancePolicies, currentSort, currentDirection, selectedFamilyMember]);
 
   const fetchInsurancePolicies = async () => {
     try {
@@ -194,6 +206,10 @@ const Insurance = () => {
     setCurrentSort(direction ? value : null);
     setCurrentDirection(direction);
   };
+  
+  const handleFamilyMemberFilter = (memberId: string | null) => {
+    setSelectedFamilyMember(memberId);
+  };
 
   const getInsuranceTypeColor = (type: string) => {
     switch (type) {
@@ -285,7 +301,11 @@ const Insurance = () => {
       <Card className="finance-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Your Insurance Policies</CardTitle>
-          <div>
+          <div className="flex items-center space-x-2">
+            <FamilyMemberFilter 
+              selectedMemberId={selectedFamilyMember}
+              onSelect={handleFamilyMemberFilter}
+            />
             <SortButton
               options={sortOptions}
               currentSort={currentSort}
@@ -306,35 +326,61 @@ const Insurance = () => {
                 <TableHead className="text-right">Premium</TableHead>
                 <TableHead className="text-right">Frequency</TableHead>
                 <TableHead className="text-right">Valid Until</TableHead>
+                <TableHead>Owner</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {policiesView.map((policy) => (
-                <TableRow key={policy.id}>
-                  <TableCell className="font-medium">{policy.policyNumber}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getInsuranceTypeColor(policy.type)}>
-                      {policy.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{policy.provider}</TableCell>
-                  <TableCell className="text-right">₹{policy.coverAmount.toLocaleString()}</TableCell>
-                  <TableCell className="text-right">₹{policy.premium.toLocaleString()}</TableCell>
-                  <TableCell className="text-right">{policy.frequency}</TableCell>
-                  <TableCell className="text-right">{format(new Date(policy.endDate), 'dd MMM yyyy')}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(policy)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openDeleteAlert(policy)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {policiesView.map((policy) => {
+                // Get family member info
+                const getFamilyMemberInfo = async (id?: string) => {
+                  if (!id) return '';
+                  try {
+                    const member = await getFamilyMemberById(id);
+                    return member ? (
+                      <div className="flex items-center">
+                        <div 
+                          className="w-3 h-3 rounded-full mr-1" 
+                          style={{ backgroundColor: member.color }}
+                        />
+                        <span>{member.name}</span>
+                      </div>
+                    ) : '';
+                  } catch (error) {
+                    console.error('Error fetching family member:', error);
+                    return '';
+                  }
+                };
+                
+                return (
+                  <TableRow key={policy.id}>
+                    <TableCell className="font-medium">{policy.policyNumber}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={getInsuranceTypeColor(policy.type)}>
+                        {policy.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{policy.provider}</TableCell>
+                    <TableCell className="text-right">₹{policy.coverAmount.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">₹{policy.premium.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{policy.frequency}</TableCell>
+                    <TableCell className="text-right">{format(new Date(policy.endDate), 'dd MMM yyyy')}</TableCell>
+                    <TableCell>
+                      {React.useMemo(() => getFamilyMemberInfo(policy.familyMemberId), [policy.familyMemberId])}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end space-x-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(policy)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openDeleteAlert(policy)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

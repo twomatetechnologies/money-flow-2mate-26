@@ -12,6 +12,7 @@ export interface StockHolding {
   value: number;
   sector?: string;
   lastUpdated: Date;
+  familyMemberId?: string; // Associate with family member
 }
 
 export interface FixedDeposit {
@@ -25,6 +26,7 @@ export interface FixedDeposit {
   maturityAmount: number;
   isAutoRenew: boolean;
   notes?: string;
+  familyMemberId?: string; // Associate with family member
 }
 
 export interface SIPInvestment {
@@ -38,6 +40,7 @@ export interface SIPInvestment {
   currentValue: number;
   returns: number;
   returnsPercent: number;
+  familyMemberId?: string; // Associate with family member
 }
 
 export interface InsurancePolicy {
@@ -53,6 +56,7 @@ export interface InsurancePolicy {
   nominees?: string[];
   documents?: string[];
   notes?: string;
+  familyMemberId?: string; // Associate with family member
 }
 
 export interface GoldInvestment {
@@ -65,6 +69,7 @@ export interface GoldInvestment {
   value: number;
   location?: string; // for physical gold
   notes?: string;
+  familyMemberId?: string; // Associate with family member
 }
 
 export interface NetWorthData {
@@ -80,4 +85,16 @@ export interface NetWorthData {
     date: Date;
     value: number;
   }[];
+}
+
+// Family member type
+export interface FamilyMember {
+  id: string;
+  name: string;
+  relationship: 'Self' | 'Spouse' | 'Parent' | 'Child' | 'Sibling' | 'Other';
+  color: string; // For visual representation in charts and UI
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
 }
