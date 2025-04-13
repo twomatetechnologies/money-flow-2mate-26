@@ -1,4 +1,3 @@
-
 import { 
   StockHolding, 
   FixedDeposit, 
@@ -21,7 +20,8 @@ export const mockStocks: StockHolding[] = [
     changePercent: 1.37,
     value: 129000,
     sector: 'Energy',
-    lastUpdated: new Date()
+    lastUpdated: new Date(),
+    familyMemberId: 'self-default'
   },
   {
     id: '2',
@@ -34,7 +34,8 @@ export const mockStocks: StockHolding[] = [
     changePercent: -1.93,
     value: 142000,
     sector: 'Technology',
-    lastUpdated: new Date()
+    lastUpdated: new Date(),
+    familyMemberId: 'spouse-default'
   },
   {
     id: '3',
@@ -47,7 +48,8 @@ export const mockStocks: StockHolding[] = [
     changePercent: 0.7,
     value: 129000,
     sector: 'Banking',
-    lastUpdated: new Date()
+    lastUpdated: new Date(),
+    familyMemberId: 'parent-default'
   },
   {
     id: '4',
@@ -60,7 +62,8 @@ export const mockStocks: StockHolding[] = [
     changePercent: 2.22,
     value: 103500,
     sector: 'Technology',
-    lastUpdated: new Date()
+    lastUpdated: new Date(),
+    familyMemberId: 'self-default'
   },
   {
     id: '5',
@@ -73,7 +76,8 @@ export const mockStocks: StockHolding[] = [
     changePercent: -1.73,
     value: 170000,
     sector: 'Financial Services',
-    lastUpdated: new Date()
+    lastUpdated: new Date(),
+    familyMemberId: 'spouse-default'
   }
 ];
 
@@ -89,6 +93,7 @@ export const mockFixedDeposits: FixedDeposit[] = [
     maturityDate: new Date('2024-10-15'),
     maturityAmount: 105700,
     isAutoRenew: true,
+    familyMemberId: 'self-default'
   },
   {
     id: '2',
@@ -100,7 +105,8 @@ export const mockFixedDeposits: FixedDeposit[] = [
     maturityDate: new Date('2025-06-20'),
     maturityAmount: 225044,
     isAutoRenew: false,
-    notes: 'For home renovation'
+    notes: 'For home renovation',
+    familyMemberId: 'spouse-default'
   },
   {
     id: '3',
@@ -112,7 +118,8 @@ export const mockFixedDeposits: FixedDeposit[] = [
     maturityDate: new Date('2024-07-10'),
     maturityAmount: 154425,
     isAutoRenew: true,
-    notes: 'Short term FD'
+    notes: 'Short term FD',
+    familyMemberId: 'parent-default'
   }
 ];
 
@@ -128,7 +135,8 @@ export const mockSIPInvestments: SIPInvestment[] = [
     duration: 60, // 5 years
     currentValue: 115000,
     returns: 15000,
-    returnsPercent: 15.0
+    returnsPercent: 15.0,
+    familyMemberId: 'self-default'
   },
   {
     id: '2',
@@ -140,7 +148,8 @@ export const mockSIPInvestments: SIPInvestment[] = [
     duration: 36, // 3 years
     currentValue: 124500,
     returns: 16500,
-    returnsPercent: 15.3
+    returnsPercent: 15.3,
+    familyMemberId: 'spouse-default'
   },
   {
     id: '3',
@@ -151,7 +160,8 @@ export const mockSIPInvestments: SIPInvestment[] = [
     startDate: new Date('2022-11-05'),
     currentValue: 38000,
     returns: 4000,
-    returnsPercent: 11.8
+    returnsPercent: 11.8,
+    familyMemberId: 'parent-default'
   }
 ];
 
@@ -168,7 +178,8 @@ export const mockInsurancePolicies: InsurancePolicy[] = [
     startDate: new Date('2020-05-10'),
     endDate: new Date('2045-05-10'),
     nominees: ['Spouse Name'],
-    notes: 'Term insurance with critical illness cover'
+    notes: 'Term insurance with critical illness cover',
+    familyMemberId: 'self-default'
   },
   {
     id: '2',
@@ -181,7 +192,8 @@ export const mockInsurancePolicies: InsurancePolicy[] = [
     startDate: new Date('2022-03-15'),
     endDate: new Date('2023-03-15'),
     nominees: ['Self', 'Spouse', 'Children'],
-    notes: 'Family floater plan'
+    notes: 'Family floater plan',
+    familyMemberId: 'spouse-default'
   },
   {
     id: '3',
@@ -193,7 +205,8 @@ export const mockInsurancePolicies: InsurancePolicy[] = [
     frequency: 'Yearly',
     startDate: new Date('2023-11-20'),
     endDate: new Date('2024-11-20'),
-    notes: 'Comprehensive car insurance'
+    notes: 'Comprehensive car insurance',
+    familyMemberId: 'parent-default'
   }
 ];
 
@@ -208,7 +221,8 @@ export const mockGoldInvestments: GoldInvestment[] = [
     currentPrice: 5800, // per gram
     value: 290000, // current value
     location: 'Bank locker',
-    notes: 'Gold coins purchased during Diwali'
+    notes: 'Gold coins purchased during Diwali',
+    familyMemberId: 'self-default'
   },
   {
     id: '2',
@@ -218,7 +232,8 @@ export const mockGoldInvestments: GoldInvestment[] = [
     purchasePrice: 4800, // per unit
     currentPrice: 5800, // per unit
     value: 232000, // current value
-    notes: 'Sovereign Gold Bond 2021-22 Series'
+    notes: 'Sovereign Gold Bond 2021-22 Series',
+    familyMemberId: 'spouse-default'
   },
   {
     id: '3',
@@ -228,7 +243,8 @@ export const mockGoldInvestments: GoldInvestment[] = [
     purchasePrice: 5000, // per gram
     currentPrice: 5800, // per gram
     value: 145000, // current value
-    notes: 'Digital gold on investment app'
+    notes: 'Digital gold on investment app',
+    familyMemberId: 'parent-default'
   }
 ];
 

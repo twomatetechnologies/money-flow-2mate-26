@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { getGoldInvestments, createGold, updateGold, deleteGold } from '@/services/crudService';
 import { GoldInvestment, FamilyMember } from '@/types';
@@ -237,40 +236,35 @@ const Gold = () => {
   // Create a cache for family member components to avoid rerenders
   const [familyMemberComponents, setFamilyMemberComponents] = useState<Record<string, React.ReactNode>>({});
 
-  // Function to get family member info that returns a component directly, not a promise
-  const getFamilyMemberInfo = async (id?: string) => {
-    if (!id) return '';
+  // Function to get family member info that returns a component directly
+  const getFamilyMemberInfo = (id?: string): React.ReactNode => {
+    if (!id) return '-';
     
     if (familyMemberComponents[id]) {
       return familyMemberComponents[id];
     }
     
-    try {
-      const member = await getFamilyMemberById(id);
-      if (member) {
-        const component = (
-          <div className="flex items-center">
-            <div 
-              className="w-3 h-3 rounded-full mr-1" 
-              style={{ backgroundColor: member.color }}
-            />
-            <span>{member.name}</span>
-          </div>
-        );
-        
-        // Update cache
-        setFamilyMemberComponents(prev => ({
-          ...prev,
-          [id]: component
-        }));
-        
-        return component;
-      }
-      return '';
-    } catch (error) {
-      console.error('Error fetching family member:', error);
-      return '';
+    const member = getFamilyMemberById(id);
+    if (member) {
+      const component = (
+        <div className="flex items-center">
+          <div 
+            className="w-3 h-3 rounded-full mr-1" 
+            style={{ backgroundColor: member.color }}
+          />
+          <span>{member.name}</span>
+        </div>
+      );
+      
+      // Update cache
+      setFamilyMemberComponents(prev => ({
+        ...prev,
+        [id]: component
+      }));
+      
+      return component;
     }
+    return '-';
   };
 
   // Pre-fetch all family member components
@@ -278,7 +272,7 @@ const Gold = () => {
     const fetchAllFamilyMembers = async () => {
       for (const gold of goldInvestments) {
         if (gold.familyMemberId && !familyMemberComponents[gold.familyMemberId]) {
-          await getFamilyMemberInfo(gold.familyMemberId);
+          getFamilyMemberInfo(gold.familyMemberId);
         }
       }
     };
@@ -295,6 +289,7 @@ const Gold = () => {
   }
 
   return (
+    
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -424,7 +419,7 @@ const Gold = () => {
                     </TableCell>
                     <TableCell>{gold.location || gold.notes || '-'}</TableCell>
                     <TableCell>
-                      {familyMemberComponents[gold.familyMemberId || ''] || '-'}
+                      {getFamilyMemberInfo(gold.familyMemberId)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-1">
@@ -459,6 +454,7 @@ const Gold = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    
   );
 };
 
