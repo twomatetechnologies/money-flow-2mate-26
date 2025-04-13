@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import {
   BarChart,
   Coins,
-  DollarSign,
   Heart,
   Home,
   Package,
@@ -16,7 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const Sidebar = () => {
+export const Sidebar = () => {
   const { isDevelopmentMode } = useAuth();
   
   return (
