@@ -82,7 +82,11 @@ export const deleteFamilyMember = (id: string): boolean => {
 };
 
 export const getFamilyMemberById = (id: string): FamilyMember | null => {
-  return familyMembers.find(member => member.id === id) || null;
+  console.log('Looking for family member with ID:', id);
+  console.log('Available family members:', familyMembers);
+  const member = familyMembers.find(member => member.id === id);
+  console.log('Found member:', member || 'null');
+  return member || null;
 };
 
 export const getFamilyMembers = (): Promise<FamilyMember[]> => {

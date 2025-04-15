@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import FamilyMemberSelect from '@/components/common/FamilyMemberSelect';
 
 interface StockFormProps {
   isOpen: boolean;
@@ -23,7 +24,8 @@ const StockForm = ({ isOpen, onClose, onSubmit, initialData, mode }: StockFormPr
       quantity: 0,
       averageBuyPrice: 0,
       currentPrice: 0,
-      sector: ''
+      sector: '',
+      familyMemberId: ''
     }
   });
 
@@ -38,7 +40,8 @@ const StockForm = ({ isOpen, onClose, onSubmit, initialData, mode }: StockFormPr
         quantity: 0,
         averageBuyPrice: 0,
         currentPrice: 0,
-        sector: ''
+        sector: '',
+        familyMemberId: ''
       });
     }
   }, [initialData, mode, form]);
@@ -159,6 +162,23 @@ const StockForm = ({ isOpen, onClose, onSubmit, initialData, mode }: StockFormPr
                   <FormLabel>Sector</FormLabel>
                   <FormControl>
                     <Input placeholder="Technology" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="familyMemberId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FamilyMemberSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      label="Owner"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
