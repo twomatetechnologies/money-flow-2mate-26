@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { SIPInvestment } from '@/types';
@@ -7,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import FamilyMemberSelect from '@/components/common/FamilyMemberSelect';
 
 interface SIPFormProps {
   isOpen: boolean;
@@ -27,7 +27,8 @@ const SIPForm = ({ isOpen, onClose, onSubmit, initialData, mode }: SIPFormProps)
       duration: 12,
       currentValue: 0,
       returns: 0,
-      returnsPercent: 0
+      returnsPercent: 0,
+      familyMemberId: ''
     }
   });
 
@@ -45,7 +46,8 @@ const SIPForm = ({ isOpen, onClose, onSubmit, initialData, mode }: SIPFormProps)
         duration: 12,
         currentValue: 0,
         returns: 0,
-        returnsPercent: 0
+        returnsPercent: 0,
+        familyMemberId: ''
       });
     }
   }, [initialData, mode, form]);
@@ -201,6 +203,23 @@ const SIPForm = ({ isOpen, onClose, onSubmit, initialData, mode }: SIPFormProps)
                   <FormLabel>Current Value (₹)</FormLabel>
                   <FormControl>
                     <Input type="number" min="0" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="familyMemberId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FamilyMemberSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      label="Owner"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -44,19 +44,31 @@ const FamilyMemberSelect: React.FC<FamilyMemberSelectProps> = ({
     fetchFamilyMembers();
   }, []);
 
+  // Handle the case of empty value by converting it to "none" internally
+  const handleValueChange = (selectedValue: string) => {
+    if (selectedValue === "none") {
+      onChange("");
+    } else {
+      onChange(selectedValue);
+    }
+  };
+
+  // Convert empty string to "none" for the Select component
+  const selectValue = !value ? "none" : value;
+
   return (
     <div className="flex flex-col space-y-1.5">
       <label className="text-sm font-medium">{label}{required && <span className="text-destructive"> *</span>}</label>
       <Select
-        value={value || ""}
-        onValueChange={onChange}
+        value={selectValue}
+        onValueChange={handleValueChange}
         disabled={disabled || loading}
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select family member" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Not assigned</SelectItem>
+          <SelectItem value="none">Not assigned</SelectItem>
           {familyMembers.map((member) => (
             <SelectItem key={member.id} value={member.id}>
               <div className="flex items-center">
