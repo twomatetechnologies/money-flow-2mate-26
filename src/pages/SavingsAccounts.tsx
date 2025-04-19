@@ -49,7 +49,7 @@ const SavingsAccounts = () => {
     }
   };
 
-  const handleCreateAccount = (accountData: Partial<SavingsAccount>) => {
+  const handleCreateAccount = (accountData: Omit<SavingsAccount, 'id' | 'lastUpdated'>) => {
     try {
       const newAccount = createSavingsAccount(accountData);
       setAccounts([...accounts, newAccount]);
@@ -135,7 +135,7 @@ const SavingsAccounts = () => {
 
   const handleFormSubmit = (account: Partial<SavingsAccount>) => {
     if (formMode === 'create') {
-      handleCreateAccount(account);
+      handleCreateAccount(account as Omit<SavingsAccount, 'id' | 'lastUpdated'>);
     } else {
       handleUpdateAccount(account);
     }

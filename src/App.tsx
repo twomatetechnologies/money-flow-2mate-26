@@ -17,6 +17,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import AuditTrail from './pages/AuditTrail';
 import FamilyMembers from './pages/FamilyMembers';
+import SavingsAccounts from './pages/SavingsAccounts';
 import { Toaster } from './components/ui/toaster';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './App.css';
