@@ -4,13 +4,14 @@ import { SavingsAccount } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, Wallet } from 'lucide-react';
+import { Plus, Pencil, Trash2, Wallet, Import, FileExport, FileText } from 'lucide-react';
 import SavingsAccountForm from '@/components/savings/SavingsAccountForm';
 import { useToast } from '@/components/ui/use-toast';
 import AuditTrail from '@/components/common/AuditTrail';
 import { getAuditRecordsByType } from '@/services/auditService';
 import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { exportSavingsAccounts, downloadSavingsAccountSample, importSavingsAccounts } from '@/services/savingsService';
 
 const SavingsAccounts = () => {
   const [accounts, setAccounts] = useState<SavingsAccount[]>([]);
@@ -143,6 +144,28 @@ const SavingsAccounts = () => {
 
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
 
+  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      await importSavingsAccounts(file);
+      fetchAccounts();
+      fetchAuditRecords();
+      toast({
+        title: "Import Successful",
+        description: "Savings accounts have been imported successfully.",
+      });
+    } catch (error) {
+      console.error('Error importing savings accounts:', error);
+      toast({
+        title: "Import Failed",
+        description: "Failed to import savings accounts. Please check the file format.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -160,10 +183,33 @@ const SavingsAccounts = () => {
             Track your savings accounts across different banks
           </p>
         </div>
-        <Button onClick={openCreateForm} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Savings Account
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => downloadSavingsAccountSample()}>
+            <FileText className="h-4 w-4 mr-2" />
+            Sample File
+          </Button>
+          <div className="relative">
+            <input
+              type="file"
+              id="file-upload"
+              className="hidden"
+              accept=".csv,.xlsx,.xls"
+              onChange={handleImportFile}
+            />
+            <Button variant="outline" onClick={() => document.getElementById('file-upload')?.click()}>
+              <Import className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+          </div>
+          <Button variant="outline" onClick={() => exportSavingsAccounts()}>
+            <FileExport className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button onClick={openCreateForm} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Savings Account
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6">
