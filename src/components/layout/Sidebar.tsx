@@ -1,4 +1,3 @@
-
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -11,7 +10,8 @@ import {
   Settings,
   Shield,
   TrendingUp,
-  Users
+  Users,
+  Wallet  // Adding Wallet icon
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -108,6 +108,20 @@ const Sidebar = () => {
             <span>Gold</span>
           </NavLink>
           <NavLink
+            to="/savings-accounts"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <Wallet className="h-4 w-4" />
+            <span>Savings Accounts</span>
+          </NavLink>
+          <NavLink
             to="/family-members"
             className={({ isActive }) =>
               cn(
@@ -135,40 +149,6 @@ const Sidebar = () => {
             <ScrollText className="h-4 w-4" />
             <span>Reports</span>
           </NavLink>
-        </nav>
-      </div>
-      <div className="border-t p-4">
-        <nav className="grid gap-1">
-          <NavLink
-            to="/settings"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive
-                  ? "bg-muted text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-primary"
-              )
-            }
-          >
-            <Settings className="h-4 w-4" />
-            <span>Settings</span>
-          </NavLink>
-          {isDevelopmentMode && (
-            <NavLink
-              to="/audit-trail"
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                  isActive
-                    ? "bg-muted text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-primary"
-                )
-              }
-            >
-              <ScrollText className="h-4 w-4" />
-              <span>Audit Trail</span>
-            </NavLink>
-          )}
         </nav>
       </div>
     </aside>
