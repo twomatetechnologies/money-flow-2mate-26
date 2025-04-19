@@ -7,7 +7,8 @@ import { createAuditRecord } from './auditService';
 let savingsAccounts: SavingsAccount[] = [];
 
 export const getSavingsAccounts = (): Promise<SavingsAccount[]> => {
-  return Promise.resolve(savingsAccounts);
+  // Return a deep copy of the accounts to prevent accidental mutations
+  return Promise.resolve(JSON.parse(JSON.stringify(savingsAccounts)));
 };
 
 export const createSavingsAccount = (account: Omit<SavingsAccount, 'id' | 'lastUpdated'>): SavingsAccount => {
@@ -55,5 +56,6 @@ export const deleteSavingsAccount = (id: string): boolean => {
 };
 
 export const getSavingsAccountById = (id: string): SavingsAccount | null => {
-  return savingsAccounts.find(account => account.id === id) || null;
+  const account = savingsAccounts.find(account => account.id === id);
+  return account ? JSON.parse(JSON.stringify(account)) : null;
 };

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { getSavingsAccounts, createSavingsAccount, updateSavingsAccount, deleteSavingsAccount } from '@/services/savingsService';
 import { SavingsAccount } from '@/types';
@@ -51,8 +50,11 @@ const SavingsAccounts = () => {
 
   const handleCreateAccount = (accountData: Omit<SavingsAccount, 'id' | 'lastUpdated'>) => {
     try {
-      const newAccount = createSavingsAccount(accountData);
-      setAccounts([...accounts, newAccount]);
+      // Create the account, but don't manually add to state
+      // Instead, fetch fresh data from the service
+      createSavingsAccount(accountData);
+      // Refresh the accounts list from the service to avoid duplicates
+      fetchAccounts();
       fetchAuditRecords();
       toast({
         title: "Account Created",
@@ -71,15 +73,14 @@ const SavingsAccounts = () => {
   const handleUpdateAccount = (accountData: Partial<SavingsAccount>) => {
     if (selectedAccount) {
       try {
-        const updatedAccount = updateSavingsAccount(selectedAccount.id, accountData);
-        if (updatedAccount) {
-          setAccounts(accounts.map(acc => acc.id === updatedAccount.id ? updatedAccount : acc));
-          fetchAuditRecords();
-          toast({
-            title: "Account Updated",
-            description: "Your savings account has been successfully updated.",
-          });
-        }
+        updateSavingsAccount(selectedAccount.id, accountData);
+        // Refresh accounts from service instead of manually updating state
+        fetchAccounts();
+        fetchAuditRecords();
+        toast({
+          title: "Account Updated",
+          description: "Your savings account has been successfully updated.",
+        });
       } catch (error) {
         console.error('Error updating savings account:', error);
         toast({
@@ -94,15 +95,14 @@ const SavingsAccounts = () => {
   const handleDeleteAccount = () => {
     if (accountToDelete) {
       try {
-        const success = deleteSavingsAccount(accountToDelete);
-        if (success) {
-          setAccounts(accounts.filter(acc => acc.id !== accountToDelete));
-          fetchAuditRecords();
-          toast({
-            title: "Account Deleted",
-            description: "Your savings account has been successfully deleted.",
-          });
-        }
+        deleteSavingsAccount(accountToDelete);
+        // Refresh accounts from service instead of manually updating state
+        fetchAccounts();
+        fetchAuditRecords();
+        toast({
+          title: "Account Deleted",
+          description: "Your savings account has been successfully deleted.",
+        });
       } catch (error) {
         console.error('Error deleting savings account:', error);
         toast({
