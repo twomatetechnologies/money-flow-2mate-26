@@ -42,6 +42,7 @@ function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="stocks" element={<Stocks />} />
                 <Route path="fixed-deposits" element={<FixedDeposits />} />
+                <Route path="savings-accounts" element={<SavingsAccounts />} />
                 <Route path="sip-investments" element={<SIPInvestments />} />
                 <Route path="insurance" element={<Insurance />} />
                 <Route path="gold" element={<Gold />} />

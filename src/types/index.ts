@@ -1,4 +1,3 @@
-
 // Finance data types
 export interface StockHolding {
   id: string;
@@ -97,4 +96,26 @@ export interface FamilyMember {
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
+}
+
+// Savings Account types
+export interface SavingsAccount {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  accountType: 'Savings' | 'Salary' | 'Zero Balance' | 'Other';
+  balance: number;
+  interestRate: number;
+  branchName: string;
+  ifscCode: string;
+  familyMemberId?: string; // Primary account holder
+  nominees?: Nominee[];
+  notes?: string;
+  lastUpdated: Date;
+}
+
+export interface Nominee {
+  name: string;
+  relationship: string;
+  sharePercentage: number;
 }
