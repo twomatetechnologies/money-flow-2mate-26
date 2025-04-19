@@ -160,9 +160,7 @@ const SavingsAccounts = () => {
             Track your savings accounts across different banks
           </p>
         </div>
-        <Button onClick={openCreateForm} className="flex items
-
--center gap-2">
+        <Button onClick={openCreateForm} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Add Savings Account
         </Button>
@@ -233,10 +231,10 @@ const SavingsAccounts = () => {
             </Table>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Audit Trail */}
-      <AuditTrail records={auditRecords} entityType="Savings Account" />
+        {/* Audit Trail moved AFTER the Savings Accounts grid */}
+        <AuditTrail records={auditRecords} entityType="Savings Account" />
+      </div>
 
       {/* Forms */}
       <SavingsAccountForm 
