@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { format, differenceInDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, FileText, Download, Upload } from 'lucide-react';
 import FixedDepositForm from '@/components/fixedDeposits/FixedDepositForm';
 import { useToast } from '@/components/ui/use-toast';
 import AuditTrail from '@/components/common/AuditTrail';
@@ -22,6 +22,7 @@ import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
 import FilterButton, { FilterOption } from '@/components/common/FilterButton';
+import { exportFixedDeposits, downloadFixedDepositSample, importFixedDeposits } from '@/services/fixedDepositService';
 
 const FixedDeposits = () => {
   const [fixedDeposits, setFixedDeposits] = useState<FixedDeposit[]>([]);
@@ -255,6 +256,28 @@ const FixedDeposits = () => {
   const totalMaturityAmount = displayedDeposits.reduce((sum, fd) => sum + fd.maturityAmount, 0);
   const totalInterest = totalMaturityAmount - totalPrincipal;
 
+  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      await importFixedDeposits(file);
+      fetchFixedDeposits();
+      fetchAuditRecords();
+      toast({
+        title: "Import Successful",
+        description: "Fixed deposits have been imported successfully.",
+      });
+    } catch (error) {
+      console.error('Error importing fixed deposits:', error);
+      toast({
+        title: "Import Failed",
+        description: "Failed to import fixed deposits. Please check the file format.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -272,10 +295,33 @@ const FixedDeposits = () => {
             Track your fixed deposits across different banks
           </p>
         </div>
-        <Button onClick={openCreateForm} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Fixed Deposit
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => downloadFixedDepositSample()}>
+            <FileText className="h-4 w-4 mr-2" />
+            Sample File
+          </Button>
+          <div className="relative">
+            <input
+              type="file"
+              id="fd-file-upload"
+              className="hidden"
+              accept=".csv,.xlsx,.xls"
+              onChange={handleImportFile}
+            />
+            <Button variant="outline" onClick={() => document.getElementById('fd-file-upload')?.click()}>
+              <Upload className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+          </div>
+          <Button variant="outline" onClick={() => exportFixedDeposits()}>
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button onClick={openCreateForm} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Fixed Deposit
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

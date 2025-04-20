@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { SavingsAccount } from '@/types';
 import { createAuditRecord } from './auditService';
 import { downloadSampleCSV, exportToCSV } from '@/utils/exportUtils';
+import * as XLSX from 'xlsx';
 
 // In-memory datastore (in a real app, this would use a database)
 let savingsAccounts: SavingsAccount[] = [];

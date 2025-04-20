@@ -14,7 +14,7 @@ import {
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Download, Upload } from 'lucide-react';
 import GoldForm from '@/components/gold/GoldForm';
 import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import {
@@ -37,6 +37,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
 import FamilyMemberFilter from '@/components/common/FamilyMemberFilter';
+import { exportGoldInvestments, downloadGoldSample, importGoldInvestments } from '@/services/goldService';
 
 const Gold = () => {
   const [goldInvestments, setGoldInvestments] = useState<GoldInvestment[]>([]);
@@ -233,6 +234,27 @@ const Gold = () => {
   const totalGain = totalValue - totalInvestment;
   const percentGain = totalInvestment > 0 ? (totalGain / totalInvestment) * 100 : 0;
 
+  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      await importGoldInvestments(file);
+      fetchGoldInvestments();
+      toast({
+        title: "Import Successful",
+        description: "Gold investments have been imported successfully.",
+      });
+    } catch (error) {
+      console.error('Error importing gold investments:', error);
+      toast({
+        title: "Import Failed",
+        description: "Failed to import gold investments. Please check the file format.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -244,14 +266,36 @@ const Gold = () => {
   return (
     
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Gold Investments</h1>
           <p className="text-muted-foreground">
             Track your gold investments across different forms
           </p>
         </div>
-        
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => downloadGoldSample()}>
+            <FileText className="h-4 w-4 mr-2" />
+            Sample File
+          </Button>
+          <div className="relative">
+            <input
+              type="file"
+              id="gold-file-upload"
+              className="hidden"
+              accept=".csv,.xlsx,.xls"
+              onChange={handleImportFile}
+            />
+            <Button variant="outline" onClick={() => document.getElementById('gold-file-upload')?.click()}>
+              <Upload className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+          </div>
+          <Button variant="outline" onClick={() => exportGoldInvestments()}>
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-1">
