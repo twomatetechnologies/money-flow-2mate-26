@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
@@ -21,6 +20,7 @@ import SavingsAccounts from './pages/SavingsAccounts';
 import { Toaster } from './components/ui/toaster';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './App.css';
+import Profile from './pages/Profile';
 
 function App() {
   const [queryClient] = useState(() => new QueryClient());
@@ -51,6 +51,7 @@ function App() {
                 <Route path="settings" element={<Settings />} />
                 <Route path="audit-trail" element={<AuditTrail />} />
                 <Route path="family-members" element={<FamilyMembers />} />
+                <Route path="profile" element={<Profile />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

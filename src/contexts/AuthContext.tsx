@@ -1,116 +1,89 @@
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  ReactNode,
+} from 'react';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { toast } from '@/components/ui/use-toast';
-
-type User = {
-  id: string;
-  email: string;
+export interface User {
   name: string;
-};
+  email: string;
+}
 
-type AuthContextType = {
+interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  isAuthenticated: boolean;
-  isDevelopmentMode: boolean;
-  toggleDevelopmentMode: () => void;
-};
+  updateUser: (userData: Partial<User>) => void;
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isAuthenticated: false,
+  loading: true,
+  login: async () => {},
+  logout: () => {},
+  updateUser: () => {},
+});
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isDevelopmentMode, setIsDevelopmentMode] = useState<boolean>(() => {
-    // Check local storage for development mode setting or default to false
-    const storedMode = localStorage.getItem('developmentMode');
-    return storedMode ? JSON.parse(storedMode) : false;
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is stored in localStorage on mount
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse stored user:', error);
-        localStorage.removeItem('user');
-      }
+      setUser(JSON.parse(storedUser));
+      setIsAuthenticated(true);
     }
     setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
-    setLoading(true);
-    try {
-      // In a real app, you'd verify credentials against a server
-      // This is a mock implementation for demonstration
-      if (email === 'user@example.com' && password === 'password') {
-        const mockUser = {
-          id: '1',
-          email: email,
-          name: 'Demo User',
-        };
-        
-        setUser(mockUser);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        toast({
-          title: 'Login successful',
-          description: 'Welcome back!',
-        });
-      } else {
-        throw new Error('Invalid credentials');
-      }
-    } catch (error) {
-      toast({
-        title: 'Login failed',
-        description: error instanceof Error ? error.message : 'An unknown error occurred',
-        variant: 'destructive',
-      });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+  const login = async (email: string, password: string) => {
+    // Simulate successful login
+    const fakeUser = {
+      name: 'John Doe',
+      email: email,
+    };
+    setUser(fakeUser);
+    setIsAuthenticated(true);
+    localStorage.setItem('user', JSON.stringify(fakeUser));
   };
 
   const logout = () => {
     setUser(null);
+    setIsAuthenticated(false);
     localStorage.removeItem('user');
-    toast({
-      title: 'Logged out',
-      description: 'You have been successfully logged out',
-    });
   };
 
-  const toggleDevelopmentMode = () => {
-    const newMode = !isDevelopmentMode;
-    setIsDevelopmentMode(newMode);
-    localStorage.setItem('developmentMode', JSON.stringify(newMode));
-    toast({
-      title: `${newMode ? 'Development' : 'Production'} Mode Activated`,
-      description: `Application is now running in ${newMode ? 'development' : 'production'} mode.`,
-    });
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      // Persist the updated user data
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
   };
 
   const value = {
     user,
+    isAuthenticated,
     loading,
     login,
     logout,
-    isAuthenticated: !!user,
-    isDevelopmentMode,
-    toggleDevelopmentMode,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
