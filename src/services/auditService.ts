@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { AuditRecord } from '@/types/audit';
 
@@ -27,8 +26,8 @@ let auditRecords: AuditRecord[] = loadAuditRecords();
 
 export const createAuditRecord = (
   entityId: string,
-  entityType: string,
-  action: 'create' | 'update' | 'delete',
+  entityType: 'stock' | 'fixedDeposit' | 'sip' | 'insurance' | 'gold' | 'familyMember' | 'savingsAccount',
+  action: 'create' | 'update' | 'delete' | 'import',
   details: any
 ): AuditRecord => {
   const record: AuditRecord = {
@@ -37,7 +36,7 @@ export const createAuditRecord = (
     entityId,
     entityType,
     action,
-    user: 'current-user', // In a real app, get this from auth context
+    userId: 'current-user', // In a real app, get this from auth context
     details
   };
 
