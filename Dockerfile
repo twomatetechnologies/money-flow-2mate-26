@@ -26,6 +26,14 @@ COPY --from=0 /app/dist /usr/share/nginx/html
 # Copy Nginx configuration
 COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 
+# Create a directory for persistent data
+RUN mkdir -p /data
+VOLUME /data
+
+# Copy a script to initialize the container
+COPY ./init-container.sh /docker-entrypoint.d/40-init-container.sh
+RUN chmod +x /docker-entrypoint.d/40-init-container.sh
+
 # Expose port 80
 EXPOSE 80
 

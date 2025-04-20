@@ -16,12 +16,32 @@ import {
 } from './mockData';
 import { createAuditRecord } from './auditService';
 
-// In-memory datastores (in a real app, this would use a database)
-let stocks = [...mockStocks];
-let fixedDeposits = [...mockFixedDeposits];
-let sipInvestments = [...mockSIPInvestments];
-let insurancePolicies = [...mockInsurancePolicies];
-let goldInvestments = [...mockGoldInvestments];
+// Initialize datastores from localStorage or use mock data if not available
+const loadFromStorage = <T>(key: string, mockData: T[]): T[] => {
+  try {
+    const storedData = localStorage.getItem(key);
+    return storedData ? JSON.parse(storedData) : [...mockData];
+  } catch (error) {
+    console.error(`Error loading ${key} from localStorage:`, error);
+    return [...mockData];
+  }
+};
+
+// Save data to localStorage
+const saveToStorage = <T>(key: string, data: T[]): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error(`Error saving ${key} to localStorage:`, error);
+  }
+};
+
+// In-memory datastores with persistence
+let stocks = loadFromStorage<StockHolding>('stocks', mockStocks);
+let fixedDeposits = loadFromStorage<FixedDeposit>('fixedDeposits', mockFixedDeposits);
+let sipInvestments = loadFromStorage<SIPInvestment>('sipInvestments', mockSIPInvestments);
+let insurancePolicies = loadFromStorage<InsurancePolicy>('insurancePolicies', mockInsurancePolicies);
+let goldInvestments = loadFromStorage<GoldInvestment>('goldInvestments', mockGoldInvestments);
 
 // CRUD operations for Stocks
 export const createStock = (stock: Omit<StockHolding, 'id' | 'lastUpdated'>): StockHolding => {
@@ -32,6 +52,7 @@ export const createStock = (stock: Omit<StockHolding, 'id' | 'lastUpdated'>): St
   };
   
   stocks.push(newStock);
+  saveToStorage('stocks', stocks);
   createAuditRecord(newStock.id, 'stock', 'create', newStock);
   return newStock;
 };
@@ -50,6 +71,7 @@ export const updateStock = (id: string, updates: Partial<StockHolding>): StockHo
     lastUpdated: new Date()
   };
   
+  saveToStorage('stocks', stocks);
   createAuditRecord(id, 'stock', 'update', {
     previous: originalStock,
     current: stocks[index],
@@ -66,6 +88,7 @@ export const deleteStock = (id: string): boolean => {
   const deletedStock = stocks[index];
   stocks.splice(index, 1);
   
+  saveToStorage('stocks', stocks);
   createAuditRecord(id, 'stock', 'delete', deletedStock);
   return true;
 };
@@ -87,11 +110,13 @@ export const createFixedDeposit = (fd: Partial<FixedDeposit>): FixedDeposit => {
     maturityAmount: fd.maturityAmount || 0,
     isAutoRenew: fd.isAutoRenew || false,
     notes: fd.notes || '',
+    familyMemberId: fd.familyMemberId || 'self-default',
     id: uuidv4(),
-    lastUpdated: new Date() // Add this line to fix the error
+    lastUpdated: new Date()
   };
   
   fixedDeposits.push(newFD);
+  saveToStorage('fixedDeposits', fixedDeposits);
   createAuditRecord(newFD.id, 'fixedDeposit', 'create', newFD);
   return newFD;
 };
@@ -104,9 +129,11 @@ export const updateFixedDeposit = (id: string, updates: Partial<FixedDeposit>): 
   
   fixedDeposits[index] = {
     ...fixedDeposits[index],
-    ...updates
+    ...updates,
+    lastUpdated: new Date()
   };
   
+  saveToStorage('fixedDeposits', fixedDeposits);
   createAuditRecord(id, 'fixedDeposit', 'update', {
     previous: originalFD,
     current: fixedDeposits[index],
@@ -123,6 +150,7 @@ export const deleteFixedDeposit = (id: string): boolean => {
   const deletedFD = fixedDeposits[index];
   fixedDeposits.splice(index, 1);
   
+  saveToStorage('fixedDeposits', fixedDeposits);
   createAuditRecord(id, 'fixedDeposit', 'delete', deletedFD);
   return true;
 };
@@ -144,10 +172,12 @@ export const createSIP = (sip: Partial<SIPInvestment>): SIPInvestment => {
     currentValue: sip.currentValue || 0,
     returns: sip.returns || 0,
     returnsPercent: sip.returnsPercent || 0,
+    familyMemberId: sip.familyMemberId || 'self-default',
     id: uuidv4()
   };
   
   sipInvestments.push(newSIP);
+  saveToStorage('sipInvestments', sipInvestments);
   createAuditRecord(newSIP.id, 'sip', 'create', newSIP);
   return newSIP;
 };
@@ -163,6 +193,7 @@ export const updateSIP = (id: string, updates: Partial<SIPInvestment>): SIPInves
     ...updates
   };
   
+  saveToStorage('sipInvestments', sipInvestments);
   createAuditRecord(id, 'sip', 'update', {
     previous: originalSIP,
     current: sipInvestments[index],
@@ -179,6 +210,7 @@ export const deleteSIP = (id: string): boolean => {
   const deletedSIP = sipInvestments[index];
   sipInvestments.splice(index, 1);
   
+  saveToStorage('sipInvestments', sipInvestments);
   createAuditRecord(id, 'sip', 'delete', deletedSIP);
   return true;
 };
@@ -195,6 +227,7 @@ export const createInsurance = (insurance: Omit<InsurancePolicy, 'id'>): Insuran
   };
   
   insurancePolicies.push(newInsurance);
+  saveToStorage('insurancePolicies', insurancePolicies);
   createAuditRecord(newInsurance.id, 'insurance', 'create', newInsurance);
   return newInsurance;
 };
@@ -210,6 +243,7 @@ export const updateInsurance = (id: string, updates: Partial<InsurancePolicy>): 
     ...updates
   };
   
+  saveToStorage('insurancePolicies', insurancePolicies);
   createAuditRecord(id, 'insurance', 'update', {
     previous: originalInsurance,
     current: insurancePolicies[index],
@@ -226,6 +260,7 @@ export const deleteInsurance = (id: string): boolean => {
   const deletedInsurance = insurancePolicies[index];
   insurancePolicies.splice(index, 1);
   
+  saveToStorage('insurancePolicies', insurancePolicies);
   createAuditRecord(id, 'insurance', 'delete', deletedInsurance);
   return true;
 };
@@ -239,10 +274,11 @@ export const createGold = (gold: Omit<GoldInvestment, 'id'>): GoldInvestment => 
   const newGold: GoldInvestment = {
     ...gold,
     id: uuidv4(),
-    lastUpdated: new Date() // Make sure lastUpdated is included
+    lastUpdated: new Date()
   };
   
   goldInvestments.push(newGold);
+  saveToStorage('goldInvestments', goldInvestments);
   createAuditRecord(newGold.id, 'gold', 'create', newGold);
   return newGold;
 };
@@ -255,9 +291,11 @@ export const updateGold = (id: string, updates: Partial<GoldInvestment>): GoldIn
   
   goldInvestments[index] = {
     ...goldInvestments[index],
-    ...updates
+    ...updates,
+    lastUpdated: new Date()
   };
   
+  saveToStorage('goldInvestments', goldInvestments);
   createAuditRecord(id, 'gold', 'update', {
     previous: originalGold,
     current: goldInvestments[index],
@@ -274,6 +312,7 @@ export const deleteGold = (id: string): boolean => {
   const deletedGold = goldInvestments[index];
   goldInvestments.splice(index, 1);
   
+  saveToStorage('goldInvestments', goldInvestments);
   createAuditRecord(id, 'gold', 'delete', deletedGold);
   return true;
 };
@@ -282,7 +321,7 @@ export const getGoldById = (id: string): GoldInvestment | null => {
   return goldInvestments.find(gold => gold.id === id) || null;
 };
 
-// Overrides the existing getter methods in mockData.ts
+// Data retrieval methods
 export const getStocks = (): Promise<StockHolding[]> => {
   return Promise.resolve(stocks);
 };
