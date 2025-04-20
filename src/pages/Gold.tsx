@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { getGoldInvestments, createGold, updateGold, deleteGold } from '@/services/crudService';
 import { GoldInvestment } from '@/types';
@@ -264,7 +265,6 @@ const Gold = () => {
   }
 
   return (
-    
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
@@ -296,27 +296,28 @@ const Gold = () => {
             Export
           </Button>
           
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-1">
-              <Plus className="h-4 w-4" />
-              Add Investment
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl bg-background">
-            <DialogHeader>
-              <DialogTitle>{currentInvestment ? 'Edit' : 'Add'} Gold Investment</DialogTitle>
-            </DialogHeader>
-            <GoldForm 
-              onSubmit={currentInvestment ? handleUpdateInvestment : handleAddInvestment}
-              onCancel={() => {
-                setIsDialogOpen(false);
-                setCurrentInvestment(null);
-              }}
-              initialData={currentInvestment || undefined}
-            />
-          </DialogContent>
-        </Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-1">
+                <Plus className="h-4 w-4" />
+                Add Investment
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl bg-background">
+              <DialogHeader>
+                <DialogTitle>{currentInvestment ? 'Edit' : 'Add'} Gold Investment</DialogTitle>
+              </DialogHeader>
+              <GoldForm 
+                onSubmit={currentInvestment ? handleUpdateInvestment : handleAddInvestment}
+                onCancel={() => {
+                  setIsDialogOpen(false);
+                  setCurrentInvestment(null);
+                }}
+                initialData={currentInvestment || undefined}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-4">
@@ -451,7 +452,6 @@ const Gold = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-    
   );
 };
 
