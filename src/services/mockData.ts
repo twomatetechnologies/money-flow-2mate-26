@@ -1,3 +1,4 @@
+
 import { 
   StockHolding, 
   FixedDeposit, 
@@ -93,7 +94,8 @@ export const mockFixedDeposits: FixedDeposit[] = [
     maturityDate: new Date('2024-10-15'),
     maturityAmount: 105700,
     isAutoRenew: true,
-    familyMemberId: 'self-default'
+    familyMemberId: 'self-default',
+    lastUpdated: new Date() // Add this line
   },
   {
     id: '2',
@@ -106,7 +108,8 @@ export const mockFixedDeposits: FixedDeposit[] = [
     maturityAmount: 225044,
     isAutoRenew: false,
     notes: 'For home renovation',
-    familyMemberId: 'spouse-default'
+    familyMemberId: 'spouse-default',
+    lastUpdated: new Date() // Add this line
   },
   {
     id: '3',
@@ -119,7 +122,8 @@ export const mockFixedDeposits: FixedDeposit[] = [
     maturityAmount: 154425,
     isAutoRenew: true,
     notes: 'Short term FD',
-    familyMemberId: 'parent-default'
+    familyMemberId: 'parent-default',
+    lastUpdated: new Date() // Add this line
   }
 ];
 
@@ -222,7 +226,8 @@ export const mockGoldInvestments: GoldInvestment[] = [
     value: 290000, // current value
     location: 'Bank locker',
     notes: 'Gold coins purchased during Diwali',
-    familyMemberId: 'self-default'
+    familyMemberId: 'self-default',
+    lastUpdated: new Date() // Add this line
   },
   {
     id: '2',
@@ -233,7 +238,8 @@ export const mockGoldInvestments: GoldInvestment[] = [
     currentPrice: 5800, // per unit
     value: 232000, // current value
     notes: 'Sovereign Gold Bond 2021-22 Series',
-    familyMemberId: 'spouse-default'
+    familyMemberId: 'spouse-default',
+    lastUpdated: new Date() // Add this line
   },
   {
     id: '3',
@@ -244,7 +250,8 @@ export const mockGoldInvestments: GoldInvestment[] = [
     currentPrice: 5800, // per gram
     value: 145000, // current value
     notes: 'Digital gold on investment app',
-    familyMemberId: 'parent-default'
+    familyMemberId: 'parent-default',
+    lastUpdated: new Date() // Add this line
   }
 ];
 

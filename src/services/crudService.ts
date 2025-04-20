@@ -87,7 +87,8 @@ export const createFixedDeposit = (fd: Partial<FixedDeposit>): FixedDeposit => {
     maturityAmount: fd.maturityAmount || 0,
     isAutoRenew: fd.isAutoRenew || false,
     notes: fd.notes || '',
-    id: uuidv4()
+    id: uuidv4(),
+    lastUpdated: new Date() // Add this line to fix the error
   };
   
   fixedDeposits.push(newFD);
@@ -237,7 +238,8 @@ export const getInsuranceById = (id: string): InsurancePolicy | null => {
 export const createGold = (gold: Omit<GoldInvestment, 'id'>): GoldInvestment => {
   const newGold: GoldInvestment = {
     ...gold,
-    id: uuidv4()
+    id: uuidv4(),
+    lastUpdated: new Date() // Make sure lastUpdated is included
   };
   
   goldInvestments.push(newGold);
