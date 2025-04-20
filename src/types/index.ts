@@ -26,6 +26,7 @@ export interface FixedDeposit {
   isAutoRenew: boolean;
   notes?: string;
   familyMemberId?: string; // Associate with family member
+  lastUpdated: Date; // Added to match usage in fixedDepositService.ts
 }
 
 export interface SIPInvestment {
@@ -69,6 +70,7 @@ export interface GoldInvestment {
   location?: string; // for physical gold
   notes?: string;
   familyMemberId?: string; // Associate with family member
+  lastUpdated: Date; // Added to match usage in goldService.ts
 }
 
 export interface NetWorthData {
