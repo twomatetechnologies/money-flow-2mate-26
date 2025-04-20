@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useState,
@@ -18,6 +19,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
+  isDevelopmentMode: boolean; // Added missing property
+  toggleDevelopmentMode: () => void; // Added missing property
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -27,12 +30,15 @@ export const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: () => {},
   updateUser: () => {},
+  isDevelopmentMode: false, // Initialize with default value
+  toggleDevelopmentMode: () => {}, // Initialize with empty function
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isDevelopmentMode, setIsDevelopmentMode] = useState(false); // Added state for development mode
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -40,6 +46,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(JSON.parse(storedUser));
       setIsAuthenticated(true);
     }
+    
+    // Load development mode state from localStorage
+    const devMode = localStorage.getItem('developmentMode') === 'true';
+    setIsDevelopmentMode(devMode);
+    
     setLoading(false);
   }, []);
 
@@ -69,6 +80,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const toggleDevelopmentMode = () => {
+    const newMode = !isDevelopmentMode;
+    setIsDevelopmentMode(newMode);
+    localStorage.setItem('developmentMode', String(newMode));
+  };
+
   const value = {
     user,
     isAuthenticated,
@@ -76,6 +93,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     login,
     logout,
     updateUser,
+    isDevelopmentMode,
+    toggleDevelopmentMode,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
