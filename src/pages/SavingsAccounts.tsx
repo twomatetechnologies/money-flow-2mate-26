@@ -4,7 +4,7 @@ import { SavingsAccount } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, Wallet, Import, FileExport, FileText } from 'lucide-react';
+import { Plus, Pencil, Trash2, Wallet, FileText, Download, Upload } from 'lucide-react';
 import SavingsAccountForm from '@/components/savings/SavingsAccountForm';
 import { useToast } from '@/components/ui/use-toast';
 import AuditTrail from '@/components/common/AuditTrail';
@@ -197,12 +197,12 @@ const SavingsAccounts = () => {
               onChange={handleImportFile}
             />
             <Button variant="outline" onClick={() => document.getElementById('file-upload')?.click()}>
-              <Import className="h-4 w-4 mr-2" />
+              <Upload className="h-4 w-4 mr-2" />
               Import
             </Button>
           </div>
           <Button variant="outline" onClick={() => exportSavingsAccounts()}>
-            <FileExport className="h-4 w-4 mr-2" />
+            <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
           <Button onClick={openCreateForm} className="flex items-center gap-2">
