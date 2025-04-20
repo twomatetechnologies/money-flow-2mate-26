@@ -4,21 +4,24 @@ import { GoldInvestment } from '@/types';
 import { createAuditRecord } from './auditService';
 import { downloadSampleCSV, exportToCSV } from '@/utils/exportUtils';
 import * as XLSX from 'xlsx';
+import { getGoldInvestments as fetchGoldInvestments, createGold as addGold } from '@/services/crudService';
 
 export const exportGoldInvestments = () => {
-  const investments = getGoldInvestments();
-  const exportData = investments.map(gold => ({
-    'Type': gold.type,
-    'Quantity': gold.quantity,
-    'Purchase Date': gold.purchaseDate,
-    'Purchase Price': gold.purchasePrice,
-    'Current Price': gold.currentPrice,
-    'Value': gold.value,
-    'Location/Notes': gold.location || gold.notes,
-    'Family Member ID': gold.familyMemberId
-  }));
-  
-  exportToCSV(exportData, 'gold_investments');
+  const investments = fetchGoldInvestments();
+  investments.then(data => {
+    const exportData = data.map(gold => ({
+      'Type': gold.type,
+      'Quantity': gold.quantity,
+      'Purchase Date': gold.purchaseDate,
+      'Purchase Price': gold.purchasePrice,
+      'Current Price': gold.currentPrice,
+      'Value': gold.value,
+      'Location/Notes': gold.location || gold.notes,
+      'Family Member ID': gold.familyMemberId
+    }));
+    
+    exportToCSV(exportData, 'gold_investments');
+  });
 };
 
 export const downloadGoldSample = () => {
@@ -90,7 +93,7 @@ export const importGoldInvestments = async (file: File): Promise<GoldInvestment[
         
         // Import each investment and create audit record
         investments.forEach(investment => {
-          createGold(investment);
+          addGold(investment);
           createAuditRecord(investment.id, 'gold', 'import', investment);
         });
         

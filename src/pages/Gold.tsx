@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { getGoldInvestments, createGold, updateGold, deleteGold } from '@/services/crudService';
 import { GoldInvestment } from '@/types';

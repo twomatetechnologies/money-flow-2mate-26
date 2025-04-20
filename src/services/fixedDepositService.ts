@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import { FixedDeposit } from '@/types';
 import { createAuditRecord } from './auditService';
@@ -12,12 +13,13 @@ export const getFixedDeposits = (): Promise<FixedDeposit[]> => {
   return Promise.resolve(JSON.parse(JSON.stringify(fixedDeposits)));
 };
 
-export const createFixedDeposit = (deposit: Partial<FixedDeposit>): FixedDeposit => {
+export const createFixedDeposit = (deposit: Omit<FixedDeposit, 'id' | 'lastUpdated'>): FixedDeposit => {
   const newDeposit: FixedDeposit = {
     ...deposit,
     id: uuidv4(),
-    lastUpdated: new Date()
-  } as FixedDeposit;
+    lastUpdated: new Date(),
+    isAutoRenew: deposit.isAutoRenew || false
+  };
   
   fixedDeposits.push(newDeposit);
   createAuditRecord(newDeposit.id, 'fixedDeposit', 'create', newDeposit);
@@ -61,8 +63,8 @@ export const getFixedDepositById = (id: string): FixedDeposit | null => {
   return deposit ? JSON.parse(JSON.stringify(deposit)) : null;
 };
 
-export const exportFixedDeposits = () => {
-  const deposits = getFixedDeposits();
+export const exportFixedDeposits = async () => {
+  const deposits = await getFixedDeposits();
   const exportData = deposits.map(fd => ({
     'Bank Name': fd.bankName,
     'Account Number': fd.accountNumber,
@@ -71,6 +73,7 @@ export const exportFixedDeposits = () => {
     'Start Date': fd.startDate,
     'Maturity Date': fd.maturityDate,
     'Maturity Amount': fd.maturityAmount,
+    'Auto Renew': fd.isAutoRenew ? 'Yes' : 'No',
     'Family Member ID': fd.familyMemberId
   }));
   
@@ -86,6 +89,7 @@ export const downloadFixedDepositSample = () => {
     'Start Date',
     'Maturity Date',
     'Maturity Amount',
+    'Auto Renew',
     'Family Member ID'
   ];
   
@@ -98,6 +102,7 @@ export const downloadFixedDepositSample = () => {
       'Start Date': '2024-01-01',
       'Maturity Date': '2025-01-01',
       'Maturity Amount': '107500',
+      'Auto Renew': 'Yes',
       'Family Member ID': 'member-1'
     },
     {
@@ -108,6 +113,7 @@ export const downloadFixedDepositSample = () => {
       'Start Date': '2024-02-01',
       'Maturity Date': '2025-02-01',
       'Maturity Amount': '214000',
+      'Auto Renew': 'No',
       'Family Member ID': 'member-2'
     }
   ];
@@ -140,6 +146,7 @@ export const importFixedDeposits = async (file: File): Promise<FixedDeposit[]> =
           startDate: new Date(row['Start Date']),
           maturityDate: new Date(row['Maturity Date']),
           maturityAmount: parseFloat(row['Maturity Amount']),
+          isAutoRenew: row['Auto Renew'] === 'Yes',
           familyMemberId: row['Family Member ID'],
           lastUpdated: new Date()
         }));
