@@ -1,105 +1,110 @@
 
-# Welcome to your Lovable project - Money Flow Guardian
+# Money Flow Guardian - Lovable Project
 
-## Project info
+This guide helps you get your personal finance app running with Docker, supporting both PostgreSQL database (via Docker) and file-only (no database) modes.
 
-**URL**: https://lovable.dev/projects/d10d97f2-402f-47c1-9500-49c45556eadc
+---
 
-## How can I edit this code?
+## 1. Prerequisites
 
-There are several ways of editing your application.
+- [Docker installed](https://docs.docker.com/get-docker/)
+- (Optional) [Docker Compose plugin](https://docs.docker.com/compose/)
+- (Optional for development) [Node.js & npm if running locally](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d10d97f2-402f-47c1-9500-49c45556eadc) and start prompting.
+## 2. Setup and Run using Docker (Recommended)
 
-Changes made via Lovable will be committed automatically to this repo.
+You can run the app with or without PostgreSQL. By default, the database runs in a Docker container for persistent data.
 
-**Use your preferred IDE**
+### **A. Running with PostgreSQL enabled (Recommended)**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+> The PostgreSQL container is used as a backend for persistent data storage.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-## Docker Support
-
-This project includes Docker support for easy deployment and consistent development environments.
-
-### Running with Docker + PostgreSQL
-
-By default, PostgreSQL runs as a separate container for persistent data. If you wish to **use PostgreSQL**, simply use:
+**Step 1: Start the app (and DB) via Docker Compose**
 
 ```sh
+# PostgreSQL will be enabled and running
 POSTGRES_ENABLED=true docker-compose up -d
 ```
+- The web app will be on [http://localhost:8080](http://localhost:8080).
+- A PostgreSQL DB will be available (internal network).
 
-If you **do not want PostgreSQL enabled** at startup:
-- Edit `docker-compose.yml` and comment out the `db:` service section before running `docker-compose up`.
-- Alternatively, set `POSTGRES_ENABLED=false` (though a truly conditional service requires Compose v3.9 or higher with `profiles`, not yet used here).
+**Step 2: Data Persistence**
 
-### Running Custom Migrations
+- App data and localStorage will persist in `./data` (host).
+- DB data will persist in `postgres_data` Docker volume.
 
-The app will automatically execute the `migrate-postgres.sh` script to create any tables needed in PostgreSQL on container startup.
-You may update this script (`migrate-postgres.sh`) to fit your schema and migration needs.
+**Step 3: Stop the app**
+```sh
+docker-compose down
+```
 
-### Database Credentials
+---
 
-- Default database: `financeapp`
-- User: `postgres`
-- Password: `postgres123`
-- Host: `db` (internal Docker network)
+### **B. Running without PostgreSQL**
 
-To change these, update the environment variables in `docker-compose.yml`.
+1. Edit `docker-compose.yml` and comment out the entire `db:` service block.
+2. Or set the variable (though Compose v3 doesn't fully disable services by env):
 
-## Authentication
+```sh
+POSTGRES_ENABLED=false docker-compose up -d
+```
+_Note: The app may require an active DB for all functionality._
 
-The application includes a simple authentication system. To log in, use these credentials:
+---
 
-- Email: user@example.com
-- Password: password
+## 3. Customizing Database (PostgreSQL) Credentials
 
-For production use, it's recommended to integrate with a secure authentication provider.
+Default DB connection details can be changed in `docker-compose.yml`:
+```yaml
+POSTGRES_DB=financeapp
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres123
+POSTGRES_HOST=db
+```
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## 4. Database Migrations
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-- React Query
-- React Router
+On container start, the app runs `migrate-postgres.sh` to ensure required tables exist in the PG database.
 
-## How can I deploy this project?
+- To customize schema, edit `migrate-postgres.sh`.
+- Example table creation is included for reference only.
 
-You have multiple options for deployment:
+---
 
-1. Simply open [Lovable](https://lovable.dev/projects/d10d97f2-402f-47c1-9500-49c45556eadc) and click on Share -> Publish.
+## 5. Development Usage
 
-2. Use Docker to deploy to any platform that supports Docker containers.
+For code contributions, fork/clone the repo, and use local node tooling (see Lovable docs or earlier README sections).
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes it is!
+## 6. Authentication (Demo)
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Login (demo/local):
+- Email: `user@example.com`
+- Password: `password`
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+For production changes (auth, DB, etc.), see Lovable and Docker documentation.
+
+---
+
+## 7. Troubleshooting
+
+- If the app doesn't work, check logs using:
+  ```sh
+  docker-compose logs
+  ```
+- Ensure ports 8080 (frontend) and 5432 (DB) are available.
+- For DB issues, inspect `migrate-postgres.sh`, environment variables, and Docker volumes.
+
+---
+
+## Lovable Project Online
+
+App URL: https://lovable.dev/projects/d10d97f2-402f-47c1-9500-49c45556eadc
+
+Read more at [Lovable Documentation](https://docs.lovable.dev/)
+
