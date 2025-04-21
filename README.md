@@ -41,27 +41,31 @@ npm run dev
 
 This project includes Docker support for easy deployment and consistent development environments.
 
-### Running with Docker
+### Running with Docker + PostgreSQL
+
+By default, PostgreSQL runs as a separate container for persistent data. If you wish to **use PostgreSQL**, simply use:
 
 ```sh
-# Build and start the Docker container
-docker-compose up -d
-
-# Stop the container
-docker-compose down
+POSTGRES_ENABLED=true docker-compose up -d
 ```
 
-The application will be available at http://localhost:8080
+If you **do not want PostgreSQL enabled** at startup:
+- Edit `docker-compose.yml` and comment out the `db:` service section before running `docker-compose up`.
+- Alternatively, set `POSTGRES_ENABLED=false` (though a truly conditional service requires Compose v3.9 or higher with `profiles`, not yet used here).
 
-### Using Docker for development
+### Running Custom Migrations
 
-For development with hot reload, uncomment the volume mounts in docker-compose.yml:
+The app will automatically execute the `migrate-postgres.sh` script to create any tables needed in PostgreSQL on container startup.
+You may update this script (`migrate-postgres.sh`) to fit your schema and migration needs.
 
-```yaml
-volumes:
-  - ./src:/app/src
-  - ./public:/app/public
-```
+### Database Credentials
+
+- Default database: `financeapp`
+- User: `postgres`
+- Password: `postgres123`
+- Host: `db` (internal Docker network)
+
+To change these, update the environment variables in `docker-compose.yml`.
 
 ## Authentication
 

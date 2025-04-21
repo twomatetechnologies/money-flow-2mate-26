@@ -9,13 +9,13 @@ services:
       - "8080:80"
     restart: unless-stopped
     environment:
+      - POSTGRES_ENABLED=${POSTGRES_ENABLED:-true} # default true
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_DB=financeapp
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres123
     volumes:
-      # For persistence of user data in local storage
       - ./data:/data
     depends_on:
       - db
@@ -29,8 +29,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data"
+    # The db service can be conditionally started outside this file by using `docker-compose --profile` or commenting/uncommenting this section, as docker-compose does not natively support env-based conditional services
 
 volumes:
   postgres_data:
-
