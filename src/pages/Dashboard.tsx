@@ -125,15 +125,15 @@ const Dashboard = () => {
             <div className="space-y-4 mt-4">
               <div>
                 <p className="text-sm text-gray-300">SIP Investments</p>
-                <p className="text-2xl font-bold">₹{sipInvestments.reduce((sum, sip) => sum + sip.currentValue, 0).toLocaleString()}</p>
+                <p className="text-2xl font-bold">{formatIndianNumber(sipInvestments.reduce((sum, sip) => sum + sip.currentValue, 0))}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-300">Gold Value</p>
-                <p className="text-2xl font-bold">₹{goldInvestments.reduce((sum, gold) => sum + gold.value, 0).toLocaleString()}</p>
+                <p className="text-2xl font-bold">{formatIndianNumber(goldInvestments.reduce((sum, gold) => sum + gold.value, 0))}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-300">Insurance Cover</p>
-                <p className="text-2xl font-bold">₹{insurancePolicies.reduce((sum, policy) => sum + policy.coverAmount, 0).toLocaleString()}</p>
+                <p className="text-2xl font-bold">{formatIndianNumber(insurancePolicies.reduce((sum, policy) => sum + policy.coverAmount, 0))}</p>
               </div>
             </div>
           </div>

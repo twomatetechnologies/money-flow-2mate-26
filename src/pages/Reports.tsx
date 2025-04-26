@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getNetWorth, getStocks, getFixedDeposits, getSIPInvestments, getGoldInvestments, getInsurancePolicies } from '@/services/mockData';
@@ -17,6 +16,7 @@ import {
   Cell
 } from 'recharts';
 import { format } from 'date-fns';
+import { formatIndianNumber } from '@/lib/utils';
 
 const Reports = () => {
   const [netWorth, setNetWorth] = useState<NetWorthData | null>(null);
@@ -63,7 +63,7 @@ const Reports = () => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
   const formatTooltipValue = (value: number) => {
-    return `₹${value.toLocaleString()}`;
+    return formatIndianNumber(value);
   };
 
   // Custom tooltip formatter for pie chart
@@ -73,7 +73,7 @@ const Reports = () => {
       return (
         <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
           <p className="font-bold">{data.name}</p>
-          <p>₹{data.value.toLocaleString()}</p>
+          <p>{formatIndianNumber(data.value)}</p>
           <p>{((data.value / netWorth.total) * 100).toFixed(1)}%</p>
         </div>
       );
@@ -87,7 +87,7 @@ const Reports = () => {
       return (
         <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
           <p className="font-bold">{payload[0].payload.date}</p>
-          <p>₹{payload[0].value.toLocaleString()}</p>
+          <p>{formatIndianNumber(payload[0].value)}</p>
         </div>
       );
     }

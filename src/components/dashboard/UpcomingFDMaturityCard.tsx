@@ -1,22 +1,20 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FixedDeposit } from '@/types';
 import { format, differenceInDays } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { formatIndianNumber } from '@/lib/utils';
 
 interface UpcomingFDMaturityCardProps {
   fixedDeposits: FixedDeposit[];
 }
 
 export function UpcomingFDMaturityCard({ fixedDeposits }: UpcomingFDMaturityCardProps) {
-  // Sort FDs by maturity date and get the upcoming ones
   const sortedFDs = [...fixedDeposits].sort((a, b) => 
     new Date(a.maturityDate).getTime() - new Date(b.maturityDate).getTime()
   );
   
-  // Get only FDs that are maturing within the next 90 days
   const upcomingFDs = sortedFDs.filter(fd => 
     differenceInDays(new Date(fd.maturityDate), new Date()) <= 90 &&
     differenceInDays(new Date(fd.maturityDate), new Date()) >= 0
@@ -31,7 +29,7 @@ export function UpcomingFDMaturityCard({ fixedDeposits }: UpcomingFDMaturityCard
       </CardHeader>
       <CardContent>
         <div className="mb-4">
-          <div className="stat-value">₹{totalFDValue.toLocaleString()}</div>
+          <div className="stat-value">{formatIndianNumber(totalFDValue)}</div>
           <div className="stat-label">Total Fixed Deposits</div>
         </div>
         
@@ -46,7 +44,7 @@ export function UpcomingFDMaturityCard({ fixedDeposits }: UpcomingFDMaturityCard
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <div className="font-medium">₹{fd.maturityAmount.toLocaleString()}</div>
+                  <div className="font-medium">{formatIndianNumber(fd.maturityAmount)}</div>
                   <div className="text-xs text-finance-gray">
                     {differenceInDays(new Date(fd.maturityDate), new Date())} days left
                   </div>

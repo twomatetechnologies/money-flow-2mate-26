@@ -1,25 +1,22 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StockHolding } from '@/types';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { formatIndianNumber } from '@/lib/utils';
 
 interface StockSummaryCardProps {
   stocks: StockHolding[];
 }
 
 export function StockSummaryCard({ stocks }: StockSummaryCardProps) {
-  // Calculate total value of current holdings
   const totalValue = stocks.reduce((sum, stock) => sum + (stock.currentPrice * stock.quantity), 0);
   
-  // Calculate total gain/loss
   const totalInvestment = stocks.reduce((sum, stock) => sum + (stock.averageBuyPrice * stock.quantity), 0);
   const totalGain = totalValue - totalInvestment;
   const percentGain = totalInvestment > 0 ? (totalGain / totalInvestment) * 100 : 0;
   
-  // Get top 3 performing stocks based on absolute gain value
   const sortedStocks = [...stocks].sort((a, b) => {
     const gainA = (a.currentPrice - a.averageBuyPrice) * a.quantity;
     const gainB = (b.currentPrice - b.averageBuyPrice) * b.quantity;
@@ -46,7 +43,7 @@ export function StockSummaryCard({ stocks }: StockSummaryCardProps) {
       </CardHeader>
       <CardContent>
         <div className="mb-4">
-          <div className="stat-value">₹{totalValue.toLocaleString()}</div>
+          <div className="stat-value">{formatIndianNumber(totalValue)}</div>
           <div className="stat-label">Current Value</div>
         </div>
         <div className="space-y-3">
@@ -61,7 +58,7 @@ export function StockSummaryCard({ stocks }: StockSummaryCardProps) {
                     <div className="text-xs text-finance-gray">{stock.name}</div>
                   </div>
                   <div className="flex flex-col items-end">
-                    <div className="font-medium">₹{stock.currentPrice.toLocaleString()}</div>
+                    <div className="font-medium">{formatIndianNumber(stock.currentPrice)}</div>
                     <div className={`text-xs ${gainPercent >= 0 ? 'trend-up' : 'trend-down'}`}>
                       {gainPercent >= 0 ? '+' : ''}{gainPercent.toFixed(2)}%
                     </div>
