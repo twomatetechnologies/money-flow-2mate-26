@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { SavingsAccount } from '@/types';
 import { createAuditRecord } from './auditService';
@@ -20,6 +19,10 @@ export const addSavingsAccount = (account: Partial<SavingsAccount>): Promise<Sav
     balance: account.balance || 0,
     interestRate: account.interestRate || 0,
     familyMemberId: account.familyMemberId || '',
+    branchName: account.branchName || '',
+    ifscCode: account.ifscCode || '',
+    nominees: account.nominees || [],
+    notes: account.notes || '',
     lastUpdated: new Date(),
   };
   
