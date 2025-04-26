@@ -41,6 +41,7 @@ import { AuditRecord } from '@/types/audit';
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
 import FilterButton, { FilterOption } from '@/components/common/FilterButton';
 import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
+import * as XLSX from 'xlsx';
 
 const Stocks = () => {
   const [stocks, setStocks] = useState<StockHolding[]>([]);
