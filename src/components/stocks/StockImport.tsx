@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,35 +11,13 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { StockHolding } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
-import { ImportIcon, AlertCircle } from 'lucide-react';
+import { Import, FileText, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface StockImportProps {
   isOpen: boolean;
   onClose: () => void;
   onImport: (stocks: Partial<StockHolding>[]) => void;
-}
-
-interface ParsedStock {
-  symbol: string;
-  name: string;
-  currentPrice: number;
-  change: number;
-  prevClose: number;
-  volume: number;
-  quantity: number;
-  averageBuyPrice: number;
-  investmentDate: string;
-  investmentAmount: number;
-  intraHighLow: string;
-  weekHighLow: string;
-  todaysGain: number;
-  todaysGainPercent: number;
-  overallGain: number;
-  overallGainPercent: number;
-  value: number;
-  broker: string;
-  notes: string;
 }
 
 const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) => {
@@ -149,15 +126,59 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
     setPreviewData([]);
   };
 
+  const downloadSampleFile = (format: 'csv' | 'xlsx') => {
+    const sampleData = [
+      ['Symbol', 'Name', 'Quantity', 'Average Buy Price', 'Current Price', 'Notes'],
+      ['AAPL', 'Apple Inc.', 10, 150.25, 175.50, 'Long term investment'],
+      ['MSFT', 'Microsoft Corporation', 5, 280.75, 300.25, 'Tech sector'],
+      ['GOOGL', 'Alphabet Inc.', 2, 2750.00, 2850.75, 'Growth stock'],
+      ['AMZN', 'Amazon.com Inc.', 3, 3300.50, 3450.25, 'E-commerce leader']
+    ];
+
+    if (format === 'csv') {
+      const csvContent = sampleData.map(row => row.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'sample_stocks.csv';
+      link.click();
+    } else {
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(sampleData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Sample Stocks');
+      XLSX.writeFile(wb, 'sample_stocks.xlsx');
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Import Stocks</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with your stock holdings to import them into your portfolio.
+            Upload a CSV or Excel file with your stock holdings to import them into your portfolio.
+            Download a sample file to see the required format.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="flex gap-4 mb-4">
+          <Button 
+            variant="outline" 
+            onClick={() => downloadSampleFile('csv')}
+            className="flex items-center"
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Download Sample CSV
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => downloadSampleFile('xlsx')}
+            className="flex items-center"
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Download Sample Excel
+          </Button>
+        </div>
 
         <div className="space-y-4">
           <div className="grid w-full max-w-sm items-center gap-1.5">
