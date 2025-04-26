@@ -19,6 +19,7 @@ import {
   GoldInvestment,
   InsurancePolicy 
 } from '@/types';
+import { formatIndianNumber } from '@/lib/utils';
 
 const Dashboard = () => {
   const [netWorth, setNetWorth] = useState<NetWorthData | null>(null);
