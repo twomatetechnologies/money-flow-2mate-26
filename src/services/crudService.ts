@@ -1,18 +1,19 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { 
   StockHolding, 
   FixedDeposit, 
   SIPInvestment, 
   InsurancePolicy, 
-  GoldInvestment 
+  GoldInvestment,
+  NetWorthData 
 } from '@/types';
 import { 
   mockStocks, 
   mockFixedDeposits, 
   mockSIPInvestments, 
   mockInsurancePolicies, 
-  mockGoldInvestments 
+  mockGoldInvestments,
+  mockNetWorthData
 } from './mockData';
 import { createAuditRecord } from './auditService';
 
@@ -340,4 +341,44 @@ export const getInsurancePolicies = (): Promise<InsurancePolicy[]> => {
 
 export const getGoldInvestments = (): Promise<GoldInvestment[]> => {
   return Promise.resolve(goldInvestments);
+};
+
+// Add the missing getNetWorth function
+export const getNetWorth = async (): Promise<NetWorthData> => {
+  // Calculate live net worth based on current data
+  const stocksData = await getStocks();
+  const fdData = await getFixedDeposits();
+  const sipData = await getSIPInvestments();
+  const goldData = await getGoldInvestments();
+  const insuranceData = await getInsurancePolicies();
+  
+  const stocksTotal = stocksData.reduce((sum, stock) => sum + stock.value, 0);
+  const fdTotal = fdData.reduce((sum, fd) => sum + fd.principal, 0);
+  const sipTotal = sipData.reduce((sum, sip) => sum + sip.currentValue, 0);
+  const goldTotal = goldData.reduce((sum, gold) => sum + gold.value, 0);
+  const otherTotal = insuranceData.reduce((sum, insurance) => sum + insurance.premium * 12, 0);
+  
+  const total = stocksTotal + fdTotal + sipTotal + goldTotal + otherTotal;
+  
+  // Get the history from mock data but use live calculated total for current value
+  const history = [...mockNetWorthData.history];
+  if (history.length > 0) {
+    // Update the latest history entry with the current calculated total
+    history[history.length - 1] = {
+      date: new Date(),
+      value: total
+    };
+  }
+  
+  return {
+    total: total,
+    breakdown: {
+      stocks: stocksTotal,
+      fixedDeposits: fdTotal,
+      sip: sipTotal,
+      gold: goldTotal,
+      other: otherTotal
+    },
+    history: history
+  };
 };
