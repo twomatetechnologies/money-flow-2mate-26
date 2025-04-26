@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import { SavingsAccount } from '@/types';
 import { createAuditRecord } from './auditService';
@@ -12,21 +13,30 @@ export const getSavingsAccounts = (): Promise<SavingsAccount[]> => {
   return Promise.resolve(JSON.parse(JSON.stringify(savingsAccounts)));
 };
 
-export const createSavingsAccount = (account: Omit<SavingsAccount, 'id' | 'lastUpdated'>): SavingsAccount => {
+export const addSavingsAccount = (account: Partial<SavingsAccount>): Promise<SavingsAccount> => {
   const newAccount: SavingsAccount = {
-    ...account,
     id: uuidv4(),
-    lastUpdated: new Date()
+    bankName: account.bankName || '',
+    accountNumber: account.accountNumber || '',
+    accountType: account.accountType || '',
+    branchName: account.branchName || '',
+    ifscCode: account.ifscCode || '',
+    balance: account.balance || 0,
+    interestRate: account.interestRate || 0,
+    familyMemberId: account.familyMemberId || '',
+    lastUpdated: new Date(),
   };
   
   savingsAccounts.push(newAccount);
   createAuditRecord(newAccount.id, 'savingsAccount', 'create', newAccount);
-  return newAccount;
+  return Promise.resolve(newAccount);
 };
 
-export const updateSavingsAccount = (id: string, updates: Partial<SavingsAccount>): SavingsAccount | null => {
+export const updateSavingsAccount = (id: string, updates: Partial<SavingsAccount>): Promise<SavingsAccount> => {
   const index = savingsAccounts.findIndex(account => account.id === id);
-  if (index === -1) return null;
+  if (index === -1) {
+    return Promise.reject(new Error('Savings account not found'));
+  }
   
   const originalAccount = { ...savingsAccounts[index] };
   
@@ -42,23 +52,20 @@ export const updateSavingsAccount = (id: string, updates: Partial<SavingsAccount
     changes: updates
   });
   
-  return savingsAccounts[index];
+  return Promise.resolve(savingsAccounts[index]);
 };
 
-export const deleteSavingsAccount = (id: string): boolean => {
+export const deleteSavingsAccount = (id: string): Promise<void> => {
   const index = savingsAccounts.findIndex(account => account.id === id);
-  if (index === -1) return false;
+  if (index === -1) {
+    return Promise.reject(new Error('Savings account not found'));
+  }
   
   const deletedAccount = savingsAccounts[index];
   savingsAccounts.splice(index, 1);
   
   createAuditRecord(id, 'savingsAccount', 'delete', deletedAccount);
-  return true;
-};
-
-export const getSavingsAccountById = (id: string): SavingsAccount | null => {
-  const account = savingsAccounts.find(account => account.id === id);
-  return account ? JSON.parse(JSON.stringify(account)) : null;
+  return Promise.resolve();
 };
 
 export const exportSavingsAccounts = () => {

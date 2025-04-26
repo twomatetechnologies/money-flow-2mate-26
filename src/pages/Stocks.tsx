@@ -57,13 +57,6 @@ const Stocks = () => {
   const { toast } = useToast();
   const { settings } = useSettings();
 
-  // Sorting state
-  const [currentSort, setCurrentSort] = useState<string | null>(null);
-  const [currentDirection, setCurrentDirection] = useState<SortDirection>(null);
-
-  // Filtering state
-  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
-
   const sortOptions: SortOption[] = [
     { label: 'Symbol', value: 'symbol' },
     { label: 'Name', value: 'name' },
@@ -93,22 +86,17 @@ const Stocks = () => {
   useEffect(() => {
     fetchStocks();
     
-    // Start the stock price monitoring service
     let stopMonitoringFn: (() => void) | undefined;
     
-    // Using an async IIFE to properly handle the async function
     (async () => {
       try {
-        // Try to use real API first
         stopMonitoringFn = await startStockPriceMonitoring(settings.stockPriceAlertThreshold);
         console.log("Using real market data for stock prices");
       } catch (error) {
-        // Fall back to simulation if API fails
         console.error('Error starting real stock monitoring, falling back to simulation:', error);
         stopMonitoringFn = await simulateStockPriceUpdates(settings.stockPriceAlertThreshold);
         console.log("Using simulated market data for stock prices");
         
-        // Show a toast notification about using simulated data
         toast({
           title: "Using Simulated Data",
           description: "Could not connect to live market data. Using simulated stock prices instead.",
@@ -117,7 +105,6 @@ const Stocks = () => {
       }
     })();
     
-    // Clean up the interval when the component unmounts
     return () => {
       if (typeof stopMonitoringFn === 'function') {
         stopMonitoringFn();
@@ -125,12 +112,10 @@ const Stocks = () => {
     };
   }, [settings.stockPriceAlertThreshold]);
 
-  // Apply sorting and filtering whenever the underlying data or sort/filter options change
   useEffect(() => {
     applyFiltersAndSort();
   }, [stocks, currentSort, currentDirection, activeFilters]);
 
-  // Generate filter options based on available stocks
   useEffect(() => {
     if (stocks.length > 0) {
       setFilterOptions([
@@ -203,7 +188,6 @@ const Stocks = () => {
     try {
       const importedCount = stocksToImport.length;
       
-      // Create each stock
       for (const stock of stocksToImport) {
         await createStock(stock as Omit<StockHolding, 'id' | 'lastUpdated'>);
       }
@@ -281,16 +265,13 @@ const Stocks = () => {
     setActiveFilters({});
   };
 
-  // Calculate gainPercent for each stock for sorting/filtering
   const calculateGainPercent = (stock: StockHolding) => {
     return ((stock.currentPrice - stock.averageBuyPrice) / stock.averageBuyPrice) * 100;
   };
 
-  // Function to apply both sorting and filtering
   const applyFiltersAndSort = () => {
     let result = [...stocks];
     
-    // Apply filters
     if (Object.keys(activeFilters).length > 0) {
       Object.entries(activeFilters).forEach(([key, value]) => {
         if (value) {
@@ -309,12 +290,10 @@ const Stocks = () => {
       });
     }
     
-    // Apply sorting
     if (currentSort && currentDirection) {
       result.sort((a, b) => {
         let aValue, bValue;
         
-        // Special case for gain percent which is calculated
         if (currentSort === 'gainPercent') {
           aValue = calculateGainPercent(a);
           bValue = calculateGainPercent(b);
@@ -332,7 +311,7 @@ const Stocks = () => {
     setDisplayedStocks(result);
   };
 
-  export const downloadSampleFile = (format: 'csv' | 'xlsx') => {
+  const downloadSampleFile = (format: 'csv' | 'xlsx') => {
     if (format === 'csv') {
       const link = document.createElement('a');
       link.href = '/sample_stocks.csv';
@@ -504,7 +483,6 @@ const Stocks = () => {
         </CardContent>
       </Card>
 
-      {/* Stock Form Dialog */}
       <StockForm 
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
@@ -513,14 +491,12 @@ const Stocks = () => {
         mode={formMode}
       />
 
-      {/* Stock Import Dialog */}
       <StockImport
         isOpen={isImportOpen}
         onClose={() => setIsImportOpen(false)}
         onImport={handleImportStocks}
       />
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!stockToDelete} onOpenChange={(open) => !open && setStockToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -536,7 +512,6 @@ const Stocks = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Audit Trail Dialog */}
       <Dialog open={isAuditOpen} onOpenChange={setIsAuditOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
