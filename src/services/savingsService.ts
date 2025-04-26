@@ -20,8 +20,6 @@ export const addSavingsAccount = (account: Partial<SavingsAccount>): Promise<Sav
     balance: account.balance || 0,
     interestRate: account.interestRate || 0,
     familyMemberId: account.familyMemberId || '',
-    isJointAccount: account.isJointAccount || false,
-    jointHolderName: account.jointHolderName || '',
     lastUpdated: new Date(),
   };
   
