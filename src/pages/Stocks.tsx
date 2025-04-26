@@ -332,6 +332,27 @@ const Stocks = () => {
     setDisplayedStocks(result);
   };
 
+  export const downloadSampleFile = (format: 'csv' | 'xlsx') => {
+    if (format === 'csv') {
+      const link = document.createElement('a');
+      link.href = '/sample_stocks.csv';
+      link.download = 'sample_stocks.csv';
+      link.click();
+    } else {
+      const workbook = XLSX.utils.book_new();
+      const data = [
+        ['Symbol', 'Name', 'Quantity', 'Average Buy Price', 'Current Price', 'Notes'],
+        ['AAPL', 'Apple Inc.', 10, 150.25, 175.50, 'Long term investment'],
+        ['MSFT', 'Microsoft Corporation', 5, 280.75, 300.25, 'Tech sector'],
+        ['GOOGL', 'Alphabet Inc.', 2, 2750.00, 2850.75, 'Growth stock'],
+        ['AMZN', 'Amazon.com Inc.', 3, 3300.50, 3450.25, 'E-commerce leader']
+      ];
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sample Stocks');
+      XLSX.writeFile(workbook, 'sample_stocks.xlsx');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
