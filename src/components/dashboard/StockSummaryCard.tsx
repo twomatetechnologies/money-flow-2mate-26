@@ -11,20 +11,20 @@ interface StockSummaryCardProps {
 }
 
 export function StockSummaryCard({ stocks }: StockSummaryCardProps) {
-  const totalValue = stocks.reduce((sum, stock) => sum + stock.value, 0);
-  const totalGain = stocks.reduce((sum, stock) => {
-    const gain = (stock.currentPrice - stock.averageBuyPrice) * stock.quantity;
-    return sum + gain;
-  }, 0);
+  // Calculate total value of current holdings
+  const totalValue = stocks.reduce((sum, stock) => sum + (stock.currentPrice * stock.quantity), 0);
   
-  const percentGain = (totalGain / (totalValue - totalGain)) * 100;
-  const isPositive = percentGain >= 0;
-
-  // Get top 3 performing stocks
-  const sortedStocks = [...stocks].sort((a, b) => 
-    (b.currentPrice - b.averageBuyPrice) * b.quantity - 
-    (a.currentPrice - a.averageBuyPrice) * a.quantity
-  );
+  // Calculate total gain/loss
+  const totalInvestment = stocks.reduce((sum, stock) => sum + (stock.averageBuyPrice * stock.quantity), 0);
+  const totalGain = totalValue - totalInvestment;
+  const percentGain = totalInvestment > 0 ? (totalGain / totalInvestment) * 100 : 0;
+  
+  // Get top 3 performing stocks based on absolute gain value
+  const sortedStocks = [...stocks].sort((a, b) => {
+    const gainA = (a.currentPrice - a.averageBuyPrice) * a.quantity;
+    const gainB = (b.currentPrice - b.averageBuyPrice) * b.quantity;
+    return gainB - gainA;
+  });
   const topStocks = sortedStocks.slice(0, 3);
 
   return (
@@ -33,13 +33,13 @@ export function StockSummaryCard({ stocks }: StockSummaryCardProps) {
         <CardTitle className="flex items-center justify-between">
           <span>Stock Portfolio</span>
           <div className="flex items-center">
-            {isPositive ? (
+            {percentGain >= 0 ? (
               <TrendingUp className="h-4 w-4 mr-1 trend-up" />
             ) : (
               <TrendingDown className="h-4 w-4 mr-1 trend-down" />
             )}
-            <span className={`text-sm font-medium ${isPositive ? 'trend-up' : 'trend-down'}`}>
-              {isPositive ? '+' : ''}{percentGain.toFixed(2)}%
+            <span className={`text-sm font-medium ${percentGain >= 0 ? 'trend-up' : 'trend-down'}`}>
+              {percentGain >= 0 ? '+' : ''}{percentGain.toFixed(2)}%
             </span>
           </div>
         </CardTitle>
@@ -51,20 +51,23 @@ export function StockSummaryCard({ stocks }: StockSummaryCardProps) {
         </div>
         <div className="space-y-3">
           <div className="text-sm font-medium text-finance-gray">Top Performers</div>
-          {topStocks.map(stock => (
-            <div key={stock.id} className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <div className="font-medium">{stock.symbol}</div>
-                <div className="text-xs text-finance-gray">{stock.name}</div>
-              </div>
-              <div className="flex flex-col items-end">
-                <div className="font-medium">₹{stock.currentPrice.toLocaleString()}</div>
-                <div className={`text-xs ${stock.changePercent >= 0 ? 'trend-up' : 'trend-down'}`}>
-                  {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+          {topStocks.map(stock => {
+            const gainPercent = ((stock.currentPrice - stock.averageBuyPrice) / stock.averageBuyPrice) * 100;
+            return (
+              <div key={stock.id} className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <div className="font-medium">{stock.symbol}</div>
+                  <div className="text-xs text-finance-gray">{stock.name}</div>
+                </div>
+                <div className="flex flex-col items-end">
+                  <div className="font-medium">₹{stock.currentPrice.toLocaleString()}</div>
+                  <div className={`text-xs ${gainPercent >= 0 ? 'trend-up' : 'trend-down'}`}>
+                    {gainPercent >= 0 ? '+' : ''}{gainPercent.toFixed(2)}%
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
       <CardFooter>

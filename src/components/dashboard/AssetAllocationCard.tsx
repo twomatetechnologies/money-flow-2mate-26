@@ -9,14 +9,16 @@ interface AssetAllocationCardProps {
 }
 
 export function AssetAllocationCard({ data }: AssetAllocationCardProps) {
-  const { breakdown } = data;
+  // Calculate actual percentages based on the current total
+  const total = data.total;
+  const calculatePercentage = (value: number) => ((value / total) * 100).toFixed(1);
   
   const chartData = [
-    { name: 'Stocks', value: breakdown.stocks },
-    { name: 'Fixed Deposits', value: breakdown.fixedDeposits },
-    { name: 'SIP Investments', value: breakdown.sip },
-    { name: 'Gold', value: breakdown.gold },
-    { name: 'Other Assets', value: breakdown.other }
+    { name: 'Stocks', value: data.breakdown.stocks, percentage: calculatePercentage(data.breakdown.stocks) },
+    { name: 'Fixed Deposits', value: data.breakdown.fixedDeposits, percentage: calculatePercentage(data.breakdown.fixedDeposits) },
+    { name: 'SIP Investments', value: data.breakdown.sip, percentage: calculatePercentage(data.breakdown.sip) },
+    { name: 'Gold', value: data.breakdown.gold, percentage: calculatePercentage(data.breakdown.gold) },
+    { name: 'Other Assets', value: data.breakdown.other, percentage: calculatePercentage(data.breakdown.other) }
   ];
 
   const COLORS = ['#1A365D', '#2C7A7B', '#D69E2E', '#805AD5', '#4A5568'];
@@ -54,7 +56,7 @@ export function AssetAllocationCard({ data }: AssetAllocationCardProps) {
                 formatter={(value, entry, index) => {
                   return (
                     <span style={{ color: '#4A5568', fontSize: '0.875rem' }}>
-                      {value}: {((chartData[index!].value / data.total) * 100).toFixed(1)}%
+                      {value}: {chartData[index!].percentage}%
                     </span>
                   );
                 }}
