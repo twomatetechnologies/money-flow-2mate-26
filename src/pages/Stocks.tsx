@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { StockHolding } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,6 +57,12 @@ const Stocks = () => {
   const [auditRecords, setAuditRecords] = useState<AuditRecord[]>([]);
   const { toast } = useToast();
   const { settings } = useSettings();
+  
+  // Add the missing state variables for sorting and filtering
+  const [currentSort, setCurrentSort] = useState<string | null>(null);
+  const [currentDirection, setCurrentDirection] = useState<SortDirection>(null);
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
+  const [filterOptions, setFilterOptions] = useState<FilterOption[]>([]);
 
   const sortOptions: SortOption[] = [
     { label: 'Symbol', value: 'symbol' },

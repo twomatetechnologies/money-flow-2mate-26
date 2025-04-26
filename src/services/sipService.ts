@@ -15,7 +15,7 @@ export const addSIPInvestment = (sip: Partial<SIPInvestment>): Promise<SIPInvest
   const newSIP: SIPInvestment = {
     id: uuidv4(),
     name: sip.name || '',
-    type: sip.type || '',
+    type: (sip.type as SIPInvestment['type']) || 'Other',
     amount: sip.amount || 0,
     frequency: sip.frequency || 'Monthly',
     currentValue: sip.currentValue || 0,
@@ -23,11 +23,10 @@ export const addSIPInvestment = (sip: Partial<SIPInvestment>): Promise<SIPInvest
     returnsPercent: sip.returnsPercent || 0,
     familyMemberId: sip.familyMemberId || '',
     startDate: sip.startDate || new Date(),
-    lastUpdated: new Date(),
   };
   
   sipInvestments.push(newSIP);
-  createAuditRecord(newSIP.id, 'sipInvestment', 'create', newSIP);
+  createAuditRecord(newSIP.id, 'sip', 'create', newSIP);
   return Promise.resolve(newSIP);
 };
 
@@ -42,10 +41,9 @@ export const updateSIPInvestment = (id: string, updates: Partial<SIPInvestment>)
   sipInvestments[index] = {
     ...sipInvestments[index],
     ...updates,
-    lastUpdated: new Date()
   };
   
-  createAuditRecord(id, 'sipInvestment', 'update', {
+  createAuditRecord(id, 'sip', 'update', {
     previous: originalSIP,
     current: sipInvestments[index],
     changes: updates
@@ -63,6 +61,6 @@ export const deleteSIPInvestment = (id: string): Promise<void> => {
   const deletedSIP = sipInvestments[index];
   sipInvestments.splice(index, 1);
   
-  createAuditRecord(id, 'sipInvestment', 'delete', deletedSIP);
+  createAuditRecord(id, 'sip', 'delete', deletedSIP);
   return Promise.resolve();
 };
