@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { NetWorthCard } from '@/components/dashboard/NetWorthCard';
 import { AssetAllocationCard } from '@/components/dashboard/AssetAllocationCard';
@@ -11,7 +10,7 @@ import {
   getSIPInvestments,
   getGoldInvestments,
   getInsurancePolicies
-} from '@/services/mockData';
+} from '@/services/crudService';
 import { 
   NetWorthData, 
   StockHolding, 
@@ -30,38 +29,60 @@ const Dashboard = () => {
   const [insurancePolicies, setInsurancePolicies] = useState<InsurancePolicy[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchData = async () => {
+    try {
+      const stocksData = await getStocks();
+      
+      const [
+        fdData, 
+        sipData,
+        goldData,
+        insuranceData
+      ] = await Promise.all([
+        getFixedDeposits(),
+        getSIPInvestments(),
+        getGoldInvestments(),
+        getInsurancePolicies()
+      ]);
+
+      setStocks(stocksData);
+      setFixedDeposits(fdData);
+      setSipInvestments(sipData);
+      setGoldInvestments(goldData);
+      setInsurancePolicies(insuranceData);
+      
+      const stocksTotal = stocksData.reduce((sum, stock) => sum + stock.value, 0);
+      const fdTotal = fdData.reduce((sum, fd) => sum + fd.principal, 0);
+      const sipTotal = sipData.reduce((sum, sip) => sum + sip.currentValue, 0);
+      const goldTotal = goldData.reduce((sum, gold) => sum + gold.value, 0);
+      const otherTotal = insuranceData.reduce((sum, insurance) => sum + insurance.premium * 12, 0);
+      
+      const total = stocksTotal + fdTotal + sipTotal + goldTotal + otherTotal;
+      
+      const calculatedNetWorth: NetWorthData = {
+        total: total,
+        breakdown: {
+          stocks: stocksTotal,
+          fixedDeposits: fdTotal,
+          sip: sipTotal,
+          gold: goldTotal,
+          other: otherTotal
+        },
+        history: [
+          ...(netWorth?.history.slice(0, -1) || []),
+          { date: new Date(), value: total }
+        ]
+      };
+      
+      setNetWorth(calculatedNetWorth);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [
-          netWorthData, 
-          stocksData, 
-          fdData, 
-          sipData,
-          goldData,
-          insuranceData
-        ] = await Promise.all([
-          getNetWorth(),
-          getStocks(),
-          getFixedDeposits(),
-          getSIPInvestments(),
-          getGoldInvestments(),
-          getInsurancePolicies()
-        ]);
-
-        setNetWorth(netWorthData);
-        setStocks(stocksData);
-        setFixedDeposits(fdData);
-        setSipInvestments(sipData);
-        setGoldInvestments(goldData);
-        setInsurancePolicies(insuranceData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
 

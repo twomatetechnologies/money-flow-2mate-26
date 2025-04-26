@@ -51,23 +51,27 @@ export function StockSummaryCard({ stocks }: StockSummaryCardProps) {
         </div>
         <div className="space-y-3">
           <div className="text-sm font-medium text-finance-gray">Top Performers</div>
-          {topStocks.map(stock => {
-            const gainPercent = ((stock.currentPrice - stock.averageBuyPrice) / stock.averageBuyPrice) * 100;
-            return (
-              <div key={stock.id} className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <div className="font-medium">{stock.symbol}</div>
-                  <div className="text-xs text-finance-gray">{stock.name}</div>
-                </div>
-                <div className="flex flex-col items-end">
-                  <div className="font-medium">₹{stock.currentPrice.toLocaleString()}</div>
-                  <div className={`text-xs ${gainPercent >= 0 ? 'trend-up' : 'trend-down'}`}>
-                    {gainPercent >= 0 ? '+' : ''}{gainPercent.toFixed(2)}%
+          {topStocks.length > 0 ? (
+            topStocks.map(stock => {
+              const gainPercent = ((stock.currentPrice - stock.averageBuyPrice) / stock.averageBuyPrice) * 100;
+              return (
+                <div key={stock.id} className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <div className="font-medium">{stock.symbol}</div>
+                    <div className="text-xs text-finance-gray">{stock.name}</div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <div className="font-medium">₹{stock.currentPrice.toLocaleString()}</div>
+                    <div className={`text-xs ${gainPercent >= 0 ? 'trend-up' : 'trend-down'}`}>
+                      {gainPercent >= 0 ? '+' : ''}{gainPercent.toFixed(2)}%
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          ) : (
+            <div className="text-center py-2 text-muted-foreground">No stocks in portfolio</div>
+          )}
         </div>
       </CardContent>
       <CardFooter>
