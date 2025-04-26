@@ -1,4 +1,3 @@
-
 # Use an official Node runtime as the base image
 FROM node:18-alpine
 
@@ -30,9 +29,10 @@ COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 RUN mkdir -p /data
 VOLUME /data
 
-# Copy a script to initialize the container
+# Copy initialization and migration scripts
 COPY ./init-container.sh /docker-entrypoint.d/40-init-container.sh
-RUN chmod +x /docker-entrypoint.d/40-init-container.sh
+COPY ./migrate-postgres.sh /migrate-postgres.sh
+RUN chmod +x /docker-entrypoint.d/40-init-container.sh /migrate-postgres.sh
 
 # Expose port 80
 EXPOSE 80
