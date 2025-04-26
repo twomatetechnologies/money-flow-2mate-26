@@ -1,26 +1,54 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { StockHolding } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Import } from 'lucide-react';
+import { 
+  Table, 
+  TableBody, 
+  TableCaption, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { TrendingUp, TrendingDown, Plus, Pencil, Trash, History, Eye, Import } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useSettings } from '@/contexts/SettingsContext';
 import StockForm from '@/components/stocks/StockForm';
 import StockImport from '@/components/stocks/StockImport';
 import { StockStats } from '@/components/stocks/StockStats';
 import { StockTable } from '@/components/stocks/StockTable';
 import AuditTrail from '@/components/common/AuditTrail';
-import { useStocks } from '@/hooks/useStocks';
+import { getStocks, createStock, updateStock, deleteStock, getStockById } from '@/services/crudService';
+import { startStockPriceMonitoring, simulateStockPriceUpdates } from '@/services/stockPriceService';
 import { getAuditRecordsForEntity } from '@/services/auditService';
-import { createStock, updateStock, deleteStock } from '@/services/crudService';
-import SortButton from '@/components/common/SortButton';
-import FilterButton from '@/components/common/FilterButton';
-import { StockHolding } from '@/types';
 import { AuditRecord } from '@/types/audit';
+import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
+import FilterButton, { FilterOption } from '@/components/common/FilterButton';
+import { useStocks } from '@/hooks/useStocks';
+import * as XLSX from 'xlsx';
 
 const Stocks = () => {
   const {
+    stocks,
     displayedStocks,
     loading,
     currentSort,
@@ -29,9 +57,10 @@ const Stocks = () => {
     setCurrentSort,
     setCurrentDirection,
     setActiveFilters,
-    fetchStocks
+    fetchStocks,
+    calculateGainPercent
   } = useStocks();
-  
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
@@ -41,25 +70,26 @@ const Stocks = () => {
   const [auditRecords, setAuditRecords] = useState<AuditRecord[]>([]);
   const { toast } = useToast();
 
-  const sortOptions = [
+  // Fixed: Define filter options with correct type annotation
+  const filterOptions: FilterOption[] = [
+    {
+      id: 'performanceFilter',
+      label: 'Performance',
+      type: 'select', // Now explicitly using one of the allowed literal types
+      options: [
+        { value: 'gainers', label: 'Gainers' },
+        { value: 'losers', label: 'Losers' },
+      ]
+    }
+  ];
+
+  const sortOptions: SortOption[] = [
     { label: 'Symbol', value: 'symbol' },
     { label: 'Name', value: 'name' },
     { label: 'Quantity', value: 'quantity' },
     { label: 'Current Price', value: 'currentPrice' },
     { label: 'Value', value: 'value' },
     { label: 'Gain/Loss %', value: 'gainPercent' },
-  ];
-
-  const filterOptions = [
-    {
-      id: 'performanceFilter',
-      label: 'Performance',
-      type: 'select',
-      options: [
-        { value: 'gainers', label: 'Gainers' },
-        { value: 'losers', label: 'Losers' },
-      ]
-    }
   ];
 
   const handleAddStock = () => {
@@ -101,6 +131,10 @@ const Stocks = () => {
     }
   };
 
+  const handleImportClick = () => {
+    setIsImportOpen(true);
+  };
+
   const handleImportStocks = async (stocksToImport: Partial<StockHolding>[]) => {
     try {
       const importedCount = stocksToImport.length;
@@ -124,6 +158,10 @@ const Stocks = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleDeleteClick = (stock: StockHolding) => {
+    setStockToDelete(stock);
   };
 
   const handleConfirmDelete = async () => {
@@ -162,6 +200,27 @@ const Stocks = () => {
     }
   };
 
+  const downloadSampleFile = (format: 'csv' | 'xlsx') => {
+    if (format === 'csv') {
+      const link = document.createElement('a');
+      link.href = '/sample_stocks.csv';
+      link.download = 'sample_stocks.csv';
+      link.click();
+    } else {
+      const workbook = XLSX.utils.book_new();
+      const data = [
+        ['Symbol', 'Name', 'Quantity', 'Average Buy Price', 'Current Price', 'Notes'],
+        ['AAPL', 'Apple Inc.', 10, 150.25, 175.50, 'Long term investment'],
+        ['MSFT', 'Microsoft Corporation', 5, 280.75, 300.25, 'Tech sector'],
+        ['GOOGL', 'Alphabet Inc.', 2, 2750.00, 2850.75, 'Growth stock'],
+        ['AMZN', 'Amazon.com Inc.', 3, 3300.50, 3450.25, 'E-commerce leader']
+      ];
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sample Stocks');
+      XLSX.writeFile(workbook, 'sample_stocks.xlsx');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -180,7 +239,7 @@ const Stocks = () => {
           </p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+          <Button variant="outline" onClick={handleImportClick}>
             <Import className="mr-2 h-4 w-4" /> Import
           </Button>
           <Button onClick={handleAddStock}>
@@ -216,7 +275,7 @@ const Stocks = () => {
           <StockTable 
             stocks={displayedStocks}
             onEdit={handleEditStock}
-            onDelete={setStockToDelete}
+            onDelete={handleDeleteClick}
             onViewAudit={handleViewAudit}
           />
         </CardContent>
