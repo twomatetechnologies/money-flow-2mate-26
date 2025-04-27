@@ -28,6 +28,31 @@ const saveFixedDeposits = (deposits: FixedDeposit[]): void => {
 // In-memory datastore with persistence
 let fixedDeposits = loadFixedDeposits();
 
+// Create a sample deposit if none exist
+if (fixedDeposits.length === 0) {
+  const startDate = new Date();
+  const maturityDate = new Date();
+  maturityDate.setDate(maturityDate.getDate() + 365); // 1 year maturity
+  
+  const sampleFD: FixedDeposit = {
+    id: uuidv4(),
+    bankName: 'HDFC',
+    accountNumber: 'FD123456789',
+    principal: 100000,
+    interestRate: 6.5,
+    startDate: startDate,
+    maturityDate: maturityDate,
+    maturityAmount: 106500, // Simple interest calculation
+    isAutoRenew: false,
+    notes: 'Sample fixed deposit',
+    familyMemberId: 'self-default',
+    lastUpdated: new Date()
+  };
+  
+  fixedDeposits.push(sampleFD);
+  saveFixedDeposits(fixedDeposits);
+}
+
 // CRUD operations for Fixed Deposits
 export const createFixedDeposit = (fd: Partial<FixedDeposit>): FixedDeposit => {
   // Set default values for any missing required fields
@@ -91,5 +116,11 @@ export const getFixedDepositById = (id: string): FixedDeposit | null => {
 };
 
 export const getFixedDeposits = (): Promise<FixedDeposit[]> => {
-  return Promise.resolve(fixedDeposits);
+  return Promise.resolve([...fixedDeposits]);
+};
+
+// Alias for addFixedDeposit to maintain compatibility with existing code
+export const addFixedDeposit = (deposit: Partial<FixedDeposit>): Promise<FixedDeposit> => {
+  const newDeposit = createFixedDeposit(deposit);
+  return Promise.resolve(newDeposit);
 };

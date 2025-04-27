@@ -5,13 +5,13 @@ import { AssetAllocationCard } from '@/components/dashboard/AssetAllocationCard'
 import { StockSummaryCard } from '@/components/dashboard/StockSummaryCard';
 import { UpcomingFDMaturityCard } from '@/components/dashboard/UpcomingFDMaturityCard';
 import { 
-  getNetWorth, 
-  getStocks, 
-  getFixedDeposits, 
-  getSIPInvestments,
-  getGoldInvestments,
-  getInsurancePolicies
-} from '@/services/crudService';
+  getNetWorth
+} from '@/services/netWorthService';
+import { getStocks } from '@/services/stockService';
+import { getFixedDeposits } from '@/services/fixedDepositService';
+import { getSIPInvestments } from '@/services/sipInvestmentService';
+import { getGoldInvestments } from '@/services/goldInvestmentService';
+import { getInsurancePolicies } from '@/services/crudService';
 import { 
   NetWorthData, 
   StockHolding, 
@@ -21,6 +21,7 @@ import {
   InsurancePolicy 
 } from '@/types';
 import { formatIndianNumber } from '@/lib/utils';
+import { handleError } from '@/utils/errorHandler';
 
 const Dashboard = () => {
   const [netWorth, setNetWorth] = useState<NetWorthData | null>(null);
@@ -32,6 +33,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const [
         netWorthData,
@@ -54,43 +56,11 @@ const Dashboard = () => {
       setSipInvestments(sipData);
       setGoldInvestments(goldData);
       setInsurancePolicies(insuranceData);
+      setNetWorth(netWorthData);
       
-      const stocksTotal = stocksData.reduce((sum, stock) => sum + stock.value, 0);
-      const fdTotal = fdData.reduce((sum, fd) => sum + fd.principal, 0);
-      const sipTotal = sipData.reduce((sum, sip) => sum + sip.currentValue, 0);
-      const goldTotal = goldData.reduce((sum, gold) => sum + gold.value, 0);
-      
-      // Removed insurance from net worth calculation
-      const insuranceTotal = insuranceData.reduce((sum, insurance) => sum + insurance.premium * 12, 0);
-      
-      // Calculate net worth without including insurance
-      const total = stocksTotal + fdTotal + sipTotal + goldTotal;
-      
-      const history = [...netWorthData.history];
-      
-      if (history.length > 0) {
-        history[history.length - 1] = {
-          date: new Date(),
-          value: total
-        };
-      }
-      
-      const calculatedNetWorth: NetWorthData = {
-        total: total,
-        breakdown: {
-          stocks: stocksTotal,
-          fixedDeposits: fdTotal,
-          sip: sipTotal,
-          gold: goldTotal,
-          other: 0 // Changed to 0 since we're not including insurance in net worth
-        },
-        history: history
-      };
-      
-      setNetWorth(calculatedNetWorth);
-      setLoading(false);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      handleError(error, 'Error fetching dashboard data');
+    } finally {
       setLoading(false);
     }
   };
