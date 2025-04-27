@@ -21,6 +21,7 @@ import { Toaster } from './components/ui/toaster';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './App.css';
 import Profile from './pages/Profile';
+import Goals from './pages/Goals';
 
 function App() {
   const [queryClient] = useState(() => new QueryClient());
@@ -52,6 +53,7 @@ function App() {
                 <Route path="audit-trail" element={<AuditTrail />} />
                 <Route path="family-members" element={<FamilyMembers />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="goals" element={<Goals />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
