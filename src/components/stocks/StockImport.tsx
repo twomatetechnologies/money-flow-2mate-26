@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,15 +10,38 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { StockHolding } from '@/types';
-import { Import, FileText, FileSpreadsheet } from 'lucide-react';
+import { Import, FileText, FileSpreadsheet, AlertCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface StockImportProps {
   isOpen: boolean;
   onClose: () => void;
   onImport: (stocks: Partial<StockHolding>[]) => void;
+}
+
+// Define ParsedStock interface to resolve type errors
+interface ParsedStock {
+  symbol: string;
+  name: string;
+  currentPrice: number;
+  change: number;
+  prevClose: number;
+  volume: number;
+  quantity: number;
+  averageBuyPrice: number;
+  investmentDate: string;
+  investmentAmount: number;
+  intraHighLow: string;
+  weekHighLow: string;
+  todaysGain: number;
+  todaysGainPercent: number;
+  overallGain: number;
+  overallGainPercent: number;
+  value: number;
+  broker: string;
+  notes: string;
 }
 
 const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) => {
@@ -238,7 +262,7 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
             disabled={previewData.length === 0 || isLoading}
             className="ml-2"
           >
-            <ImportIcon className="mr-2 h-4 w-4" />
+            <Import className="mr-2 h-4 w-4" />
             Import {previewData.length} Stocks
           </Button>
         </DialogFooter>
