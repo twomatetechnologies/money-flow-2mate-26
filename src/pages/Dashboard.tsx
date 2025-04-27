@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { NetWorthCard } from '@/components/dashboard/NetWorthCard';
 import { AssetAllocationCard } from '@/components/dashboard/AssetAllocationCard';
@@ -58,9 +59,12 @@ const Dashboard = () => {
       const fdTotal = fdData.reduce((sum, fd) => sum + fd.principal, 0);
       const sipTotal = sipData.reduce((sum, sip) => sum + sip.currentValue, 0);
       const goldTotal = goldData.reduce((sum, gold) => sum + gold.value, 0);
+      
+      // Removed insurance from net worth calculation
       const insuranceTotal = insuranceData.reduce((sum, insurance) => sum + insurance.premium * 12, 0);
       
-      const total = stocksTotal + fdTotal + sipTotal + goldTotal + insuranceTotal;
+      // Calculate net worth without including insurance
+      const total = stocksTotal + fdTotal + sipTotal + goldTotal;
       
       const history = [...netWorthData.history];
       
@@ -78,7 +82,7 @@ const Dashboard = () => {
           fixedDeposits: fdTotal,
           sip: sipTotal,
           gold: goldTotal,
-          other: insuranceTotal
+          other: 0 // Changed to 0 since we're not including insurance in net worth
         },
         history: history
       };
