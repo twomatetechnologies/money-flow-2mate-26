@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+import TwoFactorAuth from './pages/TwoFactorAuth';
 import NotFound from './pages/NotFound';
 import { AuthProvider } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
@@ -33,6 +35,7 @@ function App() {
           <Router>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/two-factor-auth" element={<TwoFactorAuth />} />
               <Route
                 path="/"
                 element={

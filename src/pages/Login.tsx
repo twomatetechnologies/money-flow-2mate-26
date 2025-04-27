@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Lock, Mail, Bug } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,16 +15,36 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, isDevelopmentMode, toggleDevelopmentMode } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      await login(email, password);
+      const result = await login(email, password);
+      
+      if (result.requires2FA) {
+        // Redirect to 2FA page
+        navigate('/two-factor-auth', { 
+          state: { requires2FA: true, email }
+        });
+        return;
+      }
+      
+      // Normal login, redirect to home
       navigate('/');
+      
+      toast({
+        title: "Login successful",
+        description: "Welcome back!",
+      });
     } catch (error) {
-      // Error is handled in the AuthContext
+      toast({
+        title: "Login failed",
+        description: "Invalid email or password",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -96,6 +117,7 @@ const Login = () => {
               <div className="px-2 py-2 bg-amber-50 border border-amber-200 rounded-md w-full">
                 <p className="text-amber-800 text-sm font-medium mb-1">Development Mode</p>
                 <p className="text-amber-700 text-sm">Login with: <code>user@example.com</code> / <code>password</code></p>
+                <p className="text-amber-700 text-sm mt-1">For 2FA demo: <code>test@example.com</code> / <code>password</code></p>
               </div>
             )}
           </CardFooter>

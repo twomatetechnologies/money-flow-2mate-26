@@ -8,13 +8,17 @@ import { Slider } from '@/components/ui/slider';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { InfoIcon } from 'lucide-react';
+import { InfoIcon, Lock, Shield } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
   const { settings, updateSettings } = useSettings();
+  const { user, enableTwoFactor } = useAuth();
   const { toast } = useToast();
   const [threshold, setThreshold] = React.useState(settings.stockPriceAlertThreshold);
   const [apiKey, setApiKey] = React.useState(settings.stockApiKey || '');
+  const [is2FAEnabled, setIs2FAEnabled] = React.useState(user?.has2FAEnabled || false);
 
   const handleSaveSettings = () => {
     updateSettings({
@@ -28,6 +32,17 @@ const Settings = () => {
     });
   };
 
+  const handleToggle2FA = (enabled: boolean) => {
+    setIs2FAEnabled(enabled);
+    enableTwoFactor(enabled);
+    toast({
+      title: enabled ? "Two-Factor Authentication Enabled" : "Two-Factor Authentication Disabled",
+      description: enabled 
+        ? "Your account is now more secure with two-factor authentication." 
+        : "Two-factor authentication has been disabled.",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -37,6 +52,46 @@ const Settings = () => {
         </p>
       </div>
 
+      {/* Security Settings */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Shield className="h-5 w-5 text-primary" />
+            <CardTitle>Security Settings</CardTitle>
+          </div>
+          <CardDescription>
+            Configure authentication and security options
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-base">Two-Factor Authentication</Label>
+              <p className="text-sm text-muted-foreground">
+                Add an extra layer of security by requiring a verification code when signing in
+              </p>
+            </div>
+            <Switch 
+              checked={is2FAEnabled} 
+              onCheckedChange={handleToggle2FA}
+            />
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-primary" />
+              <Label className="text-lg font-medium">Session Timeout</Label>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Your session will automatically expire after 30 minutes of inactivity for security purposes.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stock Settings */}
       <Card>
         <CardHeader>
           <CardTitle>Stock Price Alerts</CardTitle>
