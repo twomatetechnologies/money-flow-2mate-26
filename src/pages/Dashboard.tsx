@@ -32,14 +32,16 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const stocksData = await getStocks();
-      
       const [
+        netWorthData,
+        stocksData, 
         fdData, 
         sipData,
         goldData,
         insuranceData
       ] = await Promise.all([
+        getNetWorth(),
+        getStocks(),
         getFixedDeposits(),
         getSIPInvestments(),
         getGoldInvestments(),
@@ -56,9 +58,18 @@ const Dashboard = () => {
       const fdTotal = fdData.reduce((sum, fd) => sum + fd.principal, 0);
       const sipTotal = sipData.reduce((sum, sip) => sum + sip.currentValue, 0);
       const goldTotal = goldData.reduce((sum, gold) => sum + gold.value, 0);
-      const otherTotal = insuranceData.reduce((sum, insurance) => sum + insurance.premium * 12, 0);
+      const insuranceTotal = insuranceData.reduce((sum, insurance) => sum + insurance.premium * 12, 0);
       
-      const total = stocksTotal + fdTotal + sipTotal + goldTotal + otherTotal;
+      const total = stocksTotal + fdTotal + sipTotal + goldTotal + insuranceTotal;
+      
+      const history = [...netWorthData.history];
+      
+      if (history.length > 0) {
+        history[history.length - 1] = {
+          date: new Date(),
+          value: total
+        };
+      }
       
       const calculatedNetWorth: NetWorthData = {
         total: total,
@@ -67,12 +78,9 @@ const Dashboard = () => {
           fixedDeposits: fdTotal,
           sip: sipTotal,
           gold: goldTotal,
-          other: otherTotal
+          other: insuranceTotal
         },
-        history: [
-          ...(netWorth?.history.slice(0, -1) || []),
-          { date: new Date(), value: total }
-        ]
+        history: history
       };
       
       setNetWorth(calculatedNetWorth);

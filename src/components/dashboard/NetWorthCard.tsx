@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NetWorthData } from '@/types';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
+import { formatIndianNumber } from '@/lib/utils';
 
 interface NetWorthCardProps {
   data: NetWorthData;
@@ -15,7 +16,10 @@ export function NetWorthCard({ data }: NetWorthCardProps) {
     value: item.value
   }));
 
-  const percentChange = ((data.history[data.history.length - 1].value - data.history[0].value) / data.history[0].value) * 100;
+  // Calculate percentage change between first and last history point
+  const firstValue = data.history.length > 0 ? data.history[0].value : 0;
+  const lastValue = data.history.length > 0 ? data.history[data.history.length - 1].value : 0;
+  const percentChange = firstValue > 0 ? ((lastValue - firstValue) / firstValue) * 100 : 0;
   const isPositive = percentChange >= 0;
 
   return (
@@ -32,7 +36,7 @@ export function NetWorthCard({ data }: NetWorthCardProps) {
       </CardHeader>
       <CardContent>
         <div className="mb-4">
-          <div className="stat-value">₹{data.total.toLocaleString()}</div>
+          <div className="stat-value">₹{formatIndianNumber(data.total)}</div>
           <div className="stat-label">Total Assets</div>
         </div>
         <div className="h-48">
@@ -57,7 +61,7 @@ export function NetWorthCard({ data }: NetWorthCardProps) {
                 tickFormatter={(value) => `₹${(value / 1000)}k`}
               />
               <Tooltip 
-                formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Value']}
+                formatter={(value: number) => [`₹${formatIndianNumber(value)}`, 'Value']}
                 labelFormatter={(label) => `${label}`}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
               />
