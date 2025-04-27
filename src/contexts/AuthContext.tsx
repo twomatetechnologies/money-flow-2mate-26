@@ -4,7 +4,6 @@ import React, {
   useState,
   useEffect,
   useContext,
-  ReactNode,
 } from 'react';
 
 export interface User {
@@ -37,7 +36,11 @@ export const AuthContext = createContext<AuthContextType>({
   enableTwoFactor: () => {},
 });
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
