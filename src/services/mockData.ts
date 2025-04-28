@@ -263,7 +263,8 @@ export const mockNetWorthData: NetWorthData = {
     fixedDeposits: 450000,
     sip: 277500,
     gold: 667000,
-    other: 415969
+    other: 415969,
+    providentFund: 0  // Add the missing property
   },
   history: [
     { date: new Date('2023-06-01'), value: 2100000 },

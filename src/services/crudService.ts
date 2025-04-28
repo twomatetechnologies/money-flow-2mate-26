@@ -377,7 +377,8 @@ export const getNetWorth = async (): Promise<NetWorthData> => {
       fixedDeposits: fdTotal,
       sip: sipTotal,
       gold: goldTotal,
-      other: otherTotal
+      other: otherTotal,
+      providentFund: 0  // Add the missing property
     },
     history: history
   };
