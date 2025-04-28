@@ -25,6 +25,19 @@ import {
 } from '@/types';
 import { formatIndianNumber } from '@/lib/utils';
 import { handleError } from '@/utils/errorHandler';
+import { 
+  Banknote, 
+  Coins, 
+  BadgeIndianRupee, 
+  PiggyBank,
+  HelpCircle 
+} from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Dashboard = () => {
   const [netWorth, setNetWorth] = useState<NetWorthData | null>(null);
@@ -117,22 +130,47 @@ const Dashboard = () => {
       <div className="grid gap-6 md:grid-cols-1">
         <div className="finance-card bg-finance-blue text-white p-6 rounded-lg shadow-md flex flex-col justify-between">
           <div>
-            <h3 className="text-xl font-bold mb-2">Quick Stats</h3>
+            <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+              <BadgeIndianRupee className="h-5 w-5" />
+              Quick Stats
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-white/70 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-sm">
+                    <p>This section provides a quick overview of key financial metrics across different asset types.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
               <div>
-                <p className="text-sm text-gray-300">SIP Investments</p>
+                <div className="flex items-center gap-1">
+                  <Banknote className="h-4 w-4" />
+                  <p className="text-sm text-gray-300">SIP Investments</p>
+                </div>
                 <p className="text-2xl font-bold">{formatIndianNumber(sipInvestments.reduce((sum, sip) => sum + sip.currentValue, 0))}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-300">Gold Value</p>
+                <div className="flex items-center gap-1">
+                  <Coins className="h-4 w-4" />
+                  <p className="text-sm text-gray-300">Gold Value</p>
+                </div>
                 <p className="text-2xl font-bold">{formatIndianNumber(goldInvestments.reduce((sum, gold) => sum + gold.value, 0))}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-300">Insurance Cover</p>
+                <div className="flex items-center gap-1">
+                  <BadgeIndianRupee className="h-4 w-4" />
+                  <p className="text-sm text-gray-300">Insurance Cover</p>
+                </div>
                 <p className="text-2xl font-bold">{formatIndianNumber(insurancePolicies.reduce((sum, policy) => sum + policy.coverAmount, 0))}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-300">PF Balance</p>
+                <div className="flex items-center gap-1">
+                  <PiggyBank className="h-4 w-4" />
+                  <p className="text-sm text-gray-300">PF Balance</p>
+                </div>
                 <p className="text-2xl font-bold">{formatIndianNumber(providentFunds.reduce((sum, pf) => sum + pf.totalBalance, 0))}</p>
               </div>
             </div>

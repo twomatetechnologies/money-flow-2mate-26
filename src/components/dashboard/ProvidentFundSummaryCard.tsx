@@ -7,7 +7,13 @@ import { Link } from 'react-router-dom';
 import { formatIndianNumber } from '@/lib/utils';
 import { getProvidentFunds } from '@/services/providentFundService';
 import { handleError } from '@/utils/errorHandler';
-import { PiggyBank } from 'lucide-react';
+import { PiggyBank, HelpCircle } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProvidentFundSummaryCardProps {
   providentFunds?: ProvidentFund[];
@@ -48,7 +54,19 @@ export function ProvidentFundSummaryCard({ providentFunds: propPFs }: ProvidentF
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center">
           <PiggyBank className="h-5 w-5 mr-2" />
-          Provident Fund Summary
+          <span>Provident Fund Summary</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-sm">
+                <p>Total PF Balance = Sum of all provident fund account balances</p>
+                <p className="mt-2">Monthly contributions and interest rates determine the growth of your PF accounts over time.</p>
+                <p className="mt-2">Formula: PF Balance grows with: Principal + Monthly Contributions + Interest Earned</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -59,7 +77,7 @@ export function ProvidentFundSummaryCard({ providentFunds: propPFs }: ProvidentF
         ) : (
           <>
             <div className="mb-4">
-              <div className="stat-value">₹{formatIndianNumber(totalBalance)}</div>
+              <div className="stat-value">{formatIndianNumber(totalBalance)}</div>
               <div className="stat-label">Total PF Balance</div>
             </div>
             
@@ -67,7 +85,7 @@ export function ProvidentFundSummaryCard({ providentFunds: propPFs }: ProvidentF
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <div>Monthly Contribution:</div>
-                  <div className="font-semibold">₹{formatIndianNumber(totalMonthlyContribution)}</div>
+                  <div className="font-semibold">{formatIndianNumber(totalMonthlyContribution)}</div>
                 </div>
                 <div className="flex justify-between items-center">
                   <div>Average Interest Rate:</div>

@@ -3,6 +3,14 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NetWorthData } from '@/types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart as PieChartIcon, HelpCircle } from 'lucide-react';
+import { formatIndianNumber } from '@/lib/utils';
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AssetAllocationCardProps {
   data: NetWorthData;
@@ -24,15 +32,30 @@ export function AssetAllocationCard({ data }: AssetAllocationCardProps) {
     { name: 'Fixed Deposits', value: data.breakdown.fixedDeposits, percentage: calculatePercentage(data.breakdown.fixedDeposits) },
     { name: 'SIP Investments', value: data.breakdown.sip, percentage: calculatePercentage(data.breakdown.sip) },
     { name: 'Gold', value: data.breakdown.gold, percentage: calculatePercentage(data.breakdown.gold) },
+    { name: 'Provident Fund', value: data.breakdown.providentFund, percentage: calculatePercentage(data.breakdown.providentFund) },
     { name: 'Other Assets', value: data.breakdown.other, percentage: calculatePercentage(data.breakdown.other) }
   ].filter(item => item.value > 0);
 
-  const COLORS = ['#1A365D', '#2C7A7B', '#D69E2E', '#805AD5', '#4A5568'];
+  const COLORS = ['#1A365D', '#2C7A7B', '#D69E2E', '#805AD5', '#38A169', '#4A5568'];
 
   return (
     <Card className="finance-card">
       <CardHeader className="pb-2">
-        <CardTitle>Asset Allocation</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <PieChartIcon className="h-5 w-5" />
+          <span>Asset Allocation</span>
+          <TooltipProvider>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-sm">
+                <p>Asset Allocation shows how your wealth is distributed across different investment types.</p>
+                <p className="mt-2">A well-diversified portfolio typically has assets spread across multiple categories to balance risk and return.</p>
+              </TooltipContent>
+            </UITooltip>
+          </TooltipProvider>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {chartData.length > 0 ? (
@@ -53,7 +76,7 @@ export function AssetAllocationCard({ data }: AssetAllocationCardProps) {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Value']}
+                  formatter={(value: number) => [formatIndianNumber(value), 'Value']}
                   contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
                 />
                 <Legend 

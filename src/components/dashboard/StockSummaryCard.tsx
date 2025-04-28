@@ -1,10 +1,17 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StockHolding } from '@/types';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, LineChart, HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatIndianNumber } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface StockSummaryCardProps {
   stocks: StockHolding[];
@@ -28,7 +35,21 @@ export function StockSummaryCard({ stocks }: StockSummaryCardProps) {
     <Card className="finance-card">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between">
-          <span>Stock Portfolio</span>
+          <div className="flex items-center gap-2">
+            <LineChart className="h-5 w-5" />
+            <span>Stock Portfolio</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-sm">
+                  <p>Current Stock Value = Current Price × Quantity for all stocks</p>
+                  <p className="mt-2">Performance percentage shows overall gain/loss compared to your purchase cost.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <div className="flex items-center">
             {percentGain >= 0 ? (
               <TrendingUp className="h-4 w-4 mr-1 trend-up" />

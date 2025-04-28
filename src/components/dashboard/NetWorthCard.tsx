@@ -5,6 +5,13 @@ import { NetWorthData } from '@/types';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
 import { formatIndianNumber } from '@/lib/utils';
+import { CircleDollarSign, HelpCircle } from 'lucide-react';
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface NetWorthCardProps {
   data: NetWorthData;
@@ -26,7 +33,21 @@ export function NetWorthCard({ data }: NetWorthCardProps) {
     <Card className="finance-card">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between">
-          <span>Net Worth</span>
+          <div className="flex items-center gap-2">
+            <CircleDollarSign className="h-5 w-5" />
+            <span>Net Worth</span>
+            <TooltipProvider>
+              <UITooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-sm">
+                  <p>Net Worth = Sum of all your assets (Stocks + Fixed Deposits + SIP Investments + Gold + Provident Fund)</p>
+                  <p className="mt-2">This represents your total financial value and is a key indicator of financial health.</p>
+                </TooltipContent>
+              </UITooltip>
+            </TooltipProvider>
+          </div>
           <div className="flex items-center">
             <span className={`text-sm font-medium ${isPositive ? 'trend-up' : 'trend-down'}`}>
               {isPositive ? '+' : ''}{percentChange.toFixed(2)}%
@@ -36,7 +57,7 @@ export function NetWorthCard({ data }: NetWorthCardProps) {
       </CardHeader>
       <CardContent>
         <div className="mb-4">
-          <div className="stat-value">₹{formatIndianNumber(data.total)}</div>
+          <div className="stat-value">{formatIndianNumber(data.total)}</div>
           <div className="stat-label">Total Assets</div>
         </div>
         <div className="h-48">
@@ -61,7 +82,7 @@ export function NetWorthCard({ data }: NetWorthCardProps) {
                 tickFormatter={(value) => `₹${(value / 1000)}k`}
               />
               <Tooltip 
-                formatter={(value: number) => [`₹${formatIndianNumber(value)}`, 'Value']}
+                formatter={(value: number) => [formatIndianNumber(value), 'Value']}
                 labelFormatter={(label) => `${label}`}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
               />

@@ -8,6 +8,13 @@ import { Link } from 'react-router-dom';
 import { formatIndianNumber } from '@/lib/utils';
 import { getFixedDeposits } from '@/services/fixedDepositService';
 import { handleError } from '@/utils/errorHandler';
+import { Calendar, HelpCircle } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface UpcomingFDMaturityCardProps {
   fixedDeposits?: FixedDeposit[];
@@ -51,7 +58,22 @@ export function UpcomingFDMaturityCard({ fixedDeposits: propFixedDeposits }: Upc
   return (
     <Card className="finance-card h-full">
       <CardHeader className="pb-2">
-        <CardTitle>Upcoming FD Maturities</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          <span>Upcoming FD Maturities</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-sm">
+                <p>Shows fixed deposits maturing in the next 90 days.</p>
+                <p className="mt-2">Total Fixed Deposits = Sum of all FD principal amounts.</p>
+                <p className="mt-2">Maturity Value = Principal + Interest earned over the deposit period.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
