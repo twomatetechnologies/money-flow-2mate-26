@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getNetWorth, getStocks, getFixedDeposits, getSIPInvestments, getGoldInvestments, getInsurancePolicies } from '@/services/mockData';
+import { getNetWorth } from '@/services/netWorthService';
 import { NetWorthData } from '@/types';
 import { 
   BarChart, 
@@ -51,8 +52,9 @@ const Reports = () => {
     { name: 'Fixed Deposits', value: netWorth.breakdown.fixedDeposits },
     { name: 'SIP', value: netWorth.breakdown.sip },
     { name: 'Gold', value: netWorth.breakdown.gold },
+    { name: 'Provident Fund', value: netWorth.breakdown.providentFund },
     { name: 'Other', value: netWorth.breakdown.other },
-  ];
+  ].filter(item => item.value > 0); // Only include items with values > 0
 
   // Prepare data for the bar chart
   const barData = netWorth.history.map(item => ({
@@ -60,11 +62,7 @@ const Reports = () => {
     Net_Worth: item.value
   }));
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
-  const formatTooltipValue = (value: number) => {
-    return formatIndianNumber(value);
-  };
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#4A5568'];
 
   // Custom tooltip formatter for pie chart
   const customPieTooltip = ({ active, payload }: any) => {

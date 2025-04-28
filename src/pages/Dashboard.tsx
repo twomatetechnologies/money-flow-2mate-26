@@ -52,6 +52,7 @@ const Dashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Fetch all data in parallel
       const [
         netWorthData,
         stocksData, 
@@ -96,6 +97,30 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  // Dynamic insight message based on data
+  const getInsightMessage = () => {
+    if (netWorth.total <= 0) return "Start building your wealth today!";
+    
+    const largestAsset = Object.entries(netWorth.breakdown)
+      .reduce((max, [key, value]) => value > max.value ? {key, value} : max, {key: "", value: 0});
+      
+    if (largestAsset.key === "stocks" && largestAsset.value > netWorth.total * 0.5) {
+      return "Your portfolio is heavily weighted towards stocks. Consider diversification.";
+    } else if (largestAsset.key === "fixedDeposits" && largestAsset.value > netWorth.total * 0.5) {
+      return "Consider equity investments for potentially higher returns.";
+    } else if (netWorth.history.length > 2) {
+      const lastValue = netWorth.history[netWorth.history.length - 1].value;
+      const prevValue = netWorth.history[netWorth.history.length - 2].value;
+      if (lastValue > prevValue) {
+        return "Your wealth is growing steadily!";
+      } else {
+        return "Focus on increasing your savings and investments.";
+      }
+    }
+    
+    return "Keep tracking your investments for better financial health!";
+  };
 
   return (
     <div className="space-y-6">
@@ -176,7 +201,7 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="mt-6 font-medium text-lg">
-            Your wealth is growing steadily!
+            {getInsightMessage()}
           </div>
         </div>
       </div>

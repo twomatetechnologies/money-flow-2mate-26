@@ -9,11 +9,68 @@ const STOCKS_STORAGE_KEY = 'stocks';
 const loadStocks = (): StockHolding[] => {
   try {
     const stored = localStorage.getItem(STOCKS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    if (stored) {
+      return JSON.parse(stored);
+    } else {
+      // Create sample data if none exists
+      return createSampleStocks();
+    }
   } catch (error) {
     console.error('Error loading stocks:', error);
-    return [];
+    return createSampleStocks();
   }
+};
+
+// Create sample stock data for visualization
+const createSampleStocks = (): StockHolding[] => {
+  const sampleStocks: StockHolding[] = [
+    {
+      id: uuidv4(),
+      symbol: 'RELIANCE',
+      name: 'Reliance Industries',
+      quantity: 50,
+      averageBuyPrice: 2400,
+      currentPrice: 2580,
+      change: 35,
+      changePercent: 1.37,
+      value: 129000,
+      sector: 'Energy',
+      lastUpdated: new Date(),
+      familyMemberId: 'self-default'
+    },
+    {
+      id: uuidv4(),
+      symbol: 'INFY',
+      name: 'Infosys',
+      quantity: 100,
+      averageBuyPrice: 1500,
+      currentPrice: 1420,
+      change: -28,
+      changePercent: -1.93,
+      value: 142000,
+      sector: 'Technology',
+      lastUpdated: new Date(),
+      familyMemberId: 'spouse-default'
+    },
+    {
+      id: uuidv4(),
+      symbol: 'HDFCBANK',
+      name: 'HDFC Bank',
+      quantity: 75,
+      averageBuyPrice: 1650,
+      currentPrice: 1720,
+      change: 12,
+      changePercent: 0.7,
+      value: 129000,
+      sector: 'Banking',
+      lastUpdated: new Date(),
+      familyMemberId: 'self-default'
+    }
+  ];
+  
+  // Save the sample stocks to localStorage
+  localStorage.setItem(STOCKS_STORAGE_KEY, JSON.stringify(sampleStocks));
+  return sampleStocks;
 };
 
 // Save stocks to localStorage
