@@ -24,6 +24,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './App.css';
 import Profile from './pages/Profile';
 import Goals from './pages/Goals';
+import ProvidentFund from './pages/ProvidentFund';
 
 function App() {
   const [queryClient] = useState(() => new QueryClient());
@@ -49,6 +50,7 @@ function App() {
                 <Route path="fixed-deposits" element={<FixedDeposits />} />
                 <Route path="savings-accounts" element={<SavingsAccounts />} />
                 <Route path="sip-investments" element={<SIPInvestments />} />
+                <Route path="provident-fund" element={<ProvidentFund />} />
                 <Route path="insurance" element={<Insurance />} />
                 <Route path="gold" element={<Gold />} />
                 <Route path="reports" element={<Reports />} />

@@ -1,3 +1,4 @@
+
 // Finance data types
 export interface StockHolding {
   id: string;
@@ -73,6 +74,21 @@ export interface GoldInvestment {
   lastUpdated: Date; // Added to match usage in goldService.ts
 }
 
+export interface ProvidentFund {
+  id: string;
+  employerName: string;
+  accountNumber: string;
+  employeeContribution: number;
+  employerContribution: number;
+  totalBalance: number;
+  interestRate: number;
+  startDate: Date;
+  lastUpdated: Date;
+  monthlyContribution: number;
+  notes?: string;
+  familyMemberId?: string; // Associate with family member
+}
+
 export interface NetWorthData {
   total: number;
   breakdown: {
@@ -81,6 +97,7 @@ export interface NetWorthData {
     sip: number;
     gold: number;
     other: number;
+    providentFund: number; // Added provident fund to breakdown
   };
   history: {
     date: Date;

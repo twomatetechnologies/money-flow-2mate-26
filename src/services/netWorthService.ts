@@ -1,18 +1,21 @@
+
 import { NetWorthData } from '@/types';
 import { getStocks } from './stockService';
 import { getFixedDeposits } from './fixedDepositService';
 import { getSIPInvestments } from './sipInvestmentService';
 import { getGoldInvestments } from './goldInvestmentService';
+import { getProvidentFunds } from './providentFundService';
 
 // Calculate net worth from all investment types
 export const getNetWorth = async (): Promise<NetWorthData> => {
   try {
     // Fetch data from all services in parallel
-    const [stocksData, fdData, sipData, goldData] = await Promise.all([
+    const [stocksData, fdData, sipData, goldData, pfData] = await Promise.all([
       getStocks(),
       getFixedDeposits(),
       getSIPInvestments(),
-      getGoldInvestments()
+      getGoldInvestments(),
+      getProvidentFunds()
     ]);
     
     // Calculate totals for each investment type
@@ -20,9 +23,10 @@ export const getNetWorth = async (): Promise<NetWorthData> => {
     const fdTotal = fdData.reduce((sum, fd) => sum + fd.principal, 0);
     const sipTotal = sipData.reduce((sum, sip) => sum + sip.currentValue, 0);
     const goldTotal = goldData.reduce((sum, gold) => sum + gold.value, 0);
+    const pfTotal = pfData.reduce((sum, pf) => sum + pf.totalBalance, 0);
     
     // Calculate total net worth (excluding insurance)
-    const total = stocksTotal + fdTotal + sipTotal + goldTotal;
+    const total = stocksTotal + fdTotal + sipTotal + goldTotal + pfTotal;
     
     // Get historical data from localStorage
     let history: { date: Date; value: number }[] = [];
@@ -80,6 +84,7 @@ export const getNetWorth = async (): Promise<NetWorthData> => {
         fixedDeposits: fdTotal,
         sip: sipTotal,
         gold: goldTotal,
+        providentFund: pfTotal,
         other: 0 // Insurance excluded from net worth
       },
       history: history
@@ -93,6 +98,7 @@ export const getNetWorth = async (): Promise<NetWorthData> => {
         fixedDeposits: 0,
         sip: 0,
         gold: 0,
+        providentFund: 0,
         other: 0
       },
       history: []

@@ -4,6 +4,7 @@ import { NetWorthCard } from '@/components/dashboard/NetWorthCard';
 import { AssetAllocationCard } from '@/components/dashboard/AssetAllocationCard';
 import { StockSummaryCard } from '@/components/dashboard/StockSummaryCard';
 import { UpcomingFDMaturityCard } from '@/components/dashboard/UpcomingFDMaturityCard';
+import { ProvidentFundSummaryCard } from '@/components/dashboard/ProvidentFundSummaryCard';
 import { 
   getNetWorth
 } from '@/services/netWorthService';
@@ -12,13 +13,15 @@ import { getFixedDeposits } from '@/services/fixedDepositService';
 import { getSIPInvestments } from '@/services/sipInvestmentService';
 import { getGoldInvestments } from '@/services/goldInvestmentService';
 import { getInsurancePolicies } from '@/services/crudService';
+import { getProvidentFunds } from '@/services/providentFundService';
 import { 
   NetWorthData, 
   StockHolding, 
   FixedDeposit, 
   SIPInvestment,
   GoldInvestment,
-  InsurancePolicy 
+  InsurancePolicy,
+  ProvidentFund 
 } from '@/types';
 import { formatIndianNumber } from '@/lib/utils';
 import { handleError } from '@/utils/errorHandler';
@@ -30,6 +33,7 @@ const Dashboard = () => {
   const [sipInvestments, setSipInvestments] = useState<SIPInvestment[]>([]);
   const [goldInvestments, setGoldInvestments] = useState<GoldInvestment[]>([]);
   const [insurancePolicies, setInsurancePolicies] = useState<InsurancePolicy[]>([]);
+  const [providentFunds, setProvidentFunds] = useState<ProvidentFund[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -41,14 +45,16 @@ const Dashboard = () => {
         fdData, 
         sipData,
         goldData,
-        insuranceData
+        insuranceData,
+        providentFundsData
       ] = await Promise.all([
         getNetWorth(),
         getStocks(),
         getFixedDeposits(),
         getSIPInvestments(),
         getGoldInvestments(),
-        getInsurancePolicies()
+        getInsurancePolicies(),
+        getProvidentFunds()
       ]);
 
       setStocks(stocksData);
@@ -56,6 +62,7 @@ const Dashboard = () => {
       setSipInvestments(sipData);
       setGoldInvestments(goldData);
       setInsurancePolicies(insuranceData);
+      setProvidentFunds(providentFundsData);
       setNetWorth(netWorthData);
       
     } catch (error) {
@@ -102,10 +109,16 @@ const Dashboard = () => {
         <div>
           <UpcomingFDMaturityCard fixedDeposits={fixedDeposits} />
         </div>
+        <div>
+          <ProvidentFundSummaryCard providentFunds={providentFunds} />
+        </div>
+      </div>
+      
+      <div className="grid gap-6 md:grid-cols-1">
         <div className="finance-card bg-finance-blue text-white p-6 rounded-lg shadow-md flex flex-col justify-between">
           <div>
             <h3 className="text-xl font-bold mb-2">Quick Stats</h3>
-            <div className="space-y-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
               <div>
                 <p className="text-sm text-gray-300">SIP Investments</p>
                 <p className="text-2xl font-bold">{formatIndianNumber(sipInvestments.reduce((sum, sip) => sum + sip.currentValue, 0))}</p>
@@ -117,6 +130,10 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm text-gray-300">Insurance Cover</p>
                 <p className="text-2xl font-bold">{formatIndianNumber(insurancePolicies.reduce((sum, policy) => sum + policy.coverAmount, 0))}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-300">PF Balance</p>
+                <p className="text-2xl font-bold">{formatIndianNumber(providentFunds.reduce((sum, pf) => sum + pf.totalBalance, 0))}</p>
               </div>
             </div>
           </div>

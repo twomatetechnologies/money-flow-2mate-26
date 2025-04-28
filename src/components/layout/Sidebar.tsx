@@ -1,3 +1,4 @@
+
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -6,12 +7,13 @@ import {
   Heart,
   Home,
   Package,
+  PiggyBank,
   ScrollText,
   Settings,
   Shield,
   TrendingUp,
   Users,
-  Wallet  // Adding Wallet icon
+  Wallet
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -78,6 +80,20 @@ const Sidebar = () => {
           >
             <BarChart className="h-4 w-4" />
             <span>SIP Investments</span>
+          </NavLink>
+          <NavLink
+            to="/provident-fund"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <PiggyBank className="h-4 w-4" />
+            <span>Provident Fund</span>
           </NavLink>
           <NavLink
             to="/insurance"
