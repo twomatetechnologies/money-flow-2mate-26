@@ -1,3 +1,4 @@
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -44,5 +45,6 @@ export function formatIndianNumber(num: number): string {
     result = result + '.' + decPart;
   }
 
+  // Add the currency symbol only once at the beginning
   return '₹' + result;
 }

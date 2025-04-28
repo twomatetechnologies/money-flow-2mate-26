@@ -147,7 +147,7 @@ const ProvidentFundPage = () => {
             <PiggyBank className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{formatIndianNumber(totalBalance)}</div>
+            <div className="text-2xl font-bold">{formatIndianNumber(totalBalance)}</div>
             <p className="text-xs text-muted-foreground">
               Combined balance across all PF accounts
             </p>
@@ -161,7 +161,7 @@ const ProvidentFundPage = () => {
             <PiggyBank className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{formatIndianNumber(totalMonthlyContribution)}</div>
+            <div className="text-2xl font-bold">{formatIndianNumber(totalMonthlyContribution)}</div>
             <p className="text-xs text-muted-foreground">
               Total monthly contributions across all accounts
             </p>
@@ -215,10 +215,10 @@ const ProvidentFundPage = () => {
                         <TableCell className="font-medium">{pf.employerName}</TableCell>
                         <TableCell>{pf.accountNumber}</TableCell>
                         <TableCell>{pf.interestRate.toFixed(2)}%</TableCell>
-                        <TableCell>₹{formatIndianNumber(pf.monthlyContribution)}</TableCell>
-                        <TableCell>₹{formatIndianNumber(pf.totalBalance)}</TableCell>
+                        <TableCell>{formatIndianNumber(pf.monthlyContribution)}</TableCell>
+                        <TableCell>{formatIndianNumber(pf.totalBalance)}</TableCell>
                         <TableCell>
-                          <FamilyMemberDisplay familyMemberId={pf.familyMemberId} />
+                          <FamilyMemberDisplay memberId={pf.familyMemberId} />
                         </TableCell>
                         <TableCell>{format(new Date(pf.lastUpdated), 'dd MMM yyyy')}</TableCell>
                         <TableCell className="text-right">
