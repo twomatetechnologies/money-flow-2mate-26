@@ -8,6 +8,8 @@ import { SavingsAccount } from '@/types';
 import SavingsAccountForm from '@/components/savings/SavingsAccountForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
+import ImportExportMenu from '@/components/common/ImportExportMenu';
+import { v4 as uuidv4 } from 'uuid';
 
 const SavingsAccounts = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -91,14 +93,128 @@ const SavingsAccounts = () => {
     }
   };
 
+  // For export functionality
+  const getExportData = (data: SavingsAccount[]) => {
+    return data.map(account => ({
+      'Bank Name': account.bankName,
+      'Account Number': account.accountNumber,
+      'Account Type': account.accountType,
+      'Balance': account.balance,
+      'Interest Rate': account.interestRate,
+      'Branch Name': account.branchName,
+      'IFSC Code': account.ifscCode,
+      'Family Member ID': account.familyMemberId || '',
+      'Notes': account.notes || '',
+      'Last Updated': new Date(account.lastUpdated).toISOString().split('T')[0]
+    }));
+  };
+
+  // For sample data in import functionality
+  const getSampleData = () => {
+    const headers = [
+      'Bank Name',
+      'Account Number',
+      'Account Type',
+      'Balance',
+      'Interest Rate',
+      'Branch Name',
+      'IFSC Code',
+      'Family Member ID',
+      'Notes'
+    ];
+    
+    const data = [
+      ['HDFC Bank', 'XXXX1234', 'Savings', '50000', '4.0', 'Main Branch', 'HDFC0001234', 'member-1', 'Primary savings account'],
+      ['SBI', 'XXXX5678', 'Salary', '75000', '3.5', 'City Branch', 'SBIN0005678', 'member-2', 'Salary account']
+    ];
+    
+    return { headers, data };
+  };
+
+  // Validation for imported data
+  const validateImportedData = (data: any[]) => {
+    if (!Array.isArray(data) || data.length === 0) {
+      return { valid: false, message: "No valid data found in the file" };
+    }
+    
+    const requiredFields = ['Bank Name', 'Account Number', 'Account Type', 'Balance'];
+    const isValid = data.every(item => 
+      requiredFields.every(field => item[field] !== undefined && item[field] !== '')
+    );
+    
+    if (!isValid) {
+      return { 
+        valid: false, 
+        message: "Some records are missing required fields. Required: Bank Name, Account Number, Account Type, Balance" 
+      };
+    }
+    
+    return { valid: true };
+  };
+
+  // Handle import functionality
+  const handleImport = async (importedData: any[]) => {
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const item of importedData) {
+        try {
+          const accountData: Partial<SavingsAccount> = {
+            bankName: item['Bank Name'],
+            accountNumber: item['Account Number'],
+            accountType: item['Account Type'] as SavingsAccount['accountType'],
+            balance: parseFloat(item['Balance']) || 0,
+            interestRate: parseFloat(item['Interest Rate']) || 0,
+            branchName: item['Branch Name'] || '',
+            ifscCode: item['IFSC Code'] || '',
+            familyMemberId: item['Family Member ID'] || '',
+            notes: item['Notes'] || '',
+            lastUpdated: new Date()
+          };
+          
+          await addSavingsAccount(accountData);
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          console.error("Error importing record:", error);
+        }
+      }
+      
+      toast({
+        title: "Import completed",
+        description: `Successfully imported ${successCount} accounts. ${errorCount > 0 ? `Failed: ${errorCount}` : ''}`
+      });
+      
+      loadAccounts();
+    } catch (error) {
+      console.error('Error importing accounts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to import savings accounts',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Savings Accounts</h1>
-        <Button onClick={handleAdd}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Savings Account
-        </Button>
+        <div className="flex space-x-2">
+          <ImportExportMenu
+            data={accounts}
+            onImport={handleImport}
+            exportFilename="savings_accounts"
+            getExportData={getExportData}
+            getSampleData={getSampleData}
+            validateImportedData={validateImportedData}
+          />
+          <Button onClick={handleAdd}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Savings Account
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

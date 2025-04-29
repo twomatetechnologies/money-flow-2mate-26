@@ -9,6 +9,8 @@ import FixedDepositForm from '@/components/fixedDeposits/FixedDepositForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import { handleError } from '@/utils/errorHandler';
+import ImportExportMenu from '@/components/common/ImportExportMenu';
+import { formatIndianNumber } from '@/lib/utils';
 
 const FixedDeposits = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -86,14 +88,147 @@ const FixedDeposits = () => {
     }
   };
 
+  // For export functionality
+  const getExportData = (data: FixedDeposit[]) => {
+    return data.map(fd => ({
+      'Bank Name': fd.bankName,
+      'Account Number': fd.accountNumber,
+      'Principal': fd.principal,
+      'Interest Rate': fd.interestRate,
+      'Start Date': fd.startDate ? new Date(fd.startDate).toISOString().split('T')[0] : '',
+      'Maturity Date': fd.maturityDate ? new Date(fd.maturityDate).toISOString().split('T')[0] : '',
+      'Maturity Amount': fd.maturityAmount,
+      'Auto Renew': fd.isAutoRenew ? 'Yes' : 'No',
+      'Family Member ID': fd.familyMemberId || '',
+      'Notes': fd.notes || ''
+    }));
+  };
+
+  // For sample data in import functionality
+  const getSampleData = () => {
+    const headers = [
+      'Bank Name',
+      'Account Number',
+      'Principal',
+      'Interest Rate',
+      'Start Date',
+      'Maturity Date',
+      'Maturity Amount',
+      'Auto Renew',
+      'Family Member ID',
+      'Notes'
+    ];
+    
+    const data = [
+      [
+        'HDFC Bank',
+        'FD123456789',
+        '100000',
+        '7.5',
+        '2023-01-15',
+        '2024-01-15',
+        '107500',
+        'Yes',
+        'member-1',
+        'Emergency fund FD'
+      ],
+      [
+        'SBI',
+        'FD987654321',
+        '200000',
+        '7.0',
+        '2023-05-10',
+        '2025-05-10',
+        '229400',
+        'No',
+        'member-2',
+        'Long term saving'
+      ]
+    ];
+    
+    return { headers, data };
+  };
+
+  // Validation for imported data
+  const validateImportedData = (data: any[]) => {
+    if (!Array.isArray(data) || data.length === 0) {
+      return { valid: false, message: "No valid data found in the file" };
+    }
+    
+    const requiredFields = ['Bank Name', 'Account Number', 'Principal', 'Interest Rate', 'Start Date', 'Maturity Date'];
+    const isValid = data.every(item => 
+      requiredFields.every(field => item[field] !== undefined && item[field] !== '')
+    );
+    
+    if (!isValid) {
+      return { 
+        valid: false, 
+        message: "Some records are missing required fields. Required: Bank Name, Account Number, Principal, Interest Rate, Start Date, Maturity Date" 
+      };
+    }
+    
+    return { valid: true };
+  };
+
+  // Handle import functionality
+  const handleImport = async (importedData: any[]) => {
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const item of importedData) {
+        try {
+          const fdData: Partial<FixedDeposit> = {
+            bankName: item['Bank Name'],
+            accountNumber: item['Account Number'],
+            principal: parseFloat(item['Principal']) || 0,
+            interestRate: parseFloat(item['Interest Rate']) || 0,
+            startDate: new Date(item['Start Date']),
+            maturityDate: new Date(item['Maturity Date']),
+            maturityAmount: parseFloat(item['Maturity Amount']) || 0,
+            isAutoRenew: item['Auto Renew'] === 'Yes' || item['Auto Renew'] === true,
+            familyMemberId: item['Family Member ID'] || '',
+            notes: item['Notes'] || '',
+            lastUpdated: new Date()
+          };
+          
+          await addFixedDeposit(fdData);
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          console.error("Error importing record:", error);
+        }
+      }
+      
+      toast({
+        title: "Import completed",
+        description: `Successfully imported ${successCount} fixed deposits. ${errorCount > 0 ? `Failed: ${errorCount}` : ''}`
+      });
+      
+      loadFixedDeposits();
+    } catch (error) {
+      handleError(error, 'Failed to import fixed deposits');
+    }
+  };
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Fixed Deposits</h1>
-        <Button onClick={handleAdd}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Fixed Deposit
-        </Button>
+        <div className="flex space-x-2">
+          <ImportExportMenu
+            data={fixedDeposits}
+            onImport={handleImport}
+            exportFilename="fixed_deposits"
+            getExportData={getExportData}
+            getSampleData={getSampleData}
+            validateImportedData={validateImportedData}
+          />
+          <Button onClick={handleAdd}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Fixed Deposit
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -119,7 +254,7 @@ const FixedDeposits = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Principal:</span>
-                    <span>₹{fd.principal.toLocaleString()}</span>
+                    <span>{formatIndianNumber(fd.principal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Interest Rate:</span>
@@ -127,7 +262,7 @@ const FixedDeposits = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Maturity Amount:</span>
-                    <span>₹{fd.maturityAmount.toLocaleString()}</span>
+                    <span>{formatIndianNumber(fd.maturityAmount)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Maturity Date:</span>

@@ -36,6 +36,8 @@ import {
 } from '@/services/providentFundService';
 import ProvidentFundForm, { ProvidentFundFormData } from '@/components/providentFund/ProvidentFundForm';
 import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
+import ImportExportMenu from '@/components/common/ImportExportMenu';
+import { v4 as uuidv4 } from 'uuid';
 
 const ProvidentFundPage = () => {
   const [providentFunds, setProvidentFunds] = useState<ProvidentFund[]>([]);
@@ -121,6 +123,107 @@ const ProvidentFundPage = () => {
     }
   };
 
+  // For export functionality
+  const getExportData = (data: ProvidentFund[]) => {
+    return data.map(pf => ({
+      'Employer Name': pf.employerName,
+      'Account Number': pf.accountNumber,
+      'Interest Rate': pf.interestRate,
+      'Monthly Contribution': pf.monthlyContribution,
+      'Employee Contribution': pf.employeeContribution,
+      'Employer Contribution': pf.employerContribution,
+      'Total Balance': pf.totalBalance,
+      'Start Date': format(new Date(pf.startDate), 'yyyy-MM-dd'),
+      'Family Member ID': pf.familyMemberId || '',
+      'Notes': pf.notes || ''
+    }));
+  };
+
+  // For sample data in import functionality
+  const getSampleData = () => {
+    const headers = [
+      'Employer Name',
+      'Account Number',
+      'Interest Rate',
+      'Monthly Contribution',
+      'Employee Contribution',
+      'Employer Contribution',
+      'Total Balance',
+      'Start Date',
+      'Family Member ID',
+      'Notes'
+    ];
+    
+    const data = [
+      ['ABC Company', 'PF123456789', '8.15', '5000', '100000', '80000', '180000', '2023-01-15', 'member-1', 'Primary PF account'],
+      ['XYZ Corporation', 'PF987654321', '8.05', '4500', '75000', '60000', '135000', '2022-05-10', 'member-2', 'Secondary PF account']
+    ];
+    
+    return { headers, data };
+  };
+
+  // Validation for imported data
+  const validateImportedData = (data: any[]) => {
+    if (!Array.isArray(data) || data.length === 0) {
+      return { valid: false, message: "No valid data found in the file" };
+    }
+    
+    const requiredFields = ['Employer Name', 'Account Number', 'Monthly Contribution', 'Total Balance'];
+    const isValid = data.every(item => 
+      requiredFields.every(field => item[field] !== undefined && item[field] !== '')
+    );
+    
+    if (!isValid) {
+      return { 
+        valid: false, 
+        message: "Some records are missing required fields. Required: Employer Name, Account Number, Monthly Contribution, Total Balance" 
+      };
+    }
+    
+    return { valid: true };
+  };
+
+  // Handle import functionality
+  const handleImport = async (importedData: any[]) => {
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const item of importedData) {
+        try {
+          const pfData: Omit<ProvidentFund, 'id'> = {
+            employerName: item['Employer Name'],
+            accountNumber: item['Account Number'],
+            interestRate: parseFloat(item['Interest Rate']) || 0,
+            monthlyContribution: parseFloat(item['Monthly Contribution']) || 0,
+            employeeContribution: parseFloat(item['Employee Contribution']) || 0,
+            employerContribution: parseFloat(item['Employer Contribution']) || 0,
+            totalBalance: parseFloat(item['Total Balance']) || 0,
+            startDate: new Date(item['Start Date']) || new Date(),
+            familyMemberId: item['Family Member ID'] || '',
+            notes: item['Notes'] || '',
+            lastUpdated: new Date()
+          };
+          
+          await createProvidentFund(pfData);
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          console.error("Error importing record:", error);
+        }
+      }
+      
+      toast({
+        title: "Import completed",
+        description: `Successfully imported ${successCount} provident funds. ${errorCount > 0 ? `Failed: ${errorCount}` : ''}`
+      });
+      
+      fetchProvidentFunds();
+    } catch (error) {
+      handleError(error, 'Failed to import provident funds');
+    }
+  };
+
   // Calculate totals
   const totalBalance = providentFunds.reduce((sum, pf) => sum + pf.totalBalance, 0);
   const totalMonthlyContribution = providentFunds.reduce((sum, pf) => sum + pf.monthlyContribution, 0);
@@ -134,7 +237,17 @@ const ProvidentFundPage = () => {
             Manage your provident fund accounts and track your retirement savings
           </p>
         </div>
-        <Button onClick={openCreateDialog}>Add Provident Fund</Button>
+        <div className="flex space-x-2">
+          <ImportExportMenu
+            data={providentFunds}
+            onImport={handleImport}
+            exportFilename="provident_funds"
+            getExportData={getExportData}
+            getSampleData={getSampleData}
+            validateImportedData={validateImportedData}
+          />
+          <Button onClick={openCreateDialog}>Add Provident Fund</Button>
+        </div>
       </div>
 
       {/* Summary cards */}
