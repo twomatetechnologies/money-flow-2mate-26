@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   DropdownMenu,
@@ -12,8 +11,9 @@ import { FileText, Upload, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { exportToCSV, exportToExcel, importFromFile } from "@/utils/exportUtils";
+import { exportToCSV, exportToExcel, importFromFile, downloadSampleCSV, downloadSampleExcel } from "@/utils/exportUtils";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from 'xlsx';
 
 interface ImportExportMenuProps {
   data: any[];
@@ -59,10 +59,11 @@ const ImportExportMenu: React.FC<ImportExportMenuProps> = ({
     const { headers, data: sampleData } = getSampleData();
     const filename = `sample_${exportFilename}`;
     
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sample");
-    XLSX.writeFile(wb, `${filename}.csv`);
+    // Use the utility function instead of direct XLSX calls
+    downloadSampleCSV(headers, sampleData.map(row => row.reduce((obj, val, idx) => ({
+      ...obj,
+      [headers[idx]]: val
+    }), {})), filename);
     
     toast({
       title: "Sample file downloaded",
@@ -74,10 +75,11 @@ const ImportExportMenu: React.FC<ImportExportMenuProps> = ({
     const { headers, data: sampleData } = getSampleData();
     const filename = `sample_${exportFilename}`;
     
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sample");
-    XLSX.writeFile(wb, `${filename}.xlsx`);
+    // Use the utility function instead of direct XLSX calls
+    downloadSampleExcel(headers, sampleData.map(row => row.reduce((obj, val, idx) => ({
+      ...obj,
+      [headers[idx]]: val
+    }), {})), filename);
     
     toast({
       title: "Sample file downloaded",

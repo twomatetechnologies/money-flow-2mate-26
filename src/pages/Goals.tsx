@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -14,7 +13,7 @@ import { GoalProgressCard } from '@/components/goals/GoalProgress';
 import { createGoal, getGoals, calculateGoalProgress } from '@/services/goalService';
 import { useToast } from '@/components/ui/use-toast';
 import ImportExportMenu from '@/components/common/ImportExportMenu';
-import { Goal } from '@/types/goals';
+import { FinancialGoal, Goal } from '@/types/goals';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function Goals() {
@@ -33,15 +32,15 @@ export default function Goals() {
   };
 
   // For export functionality
-  const getExportData = (data: Goal[]) => {
+  const getExportData = (data: FinancialGoal[]) => {
     return data.map(goal => ({
       'Name': goal.name,
-      'Type': goal.type,
+      'Type': goal.type || goal.category,
       'Target Amount': goal.targetAmount,
       'Current Amount': goal.currentAmount,
       'Start Date': goal.startDate ? new Date(goal.startDate).toISOString().split('T')[0] : '',
-      'Target Date': goal.targetDate ? new Date(goal.targetDate).toISOString().split('T')[0] : '',
-      'Priority': goal.priority,
+      'Target Date': goal.targetDate || goal.deadline ? new Date(goal.targetDate || goal.deadline).toISOString().split('T')[0] : '',
+      'Priority': goal.priority || 'Medium',
       'Notes': goal.notes || ''
     }));
   };
@@ -109,22 +108,19 @@ export default function Goals() {
   // Handle import functionality
   const handleImport = async (importedData: any[]) => {
     try {
-      const newGoals: Goal[] = [];
+      const newGoals: FinancialGoal[] = [];
       
       for (const item of importedData) {
         try {
+          const targetDate = new Date(item['Target Date']);
+          
           const goalData = {
             name: item['Name'],
-            type: item['Type'],
+            category: item['Type'] || 'Savings',
             targetAmount: parseFloat(item['Target Amount']) || 0,
             currentAmount: parseFloat(item['Current Amount']) || 0,
-            startDate: new Date(item['Start Date'] || new Date()),
-            targetDate: new Date(item['Target Date']),
-            priority: item['Priority'] || 'Medium',
-            notes: item['Notes'] || '',
-            id: uuidv4(),
-            createdAt: new Date(),
-            updatedAt: new Date()
+            deadline: targetDate,
+            notes: item['Notes'] || ''
           };
           
           const newGoal = createGoal(goalData);
