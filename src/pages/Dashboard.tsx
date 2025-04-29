@@ -5,6 +5,9 @@ import { AssetAllocationCard } from '@/components/dashboard/AssetAllocationCard'
 import { StockSummaryCard } from '@/components/dashboard/StockSummaryCard';
 import { UpcomingFDMaturityCard } from '@/components/dashboard/UpcomingFDMaturityCard';
 import { ProvidentFundSummaryCard } from '@/components/dashboard/ProvidentFundSummaryCard';
+import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScore';
+import { GoalProgressTracking } from '@/components/dashboard/GoalProgressTracking';
+import { PersonalizedRecommendations } from '@/components/dashboard/PersonalizedRecommendations';
 import { 
   getNetWorth
 } from '@/services/netWorthService';
@@ -14,6 +17,7 @@ import { getSIPInvestments } from '@/services/sipInvestmentService';
 import { getGoldInvestments } from '@/services/goldInvestmentService';
 import { getInsurancePolicies } from '@/services/crudService';
 import { getProvidentFunds } from '@/services/providentFundService';
+import { getGoals, calculateGoalProgress } from '@/services/goalService';
 import { 
   NetWorthData, 
   StockHolding, 
@@ -23,6 +27,7 @@ import {
   InsurancePolicy,
   ProvidentFund 
 } from '@/types';
+import { FinancialGoal, GoalProgress } from '@/types/goals';
 import { formatIndianNumber } from '@/lib/utils';
 import { handleError } from '@/utils/errorHandler';
 import { 
@@ -47,6 +52,8 @@ const Dashboard = () => {
   const [goldInvestments, setGoldInvestments] = useState<GoldInvestment[]>([]);
   const [insurancePolicies, setInsurancePolicies] = useState<InsurancePolicy[]>([]);
   const [providentFunds, setProvidentFunds] = useState<ProvidentFund[]>([]);
+  const [goals, setGoals] = useState<FinancialGoal[]>([]);
+  const [goalProgress, setGoalProgress] = useState<Record<string, GoalProgress>>({});
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -60,7 +67,8 @@ const Dashboard = () => {
         sipData,
         goldData,
         insuranceData,
-        providentFundsData
+        providentFundsData,
+        goalsData
       ] = await Promise.all([
         getNetWorth(),
         getStocks(),
@@ -68,7 +76,8 @@ const Dashboard = () => {
         getSIPInvestments(),
         getGoldInvestments(),
         getInsurancePolicies(),
-        getProvidentFunds()
+        getProvidentFunds(),
+        getGoals()
       ]);
 
       setStocks(stocksData);
@@ -78,6 +87,14 @@ const Dashboard = () => {
       setInsurancePolicies(insuranceData);
       setProvidentFunds(providentFundsData);
       setNetWorth(netWorthData);
+      setGoals(goalsData);
+      
+      // Calculate progress for each goal
+      const progressData: Record<string, GoalProgress> = {};
+      goalsData.forEach(goal => {
+        progressData[goal.id] = calculateGoalProgress(goal);
+      });
+      setGoalProgress(progressData);
       
     } catch (error) {
       handleError(error, 'Error fetching dashboard data');
@@ -136,7 +153,24 @@ const Dashboard = () => {
           <NetWorthCard data={netWorth} />
         </div>
         <div>
-          <AssetAllocationCard data={netWorth} />
+          <FinancialHealthScore netWorthData={netWorth} />
+        </div>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <PersonalizedRecommendations 
+            netWorthData={netWorth}
+            goals={goals}
+            stocks={stocks}
+            fixedDeposits={fixedDeposits}
+          />
+        </div>
+        <div>
+          <GoalProgressTracking 
+            goals={goals}
+            goalProgress={goalProgress}
+          />
         </div>
       </div>
 
