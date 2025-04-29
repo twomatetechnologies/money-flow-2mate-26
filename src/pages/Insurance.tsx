@@ -14,7 +14,7 @@ import {
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText } from 'lucide-react';
 import InsuranceForm from '@/components/insurance/InsuranceForm';
 import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import {
@@ -37,6 +37,10 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
 import FamilyMemberFilter from '@/components/common/FamilyMemberFilter';
+import { getUpcomingExpirations } from '@/services/notificationService';
+import PolicyExpirationAlert from '@/components/insurance/PolicyExpirationAlert';
+import ImportExportMenu from '@/components/common/ImportExportMenu';
+import { Separator } from '@/components/ui/separator';
 
 const Insurance = () => {
   const [insurancePolicies, setInsurancePolicies] = useState<InsurancePolicy[]>([]);
@@ -227,6 +231,14 @@ const Insurance = () => {
     }
   };
 
+  const viewPolicyDetails = (policyId: string) => {
+    const policy = insurancePolicies.find(p => p.id === policyId);
+    if (policy) {
+      setCurrentPolicy(policy);
+      setIsDialogOpen(true);
+    }
+  };
+
   const totalCoverAmount = policiesView.reduce((sum, policy) => sum + policy.coverAmount, 0);
   const totalAnnualPremium = policiesView.reduce((sum, policy) => {
     switch (policy.frequency) {
@@ -237,6 +249,51 @@ const Insurance = () => {
       default: return sum;
     }
   }, 0);
+
+  // Get upcoming policy expirations
+  const upcomingExpirations = getUpcomingExpirations(insurancePolicies);
+
+  // Sample data for export/import
+  const getSampleInsuranceData = () => {
+    return {
+      headers: ['policyNumber', 'type', 'provider', 'coverAmount', 'premium', 'frequency', 'startDate', 'endDate', 'notes'],
+      data: [
+        ['POL123456', 'Health', 'ABC Insurance', '500000', '5000', 'Yearly', '2023-01-01', '2024-01-01', 'Family floater policy'],
+        ['POL789012', 'Vehicle', 'XYZ Insure', '200000', '2000', 'Yearly', '2023-03-15', '2024-03-15', 'Car insurance']
+      ]
+    };
+  };
+
+  // Handle imported insurance data
+  const handleImportInsurance = async (data: any[]) => {
+    try {
+      // Process and add each imported policy
+      for (const item of data) {
+        await createInsurance({
+          ...item,
+          coverAmount: Number(item.coverAmount),
+          premium: Number(item.premium),
+          startDate: new Date(item.startDate),
+          endDate: new Date(item.endDate)
+        });
+      }
+      
+      // Refresh the list
+      fetchInsurancePolicies();
+      
+      toast({
+        title: 'Import successful',
+        description: `${data.length} policies imported successfully`
+      });
+    } catch (error) {
+      console.error('Error importing policies:', error);
+      toast({
+        title: 'Import failed',
+        description: 'Failed to import insurance policies',
+        variant: 'destructive'
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -256,28 +313,44 @@ const Insurance = () => {
           </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-1">
-              <Plus className="h-4 w-4" />
-              Add Policy
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl bg-background">
-            <DialogHeader>
-              <DialogTitle>{currentPolicy ? 'Edit' : 'Add'} Insurance Policy</DialogTitle>
-            </DialogHeader>
-            <InsuranceForm 
-              onSubmit={currentPolicy ? handleUpdatePolicy : handleAddPolicy}
-              onCancel={() => {
-                setIsDialogOpen(false);
-                setCurrentPolicy(null);
-              }}
-              initialData={currentPolicy || undefined}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex space-x-2">
+          <ImportExportMenu
+            data={insurancePolicies}
+            onImport={handleImportInsurance}
+            exportFilename="insurance_policies"
+            getSampleData={getSampleInsuranceData}
+          />
+          
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-1">
+                <Plus className="h-4 w-4" />
+                Add Policy
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl bg-background">
+              <DialogHeader>
+                <DialogTitle>{currentPolicy ? 'Edit' : 'Add'} Insurance Policy</DialogTitle>
+              </DialogHeader>
+              <InsuranceForm 
+                onSubmit={currentPolicy ? handleUpdatePolicy : handleAddPolicy}
+                onCancel={() => {
+                  setIsDialogOpen(false);
+                  setCurrentPolicy(null);
+                }}
+                initialData={currentPolicy || undefined}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
+      {upcomingExpirations.length > 0 && (
+        <PolicyExpirationAlert 
+          notifications={upcomingExpirations} 
+          onViewPolicy={viewPolicyDetails}
+        />
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="finance-card">
@@ -327,6 +400,7 @@ const Insurance = () => {
                 <TableHead className="text-right">Frequency</TableHead>
                 <TableHead className="text-right">Valid Until</TableHead>
                 <TableHead>Owner</TableHead>
+                <TableHead>Docs</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -347,6 +421,14 @@ const Insurance = () => {
                     <TableCell className="text-right">{format(new Date(policy.endDate), 'dd MMM yyyy')}</TableCell>
                     <TableCell>
                       <FamilyMemberDisplay memberId={policy.familyMemberId} />
+                    </TableCell>
+                    <TableCell>
+                      {policy.documents && policy.documents.length > 0 ? (
+                        <Badge variant="secondary" className="whitespace-nowrap">
+                          <FileText className="h-3 w-3 mr-1" />
+                          {policy.documents.length}
+                        </Badge>
+                      ) : null}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-1">

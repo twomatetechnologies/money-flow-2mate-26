@@ -32,6 +32,9 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import FamilyMemberSelect from '@/components/common/FamilyMemberSelect';
+import PolicyDocumentUpload from './PolicyDocumentUpload';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   type: z.enum(['Life', 'Health', 'Vehicle', 'Home', 'Term', 'Other']),
@@ -43,16 +46,18 @@ const formSchema = z.object({
   startDate: z.date(),
   endDate: z.date(),
   notes: z.string().optional(),
+  familyMemberId: z.string().optional(),
 });
 
 type InsuranceFormProps = {
-  onSubmit: (data: z.infer<typeof formSchema>) => void;
+  onSubmit: (data: Omit<InsurancePolicy, 'id'>) => void;
   onCancel: () => void;
   initialData?: Partial<InsurancePolicy>;
 };
 
 const InsuranceForm = ({ onSubmit, onCancel, initialData }: InsuranceFormProps) => {
   const { toast } = useToast();
+  const [documents, setDocuments] = React.useState<string[]>(initialData?.documents || []);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,12 +71,17 @@ const InsuranceForm = ({ onSubmit, onCancel, initialData }: InsuranceFormProps) 
       startDate: initialData?.startDate ? new Date(initialData.startDate) : new Date(),
       endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(),
       notes: initialData?.notes || '',
+      familyMemberId: initialData?.familyMemberId || undefined,
     },
   });
 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
     try {
-      onSubmit(values);
+      // Include documents in the submission
+      onSubmit({
+        ...values,
+        documents,
+      });
     } catch (error) {
       toast({
         title: 'Error',
@@ -272,6 +282,23 @@ const InsuranceForm = ({ onSubmit, onCancel, initialData }: InsuranceFormProps) 
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="familyMemberId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Policy Owner</FormLabel>
+                <FormControl>
+                  <FamilyMemberSelect
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <FormField
@@ -287,6 +314,18 @@ const InsuranceForm = ({ onSubmit, onCancel, initialData }: InsuranceFormProps) 
             </FormItem>
           )}
         />
+
+        <Separator className="my-4" />
+        
+        <div>
+          <FormLabel>Policy Documents</FormLabel>
+          <div className="mt-2">
+            <PolicyDocumentUpload 
+              documents={documents}
+              onDocumentsChange={setDocuments}
+            />
+          </div>
+        </div>
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel}>

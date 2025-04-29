@@ -55,7 +55,7 @@ export interface InsurancePolicy {
   startDate: Date;
   endDate: Date;
   nominees?: string[];
-  documents?: string[];
+  documents?: string[]; // Document URLs or identifiers
   notes?: string;
   familyMemberId?: string; // Associate with family member
 }
