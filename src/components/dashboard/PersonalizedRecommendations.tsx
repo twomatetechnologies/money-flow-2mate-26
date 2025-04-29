@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bulb, ExternalLink, HelpCircle } from 'lucide-react';
+import { Lightbulb, ExternalLink, HelpCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -192,7 +192,7 @@ export function PersonalizedRecommendations({
     <Card className="bg-finance-blue text-white">
       <CardHeader className="pb-2">
         <CardTitle className="text-xl font-bold flex items-center gap-2">
-          <Bulb className="h-5 w-5" />
+          <Lightbulb className="h-5 w-5" />
           Personalized Recommendations
           <TooltipProvider>
             <Tooltip>
