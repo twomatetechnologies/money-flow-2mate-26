@@ -1,0 +1,405 @@
+
+openapi: 3.0.0
+info:
+  title: Money Flow Guardian API
+  description: API documentation for Money Flow Guardian financial management application
+  version: 0.1.0
+  contact:
+    name: Money Flow Guardian Team
+    url: https://github.com/yourusername/money-flow-guardian
+servers:
+  - url: https://api.moneyflowguardian.com/v1
+    description: Production server
+  - url: https://staging-api.moneyflowguardian.com/v1
+    description: Staging server
+  - url: http://localhost:3000/api/v1
+    description: Local development
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints
+  - name: Stocks
+    description: Stock investment management
+  - name: Gold
+    description: Gold investment management
+  - name: FixedDeposits
+    description: Fixed deposit management
+  - name: SIP
+    description: Systematic Investment Plan management
+  - name: Goals
+    description: Financial goals management
+  - name: NetWorth
+    description: Net worth calculation and tracking
+  - name: Family
+    description: Family member management
+  - name: Audit
+    description: Audit trails and activity logs
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  requiresTwoFactor:
+                    type: boolean
+        '401':
+          description: Invalid credentials
+
+  /auth/verify-2fa:
+    post:
+      tags:
+        - Authentication
+      summary: Verify two-factor authentication code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  pattern: '^\d{6}$'
+      responses:
+        '200':
+          description: Two-factor authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Invalid verification code
+
+  /gold:
+    get:
+      tags:
+        - Gold
+      summary: Get all gold investments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: familyMemberId
+          in: query
+          schema:
+            type: string
+          description: Filter by family member
+      responses:
+        '200':
+          description: List of gold investments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GoldInvestment'
+    post:
+      tags:
+        - Gold
+      summary: Create a new gold investment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoldInvestmentInput'
+      responses:
+        '201':
+          description: Gold investment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoldInvestment'
+        '400':
+          description: Invalid input data
+
+  /gold/{id}:
+    get:
+      tags:
+        - Gold
+      summary: Get a specific gold investment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Gold investment ID
+      responses:
+        '200':
+          description: Gold investment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoldInvestment'
+        '404':
+          description: Gold investment not found
+    put:
+      tags:
+        - Gold
+      summary: Update a gold investment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Gold investment ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoldInvestmentUpdate'
+      responses:
+        '200':
+          description: Gold investment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoldInvestment'
+        '404':
+          description: Gold investment not found
+    delete:
+      tags:
+        - Gold
+      summary: Delete a gold investment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Gold investment ID
+      responses:
+        '204':
+          description: Gold investment deleted
+        '404':
+          description: Gold investment not found
+
+  /gold/import:
+    post:
+      tags:
+        - Gold
+      summary: Import gold investments from CSV/Excel
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Import successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imported:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Invalid file format
+
+  /networth:
+    get:
+      tags:
+        - NetWorth
+      summary: Get net worth data
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: familyMemberId
+          in: query
+          schema:
+            type: string
+          description: Filter by family member (omit for all)
+      responses:
+        '200':
+          description: Net worth data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetWorthData'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    GoldInvestment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [Physical, Digital, ETF, SGB]
+        quantity:
+          type: number
+          format: float
+        purchaseDate:
+          type: string
+          format: date-time
+        purchasePrice:
+          type: number
+          format: float
+        currentPrice:
+          type: number
+          format: float
+        value:
+          type: number
+          format: float
+        location:
+          type: string
+        notes:
+          type: string
+        familyMemberId:
+          type: string
+        lastUpdated:
+          type: string
+          format: date-time
+
+    GoldInvestmentInput:
+      type: object
+      required:
+        - type
+        - quantity
+        - purchaseDate
+        - purchasePrice
+        - familyMemberId
+      properties:
+        type:
+          type: string
+          enum: [Physical, Digital, ETF, SGB]
+        quantity:
+          type: number
+          format: float
+        purchaseDate:
+          type: string
+          format: date-time
+        purchasePrice:
+          type: number
+          format: float
+        location:
+          type: string
+        notes:
+          type: string
+        familyMemberId:
+          type: string
+
+    GoldInvestmentUpdate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [Physical, Digital, ETF, SGB]
+        quantity:
+          type: number
+          format: float
+        purchaseDate:
+          type: string
+          format: date-time
+        purchasePrice:
+          type: number
+          format: float
+        location:
+          type: string
+        notes:
+          type: string
+        familyMemberId:
+          type: string
+        forceUpdatePrice:
+          type: boolean
+
+    NetWorthData:
+      type: object
+      properties:
+        total:
+          type: number
+          format: float
+        breakdown:
+          type: object
+          properties:
+            stocks:
+              type: number
+              format: float
+            fixedDeposits:
+              type: number
+              format: float
+            sip:
+              type: number
+              format: float
+            gold:
+              type: number
+              format: float
+            providentFund:
+              type: number
+              format: float
+            other:
+              type: number
+              format: float
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              value:
+                type: number
+                format: float
