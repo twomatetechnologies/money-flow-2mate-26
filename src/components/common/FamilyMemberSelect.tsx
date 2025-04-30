@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 interface FamilyMemberSelectProps {
   value: string | undefined;
   onChange: (value: string) => void;
+  onValueChange?: (value: string) => void; // Add this for backward compatibility
   disabled?: boolean;
   required?: boolean;
   label?: string;
@@ -22,6 +23,7 @@ interface FamilyMemberSelectProps {
 const FamilyMemberSelect: React.FC<FamilyMemberSelectProps> = ({
   value,
   onChange,
+  onValueChange,
   disabled = false,
   required = false,
   label = "Family Member"
@@ -48,8 +50,10 @@ const FamilyMemberSelect: React.FC<FamilyMemberSelectProps> = ({
   const handleValueChange = (selectedValue: string) => {
     if (selectedValue === "none") {
       onChange("");
+      if (onValueChange) onValueChange(""); // Call onValueChange if provided
     } else {
       onChange(selectedValue);
+      if (onValueChange) onValueChange(selectedValue); // Call onValueChange if provided
     }
   };
 

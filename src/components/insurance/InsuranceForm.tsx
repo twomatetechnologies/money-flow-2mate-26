@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -78,10 +77,22 @@ const InsuranceForm = ({ onSubmit, onCancel, initialData }: InsuranceFormProps) 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
     try {
       // Include documents in the submission
-      onSubmit({
-        ...values,
-        documents,
-      });
+      // Fix: Ensure we're passing all required fields with proper typing
+      const policyData: Omit<InsurancePolicy, 'id'> = {
+        type: values.type,
+        policyNumber: values.policyNumber,
+        provider: values.provider,
+        coverAmount: values.coverAmount,
+        premium: values.premium,
+        frequency: values.frequency,
+        startDate: values.startDate,
+        endDate: values.endDate,
+        familyMemberId: values.familyMemberId,
+        notes: values.notes,
+        documents: documents,
+      };
+      
+      onSubmit(policyData);
     } catch (error) {
       toast({
         title: 'Error',
@@ -292,7 +303,7 @@ const InsuranceForm = ({ onSubmit, onCancel, initialData }: InsuranceFormProps) 
                 <FormControl>
                   <FamilyMemberSelect
                     value={field.value}
-                    onValueChange={field.onChange}
+                    onChange={field.onChange}
                   />
                 </FormControl>
                 <FormMessage />
