@@ -72,7 +72,11 @@ export const createGold = async (gold: Omit<GoldInvestment, 'id' | 'lastUpdated'
   return newGold;
 };
 
-export const updateGold = async (id: string, updates: Partial<GoldInvestment>): Promise<GoldInvestment | null> => {
+interface GoldUpdateParams extends Partial<GoldInvestment> {
+  forceUpdatePrice?: boolean;
+}
+
+export const updateGold = async (id: string, updates: GoldUpdateParams): Promise<GoldInvestment | null> => {
   const index = goldInvestments.findIndex(gold => gold.id === id);
   if (index === -1) return null;
   

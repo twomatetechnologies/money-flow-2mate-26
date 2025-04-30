@@ -10,7 +10,7 @@ interface FinancialHealthScoreProps {
   lastUpdated?: Date;
 }
 
-const FinancialHealthScore = ({ score, previousScore, lastUpdated }: FinancialHealthScoreProps) => {
+export const FinancialHealthScore = ({ score, previousScore, lastUpdated }: FinancialHealthScoreProps) => {
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'bg-green-500';
     if (score >= 80) return 'bg-emerald-500';
@@ -59,8 +59,7 @@ const FinancialHealthScore = ({ score, previousScore, lastUpdated }: FinancialHe
           <Progress 
             value={score} 
             max={100} 
-            className="h-2 mt-2" 
-            indicatorClassName={getScoreColor(score)}
+            className={`h-2 mt-2 ${getScoreColor(score)}`}
           />
           
           {lastUpdated && (
