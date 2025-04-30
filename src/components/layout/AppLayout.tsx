@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { UserMenu } from './UserMenu';
+import Footer from './Footer';
 import { ChevronLeft, ChevronRight, Menu } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
@@ -70,9 +71,10 @@ export function AppLayout() {
           </div>
           <UserMenu />
         </header>
-        <div className="p-6 overflow-auto h-full animate-fade-in">
+        <div className="p-6 overflow-auto flex-1 animate-fade-in">
           <Outlet />
         </div>
+        <Footer />
       </main>
     </div>
   );
