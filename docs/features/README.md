@@ -8,14 +8,14 @@ Money Flow Guardian offers a comprehensive set of features for personal finance 
 1. [Dashboard](./dashboard.md)
 2. [Investment Tracking](#investment-tracking)
    - [Stocks](#stocks)
-   - [Gold Investments](#gold-investments)
+   - [Gold Investments](./gold-investments.md)
    - [Fixed Deposits](#fixed-deposits)
    - [SIP Investments](#sip-investments)
    - [Provident Funds](#provident-funds)
 3. [Goal Tracking](#goal-tracking)
 4. [Family Management](#family-management)
 5. [Reports and Analytics](#reports-and-analytics)
-6. [Security Features](#security-features)
+6. [Security Features](../user-guide/security.md)
 7. [Data Import/Export](#data-import/export)
 
 ## Investment Tracking
@@ -44,6 +44,8 @@ Comprehensive gold investment tracking including:
 - Track gold by weight, purity, and value
 - Document storage locations and details
 - Import/export gold investment data
+
+For detailed information about gold investment features, see the [Gold Investments](./gold-investments.md) documentation.
 
 ### Fixed Deposits
 
@@ -127,6 +129,8 @@ Protect your sensitive financial information:
 - Privacy controls
 - Access permissions
 
+For detailed information about security features, see the [Security Features](../user-guide/security.md) documentation.
+
 ## Data Import/Export
 
 Easily move your data in and out:
@@ -139,4 +143,3 @@ Easily move your data in and out:
 - Audit trail for data imports/exports
 
 Each feature section contains detailed instructions on how to use the feature and get the most value from it. Click on any feature for more detailed information.
-

@@ -102,9 +102,20 @@ For production changes (auth, DB, etc.), see Lovable and Docker documentation.
 
 ---
 
+## Documentation
+
+For detailed documentation about the application, please see the [Documentation](./docs/README.md) directory, which includes:
+
+- [Getting Started](./docs/getting-started.md)
+- [Features Overview](./docs/features/README.md)
+- [Architecture](./docs/architecture.md)
+- [API Documentation](./docs/api/README.md)
+- [User Guide](./docs/user-guide/README.md)
+- [Development Guide](./docs/development-guide.md)
+- [Version Management](./docs/version-management.md)
+
 ## Lovable Project Online
 
 App URL: https://lovable.dev/projects/d10d97f2-402f-47c1-9500-49c45556eadc
 
 Read more at [Lovable Documentation](https://docs.lovable.dev/)
-

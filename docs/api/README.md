@@ -66,4 +66,3 @@ In a production API, rate limiting would be:
 | 404  | Not Found - Resource doesn't exist |
 | 429  | Too Many Requests - Rate limit exceeded |
 | 500  | Internal Server Error |
-

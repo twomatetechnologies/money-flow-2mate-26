@@ -48,4 +48,3 @@ The dashboard provides a comprehensive overview of your financial status:
 - **Updates**: Check the changelog for the latest features
 
 For detailed information about each feature, please refer to the specific sections in this user guide.
-

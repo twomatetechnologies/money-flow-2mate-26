@@ -63,6 +63,16 @@ In a production environment, the 2FA implementation should be enhanced as follow
 - Provide backup recovery options
 - Log all 2FA activities for audit purposes
 
+## Implementation with Supabase
+
+If using Supabase (recommended for Lovable apps):
+
+1. Use Supabase Auth for the basic authentication
+2. Use Supabase Edge Functions to handle OTP generation and verification
+3. Use Supabase database to store user 2FA preferences and logs
+4. Use Supabase Storage to store email templates
+5. Integrate with external email/SMS providers through Supabase Edge Functions
+
 ## Data Protection
 
 ### Local Storage Security
@@ -99,4 +109,3 @@ These audit trails are accessible in the Audit Trail section of the application,
 3. Review audit logs periodically
 4. Log out when accessing from shared devices
 5. Keep the application updated to the latest version
-
