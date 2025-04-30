@@ -13,7 +13,9 @@ import {
   Shield,
   TrendingUp,
   Users,
-  Wallet
+  Wallet,
+  Award,
+  Layers
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -138,6 +140,20 @@ const Sidebar = () => {
             <span>Savings Accounts</span>
           </NavLink>
           <NavLink
+            to="/goals"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <Award className="h-4 w-4" />
+            <span>Financial Goals</span>
+          </NavLink>
+          <NavLink
             to="/family-members"
             className={({ isActive }) =>
               cn(
@@ -164,6 +180,20 @@ const Sidebar = () => {
           >
             <ScrollText className="h-4 w-4" />
             <span>Reports</span>
+          </NavLink>
+          <NavLink
+            to="/audit-trail"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                isActive
+                  ? "bg-muted text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+              )
+            }
+          >
+            <Layers className="h-4 w-4" />
+            <span>Audit Logs</span>
           </NavLink>
         </nav>
       </div>

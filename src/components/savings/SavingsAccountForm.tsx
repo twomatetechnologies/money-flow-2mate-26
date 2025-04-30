@@ -33,6 +33,29 @@ const SavingsAccountForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Sa
     }
   });
 
+  // Reset form when initialData changes or mode changes
+  React.useEffect(() => {
+    if (initialData) {
+      Object.keys(initialData).forEach((key) => {
+        const fieldKey = key as keyof SavingsAccount;
+        form.setValue(fieldKey, initialData[fieldKey]);
+      });
+    } else {
+      form.reset({
+        bankName: '',
+        accountNumber: '',
+        accountType: 'Savings',
+        balance: 0,
+        interestRate: 0,
+        branchName: '',
+        ifscCode: '',
+        familyMemberId: '',
+        nominees: [],
+        notes: ''
+      });
+    }
+  }, [initialData, form, mode]);
+
   const handleSubmit = (data: Partial<SavingsAccount>) => {
     onSubmit(data);
     form.reset();
@@ -112,7 +135,12 @@ const SavingsAccountForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Sa
                 <FormItem>
                   <FormLabel>Current Balance (₹)</FormLabel>
                   <FormControl>
-                    <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                    <Input 
+                      type="number" 
+                      {...field}
+                      value={field.value?.toString() || '0'}
+                      onChange={e => field.onChange(Number(e.target.value))} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -126,7 +154,13 @@ const SavingsAccountForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Sa
                 <FormItem>
                   <FormLabel>Interest Rate (%)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      {...field}
+                      value={field.value?.toString() || '0'}
+                      onChange={e => field.onChange(Number(e.target.value))} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
