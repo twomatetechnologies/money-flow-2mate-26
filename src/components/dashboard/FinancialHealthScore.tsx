@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import FinancialHealthExplanation from './FinancialHealthExplanation';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface FinancialHealthScoreProps {
   score: number;
@@ -32,7 +33,7 @@ export const FinancialHealthScore = ({ score, previousScore, lastUpdated }: Fina
   const scoreDifference = previousScore ? score - previousScore : 0;
 
   return (
-    <Card className="border-none shadow-none">
+    <Card className="border shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">Financial Health Score</CardTitle>
@@ -40,27 +41,38 @@ export const FinancialHealthScore = ({ score, previousScore, lastUpdated }: Fina
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col space-y-1">
+        <div className="flex flex-col space-y-2">
           <div className="flex items-end">
-            <span className="text-2xl font-bold">{score}</span>
+            <span className="text-3xl font-bold">{score}</span>
             <span className="ml-1 text-muted-foreground">/100</span>
             
             {scoreDifference !== 0 && (
-              <span className={`ml-2 text-sm ${scoreDifference > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {scoreDifference > 0 ? '+' : ''}{scoreDifference}
-              </span>
+              <div className={`ml-2 flex items-center ${scoreDifference > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {scoreDifference > 0 ? (
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 mr-1" />
+                )}
+                <span className="text-sm font-medium">
+                  {scoreDifference > 0 ? '+' : ''}{scoreDifference}
+                </span>
+              </div>
             )}
           </div>
           
           <div className="text-sm font-medium">
-            {getScoreText(score)}
+            <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${getScoreColor(score)} bg-opacity-20 text-${getScoreColor(score).replace('bg-', '')}`}>
+              {getScoreText(score)}
+            </span>
           </div>
           
-          <Progress 
-            value={score} 
-            max={100} 
-            className={`h-2 mt-2 ${getScoreColor(score)}`}
-          />
+          <div className="w-full bg-gray-100 rounded-full h-2 mt-2 overflow-hidden dark:bg-gray-700">
+            <Progress 
+              value={score} 
+              max={100} 
+              className={`h-full ${getScoreColor(score)}`}
+            />
+          </div>
           
           {lastUpdated && (
             <div className="text-xs text-muted-foreground mt-1">
