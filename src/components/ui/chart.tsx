@@ -23,7 +23,7 @@ export function ChartContainer({
   children,
 }: {
   config: Record<string, { label: string; color: string }>
-  children: React.ReactNode
+  children: ReactElement
 }) {
   return (
     <ChartContext.Provider value={config}>
@@ -34,13 +34,9 @@ export function ChartContainer({
   )
 }
 
-// Fix: Use a JSX element type instead of ReactNode
-export function ChartTooltip({ 
-  content 
-}: { 
-  content: React.ComponentType<TooltipProps<number, string>> 
-}) {
-  return <Tooltip content={content} />
+// Use proper typing for the tooltip content
+export function ChartTooltip() {
+  return <Tooltip content={<ChartTooltipContent />} />
 }
 
 export function ChartTooltipContent({

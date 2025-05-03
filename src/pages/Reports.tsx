@@ -26,8 +26,7 @@ import { formatIndianNumber } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ChartContainer,
-  ChartTooltipContent,
-  ChartTooltip
+  ChartTooltip,
 } from "@/components/ui/chart";
 import { HelpCircle, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { 
@@ -130,19 +129,6 @@ const Reports = () => {
           <p className="font-bold">{data.name}</p>
           <p>{formatIndianNumber(data.value)}</p>
           <p>{((data.value / netWorth.total) * 100).toFixed(1)}%</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // Custom tooltip formatter for line/bar chart
-  const customChartTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
-          <p className="font-bold">{payload[0].payload.date}</p>
-          <p>{formatIndianNumber(payload[0].value)}</p>
         </div>
       );
     }
@@ -271,7 +257,7 @@ const Reports = () => {
                   <YAxis 
                     tickFormatter={(value) => `₹${(value / 1000)}K`} 
                   />
-                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartTooltip />
                   <Legend />
                   <Line
                     type="monotone"
