@@ -1,5 +1,6 @@
 
 import { v4 as uuidv4 } from 'uuid';
+import { getNetWorthHistory } from './netWorthService';
 
 export interface ReportSnapshot {
   id: string;
@@ -22,18 +23,34 @@ export interface ReportSnapshot {
 
 const REPORTS_STORAGE_KEY = 'financialReports';
 
-// Function to load report snapshots from localStorage
-const loadReportSnapshots = (): ReportSnapshot[] => {
+// Function to load report snapshots from localStorage or generate historical data
+export const getReportSnapshots = (): ReportSnapshot[] => {
   try {
     const stored = localStorage.getItem(REPORTS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : generateHistoricalSnapshots();
+    if (stored) {
+      const snapshots: ReportSnapshot[] = JSON.parse(stored);
+      
+      // Convert string dates to Date objects
+      return snapshots.map(snapshot => ({
+        ...snapshot,
+        date: new Date(snapshot.date),
+        createdAt: new Date(snapshot.createdAt)
+      }));
+    }
+    
+    // Generate snapshots if none exist
+    const snapshots = generateSnapshotsFromNetWorth();
+    saveReportSnapshots(snapshots);
+    return snapshots;
   } catch (error) {
     console.error('Error loading report snapshots:', error);
-    return generateHistoricalSnapshots();
+    const snapshots = generateSnapshotsFromNetWorth();
+    saveReportSnapshots(snapshots);
+    return snapshots;
   }
 };
 
-// Function to save report snapshots to localStorage
+// Save report snapshots to localStorage
 const saveReportSnapshots = (snapshots: ReportSnapshot[]): void => {
   try {
     localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(snapshots));
@@ -42,93 +59,87 @@ const saveReportSnapshots = (snapshots: ReportSnapshot[]): void => {
   }
 };
 
-// Generate initial historical data if none exists
-const generateHistoricalSnapshots = (): ReportSnapshot[] => {
-  const snapshots: ReportSnapshot[] = [];
-  const now = new Date();
+// Generate snapshots from existing net worth history
+const generateSnapshotsFromNetWorth = (): ReportSnapshot[] => {
+  // Get the stored net worth history
+  const netWorthHistory = getNetWorthHistory();
   
-  // Generate 12 months of historical data
-  for (let i = 11; i >= 0; i--) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const baseNetWorth = 2000000; // Base value of ₹20 lakhs
+  // Convert each history point to a snapshot with additional financial data
+  const snapshots: ReportSnapshot[] = netWorthHistory.map(historyItem => {
+    const netWorth = historyItem.value;
+    const date = new Date(historyItem.date);
     
-    // Add some random variations to make the data look realistic
-    const randomGrowth = 1 + ((Math.random() * 8 - 3) / 100); // -3% to +5% change
-    const netWorth = Math.round(baseNetWorth * (1 + (0.04 * (12 - i))) * randomGrowth);
+    // Generate realistic financial metrics from the net worth
+    // These could be replaced with actual data in a real implementation
+    const liabilities = Math.round(netWorth * (0.2 + Math.random() * 0.15)); // 20-35% of net worth
+    const monthlyIncome = Math.round(netWorth * 0.04 / 12); // Roughly 4% annual return divided by 12
+    const monthlyExpenses = Math.round(monthlyIncome * (0.6 + Math.random() * 0.2)); // 60-80% of income
+    const savingsRate = Math.round(100 * (1 - (monthlyExpenses / monthlyIncome)));
     
-    // Random asset allocation but with consistent percentages that add up to 100%
-    const stocksPercent = 25 + (Math.random() * 10 - 5);
-    const fdPercent = 20 + (Math.random() * 8 - 4);
-    const savingsPercent = 15 + (Math.random() * 6 - 3);
-    const goldPercent = 15 + (Math.random() * 6 - 3);
-    const pfPercent = 20 + (Math.random() * 8 - 4);
+    // Generate realistic asset allocation based on the date
+    // This mimics changing allocation strategies over time
+    const totalAssetPercentage = 100;
+    const monthIndex = date.getMonth();
+    
+    // Slight variation in allocation based on month (simulating market changes)
+    const stockPercent = 25 + (Math.sin(monthIndex) * 8);
+    const fdPercent = 20 + (Math.cos(monthIndex) * 5);
+    const savingsPercent = 15 + (Math.sin(monthIndex + 2) * 3);
+    const goldPercent = 15 + (Math.cos(monthIndex + 1) * 4);
+    const pfPercent = 20 + (Math.sin(monthIndex + 3) * 5);
     
     // Normalize to ensure they add up to 100%
-    const total = stocksPercent + fdPercent + savingsPercent + goldPercent + pfPercent;
-    const normalizer = 100 / total;
+    const total = stockPercent + fdPercent + savingsPercent + goldPercent + pfPercent;
+    const normalizer = totalAssetPercentage / total;
     
-    const snapshot: ReportSnapshot = {
+    return {
       id: uuidv4(),
       date,
       netWorth,
       assetAllocation: {
-        stocks: Math.round(stocksPercent * normalizer),
+        stocks: Math.round(stockPercent * normalizer),
         fixedDeposits: Math.round(fdPercent * normalizer),
         savings: Math.round(savingsPercent * normalizer),
         gold: Math.round(goldPercent * normalizer),
         providentFund: Math.round(pfPercent * normalizer),
-        other: 0, // Adjusted later
+        other: 0 // Will be adjusted to make total 100%
       },
-      liabilities: Math.round(netWorth * 0.2 * (Math.random() * 0.4 + 0.8)), // 16-32% of net worth
-      monthlyIncome: 80000 + Math.round(Math.random() * 20000), // ₹80k-100k
-      monthlyExpenses: 50000 + Math.round(Math.random() * 15000), // ₹50k-65k
-      savingsRate: 25 + Math.round(Math.random() * 10), // 25-35%
+      liabilities,
+      monthlyExpenses,
+      monthlyIncome,
+      savingsRate,
       createdAt: new Date(date.getFullYear(), date.getMonth(), 
-        date.getDate() + Math.floor(Math.random() * 28))
+        date.getDate() + Math.floor(Math.random() * 7)) // Created within a week of the date
     };
-    
-    // Ensure asset allocation adds up to exactly 100%
-    const sum = Object.values(snapshot.assetAllocation).reduce((a, b) => a + b, 0);
-    if (sum < 100) {
-      snapshot.assetAllocation.other = 100 - sum;
-    }
-    
-    snapshots.push(snapshot);
-  }
+  });
   
-  saveReportSnapshots(snapshots);
-  return snapshots;
-};
-
-// In-memory store
-let reportSnapshots = loadReportSnapshots();
-
-// Get all financial report snapshots
-export const getReportSnapshots = (): ReportSnapshot[] => {
-  return [...reportSnapshots].sort((a, b) => 
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  // Sort by date
+  return snapshots.sort((a, b) => a.date.getTime() - b.date.getTime());
 };
 
 // Get the most recent snapshot
 export const getLatestSnapshot = (): ReportSnapshot => {
-  const sorted = [...reportSnapshots].sort((a, b) => 
+  const snapshots = getReportSnapshots();
+  
+  const sorted = [...snapshots].sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
   
   return sorted[0];
 };
 
-// Create a new financial snapshot (typically done monthly)
+// Create a new financial snapshot
 export const createReportSnapshot = (snapshot: Omit<ReportSnapshot, 'id' | 'createdAt'>): ReportSnapshot => {
+  const snapshots = getReportSnapshots();
+  
   const newSnapshot: ReportSnapshot = {
     ...snapshot,
     id: uuidv4(),
     createdAt: new Date()
   };
   
-  reportSnapshots.push(newSnapshot);
-  saveReportSnapshots(reportSnapshots);
+  snapshots.push(newSnapshot);
+  saveReportSnapshots(snapshots);
   
   return newSnapshot;
 };
@@ -138,7 +149,9 @@ export const getReportSnapshotsInRange = (
   startDate: Date, 
   endDate: Date
 ): ReportSnapshot[] => {
-  return reportSnapshots.filter(snapshot => {
+  const snapshots = getReportSnapshots();
+  
+  return snapshots.filter(snapshot => {
     const snapshotDate = new Date(snapshot.date);
     return snapshotDate >= startDate && snapshotDate <= endDate;
   }).sort((a, b) => 
@@ -148,11 +161,9 @@ export const getReportSnapshotsInRange = (
 
 // Calculate growth rates over periods
 export const calculateGrowthMetrics = () => {
-  const sorted = [...reportSnapshots].sort((a, b) => 
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  const snapshots = getReportSnapshots();
   
-  if (sorted.length < 2) {
+  if (snapshots.length < 2) {
     return {
       monthOverMonth: 0,
       threeMonth: 0,
@@ -161,11 +172,20 @@ export const calculateGrowthMetrics = () => {
     };
   }
   
+  const sorted = [...snapshots].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  
   const latest = sorted[sorted.length - 1];
-  const oneMonthAgo = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
-  const threeMonthsAgo = sorted.length >= 4 ? sorted[sorted.length - 4] : null;
-  const sixMonthsAgo = sorted.length >= 7 ? sorted[sorted.length - 7] : null; 
-  const oneYearAgo = sorted.length >= 12 ? sorted[sorted.length - 12] : null;
+  
+  // Find snapshot closest to one month ago
+  const oneMonthAgo = findClosestSnapshot(sorted, 1);
+  // Find snapshot closest to three months ago
+  const threeMonthsAgo = findClosestSnapshot(sorted, 3);
+  // Find snapshot closest to six months ago
+  const sixMonthsAgo = findClosestSnapshot(sorted, 6);
+  // Find snapshot closest to one year ago
+  const oneYearAgo = findClosestSnapshot(sorted, 12);
   
   return {
     monthOverMonth: oneMonthAgo ? 
@@ -177,4 +197,47 @@ export const calculateGrowthMetrics = () => {
     yearOverYear: oneYearAgo ? 
       ((latest.netWorth - oneYearAgo.netWorth) / oneYearAgo.netWorth) * 100 : 0
   };
+};
+
+// Find the snapshot closest to X months ago from the most recent snapshot
+const findClosestSnapshot = (sortedSnapshots: ReportSnapshot[], monthsAgo: number): ReportSnapshot | null => {
+  if (sortedSnapshots.length < 2) return null;
+  
+  const latest = sortedSnapshots[sortedSnapshots.length - 1];
+  const latestDate = new Date(latest.date);
+  
+  // Calculate target date
+  const targetDate = new Date(latestDate);
+  targetDate.setMonth(targetDate.getMonth() - monthsAgo);
+  
+  // Find closest snapshot to target date
+  let closest = sortedSnapshots[0];
+  let closestDiff = Math.abs(new Date(closest.date).getTime() - targetDate.getTime());
+  
+  for (let i = 1; i < sortedSnapshots.length; i++) {
+    const current = sortedSnapshots[i];
+    const currentDiff = Math.abs(new Date(current.date).getTime() - targetDate.getTime());
+    
+    if (currentDiff < closestDiff) {
+      closest = current;
+      closestDiff = currentDiff;
+    }
+  }
+  
+  return closest;
+};
+
+// Clear all report snapshots (useful for debugging)
+export const clearReportSnapshots = (): void => {
+  try {
+    localStorage.removeItem(REPORTS_STORAGE_KEY);
+  } catch (error) {
+    console.error('Error clearing report snapshots:', error);
+  }
+};
+
+// Refresh report data from net worth history
+export const refreshReportData = (): void => {
+  clearReportSnapshots();
+  getReportSnapshots(); // This will regenerate and save new data
 };
