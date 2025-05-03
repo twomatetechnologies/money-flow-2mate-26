@@ -1,7 +1,7 @@
 
 "use client"
 
-import { createContext, useContext } from "react"
+import { createContext, useContext, ReactElement } from "react"
 import { 
   Bar, 
   BarChart as RechartsBarChart, 
@@ -34,7 +34,12 @@ export function ChartContainer({
   )
 }
 
-export function ChartTooltip({ content }: { content: React.ReactNode }) {
+// Fix: Use a JSX element type instead of ReactNode
+export function ChartTooltip({ 
+  content 
+}: { 
+  content: React.ComponentType<TooltipProps<number, string>> 
+}) {
   return <Tooltip content={content} />
 }
 
