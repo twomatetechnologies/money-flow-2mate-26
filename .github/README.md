@@ -17,8 +17,10 @@ A comprehensive personal finance management application that helps users track i
 - **Data Import/Export**: CSV and Excel support for all investment types
 - **Reports & Analytics**: Performance analysis and financial insights
 - **Two-Factor Authentication**: Enhanced security for personal data
+- **Dockerized Deployment**: Easy setup with Docker and Docker Compose
+- **Database Support**: PostgreSQL integration for persistent data storage
 
-## Getting Started
+## Quick Start
 
 ### Using Docker (Recommended)
 
@@ -29,6 +31,8 @@ POSTGRES_ENABLED=true docker-compose up -d
 # Or without PostgreSQL (file-only mode)
 POSTGRES_ENABLED=false docker-compose up -d
 ```
+
+The application will be available at http://localhost:8080
 
 ### Local Development
 
@@ -43,14 +47,39 @@ npm run dev
 npm run build
 ```
 
+## Database Options
+
+### PostgreSQL Configuration
+
+Default DB connection details can be changed in `docker-compose.yml`:
+```yaml
+POSTGRES_DB=financeapp
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres123
+POSTGRES_HOST=db
+```
+
+### Database Migrations
+
+On container start, the app runs `migrate-postgres.sh` to ensure required tables exist in the PostgreSQL database.
+
 ## Documentation
 
 For detailed information, please see:
 
-- [User Guide](./docs/user-guide/README.md)
-- [API Documentation](./docs/api/README.md)
-- [Development Guide](./docs/development-guide.md)
-- [Architecture Overview](./docs/architecture.md)
+- [Getting Started](../docs/getting-started.md)
+- [Features Overview](../docs/features/README.md)
+- [Architecture Overview](../docs/architecture.md)
+- [API Documentation](../docs/api/README.md)
+- [User Guide](../docs/user-guide/README.md)
+- [Development Guide](../docs/development-guide.md)
+- [Version Management](../docs/version-management.md)
+
+## Default Login
+
+For the demo version, use these credentials:
+- Email: `user@example.com`
+- Password: `password`
 
 ## Contributing
 
@@ -73,4 +102,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)
 - [Recharts](https://recharts.org/)
-
+- [Docker](https://www.docker.com/)
+- [PostgreSQL](https://www.postgresql.org/)

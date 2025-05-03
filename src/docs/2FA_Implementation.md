@@ -59,3 +59,31 @@ If using Supabase (recommended for Lovable apps):
 3. Use Supabase database to store user 2FA preferences and logs
 4. Use Supabase Storage to store email templates
 5. Integrate with external email/SMS providers through Supabase Edge Functions
+
+## Technical Implementation Details
+
+### Code Structure
+
+The 2FA implementation is split across several components:
+
+1. **TwoFactorAuth.tsx** - The main component that handles the 2FA UI and verification
+2. **AuthContext.tsx** - Manages the authentication state, including 2FA requirements
+3. **authService.ts** - Contains the simulated backend authentication logic
+
+### Verification Flow
+
+1. User submits login credentials
+2. Login handler in AuthContext checks if the account requires 2FA
+3. If required, user is redirected to the 2FA verification page
+4. User enters code and submits
+5. Verification function checks the code (currently simulated)
+6. Upon success, user is fully authenticated and redirected to the dashboard
+
+### Integration with Audit Trail
+
+All 2FA-related actions are logged in the audit trail, including:
+- 2FA enablement/disablement
+- Successful and failed verification attempts
+- Code resend requests
+
+This provides a comprehensive security log for monitoring suspicious activities.

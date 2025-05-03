@@ -58,3 +58,24 @@ Generate insights from your financial data with detailed reports and visualizati
 
 ### Security
 Protect your sensitive financial information with two-factor authentication and comprehensive audit trails.
+
+## Deployment Options
+
+### Docker Containerization
+The application is fully containerized with Docker, allowing for easy deployment in any environment. 
+
+### Database Options
+- **PostgreSQL Mode**: Full database persistence with automatic migrations
+- **File-Only Mode**: Uses localStorage for simpler deployments
+
+## Getting Started
+
+See the [Getting Started](./getting-started.md) guide for detailed instructions on installing and running the application.
+
+## For Developers
+
+If you're looking to contribute to the project or extend its functionality, please see the [Development Guide](./development-guide.md).
+
+## Version Management
+
+The application uses semantic versioning with automatic version incrementing. See [Version Management](./version-management.md) for details.

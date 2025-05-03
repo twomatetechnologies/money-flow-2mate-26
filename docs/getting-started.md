@@ -34,7 +34,27 @@ This will:
 POSTGRES_ENABLED=false docker-compose up -d
 ```
 
-### 2. Local Development Setup
+### 2. Using Convenience Scripts
+
+For Windows users:
+```bash
+# Start the application
+run-app.bat
+
+# Stop the application
+stop-app.bat
+```
+
+For Unix/Linux/Mac users:
+```bash
+# Start the application
+./run-app.sh
+
+# Stop the application
+./stop-app.sh
+```
+
+### 3. Local Development Setup
 
 If you prefer to develop directly on your machine:
 
@@ -45,6 +65,43 @@ npm install
 # Start development server
 npm run dev
 ```
+
+## Docker Components
+
+The Dockerized application consists of:
+
+1. **Web Application Container**
+   - Built on Node.js with Nginx as the web server
+   - Exposes port 8080 for web access
+   - Mounts a volume for data persistence
+
+2. **PostgreSQL Container** (Optional)
+   - Runs PostgreSQL 15 for data storage
+   - Exposes port 5432 for database connections
+   - Stores data in a named Docker volume
+
+## Configuration Options
+
+### Environment Variables
+
+The following environment variables can be used to customize the deployment:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| POSTGRES_ENABLED | Enable/disable PostgreSQL | true |
+| POSTGRES_HOST | Database hostname | db |
+| POSTGRES_PORT | Database port | 5432 |
+| POSTGRES_DB | Database name | financeapp |
+| POSTGRES_USER | Database username | postgres |
+| POSTGRES_PASSWORD | Database password | postgres123 |
+
+### Docker Compose Customization
+
+You can modify the `docker-compose.yml` file to:
+- Change port mappings
+- Adjust environment variables
+- Add additional services
+- Configure volume mounts
 
 ## Default Login Credentials
 
@@ -57,8 +114,14 @@ For the demo version, use these credentials:
 - When using PostgreSQL: Data is stored in a Docker volume named `postgres_data`
 - Without PostgreSQL: Data is stored in browser's localStorage
 
+## Database Migrations
+
+The application runs database migrations automatically when starting with PostgreSQL enabled. 
+These migrations:
+- Create necessary database tables if they don't exist
+- Set up initial data for family members, goals, and other entities
+
 ## Next Steps
 
 - Explore the [User Guide](./user-guide/README.md) to learn about application features
 - Check the [Development Guide](./development-guide.md) if you want to contribute to the project
-
