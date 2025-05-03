@@ -2,17 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { StockHolding } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { TrendingUp, TrendingDown, Plus, Pencil, Trash, History, Eye, Import } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Plus, Import } from 'lucide-react';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -37,8 +28,7 @@ import StockImport from '@/components/stocks/StockImport';
 import { StockStats } from '@/components/stocks/StockStats';
 import { StockTable } from '@/components/stocks/StockTable';
 import AuditTrail from '@/components/common/AuditTrail';
-import { getStocks, createStock, updateStock, deleteStock, getStockById } from '@/services/crudService';
-import { startStockPriceMonitoring, simulateStockPriceUpdates } from '@/services/stockPriceService';
+import { getStockById, createStock, updateStock, deleteStock } from '@/services/crudService';
 import { getAuditRecordsForEntity } from '@/services/auditService';
 import { AuditRecord } from '@/types/audit';
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
@@ -70,26 +60,58 @@ const Stocks = () => {
   const [auditRecords, setAuditRecords] = useState<AuditRecord[]>([]);
   const { toast } = useToast();
 
-  // Fixed: Define filter options with correct type annotation
+  // Enhanced filter options
   const filterOptions: FilterOption[] = [
     {
       id: 'performanceFilter',
       label: 'Performance',
-      type: 'select', // Now explicitly using one of the allowed literal types
+      type: 'select',
       options: [
         { value: 'gainers', label: 'Gainers' },
         { value: 'losers', label: 'Losers' },
       ]
+    },
+    {
+      id: 'searchFilter',
+      label: 'Search',
+      type: 'search'
+    },
+    {
+      id: 'priceRangeFilter',
+      label: 'Price Range (₹)',
+      type: 'range'
+    },
+    {
+      id: 'valueRangeFilter',
+      label: 'Total Value Range (₹)',
+      type: 'range'
     }
   ];
+
+  // Get all unique sectors from stocks
+  const uniqueSectors = Array.from(new Set(stocks.filter(s => s.sector).map(s => s.sector)));
+  if (uniqueSectors.length > 0) {
+    filterOptions.push({
+      id: 'selectedSectors',
+      label: 'Sectors',
+      type: 'checkbox',
+      options: uniqueSectors.map(sector => ({ 
+        value: sector as string, 
+        label: sector as string 
+      }))
+    });
+  }
 
   const sortOptions: SortOption[] = [
     { label: 'Symbol', value: 'symbol' },
     { label: 'Name', value: 'name' },
     { label: 'Quantity', value: 'quantity' },
+    { label: 'Average Buy Price', value: 'averageBuyPrice' },
     { label: 'Current Price', value: 'currentPrice' },
     { label: 'Value', value: 'value' },
+    { label: 'Change %', value: 'changePercent' },
     { label: 'Gain/Loss %', value: 'gainPercent' },
+    { label: 'Owner', value: 'familyMemberId' }
   ];
 
   const handleAddStock = () => {
@@ -221,6 +243,11 @@ const Stocks = () => {
     }
   };
 
+  const handleTableSortChange = (field: string, direction: SortDirection) => {
+    setCurrentSort(direction ? field : null);
+    setCurrentDirection(direction);
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -277,6 +304,9 @@ const Stocks = () => {
             onEdit={handleEditStock}
             onDelete={handleDeleteClick}
             onViewAudit={handleViewAudit}
+            onSortChange={handleTableSortChange}
+            currentSort={currentSort}
+            currentDirection={currentDirection}
           />
         </CardContent>
       </Card>

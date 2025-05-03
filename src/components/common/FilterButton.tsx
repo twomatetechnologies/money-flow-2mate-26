@@ -9,15 +9,19 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 export interface FilterOption {
   id: string;
   label: string;
-  options: {
+  options?: {
     value: string;
     label: string;
   }[];
-  type: 'select' | 'range' | 'checkbox';
+  type: 'select' | 'range' | 'checkbox' | 'search';
+  field?: string;
 }
 
 interface FilterButtonProps {
@@ -41,6 +45,38 @@ const FilterButton: React.FC<FilterButtonProps> = ({
 
   const handleSelectChange = (filterId: string, event: React.ChangeEvent<HTMLSelectElement>) => {
     onFilterChange(filterId, event.target.value);
+  };
+
+  const handleSearchChange = (filterId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    onFilterChange(filterId, event.target.value);
+  };
+
+  const handleCheckboxChange = (filterId: string, value: string, checked: boolean) => {
+    const currentValues = activeFilters[filterId] || [];
+    let newValues;
+    
+    if (checked) {
+      newValues = [...currentValues, value];
+    } else {
+      newValues = currentValues.filter((v: string) => v !== value);
+    }
+    
+    onFilterChange(filterId, newValues.length ? newValues : null);
+  };
+
+  const handleRangeChange = (filterId: string, type: 'min' | 'max', value: string) => {
+    const current = activeFilters[filterId] || {};
+    const newValue = {
+      ...current,
+      [type]: value === '' ? null : parseFloat(value)
+    };
+    
+    // Only set the filter if at least one value is present
+    if (newValue.min !== null || newValue.max !== null) {
+      onFilterChange(filterId, newValue);
+    } else {
+      onFilterChange(filterId, null);
+    }
   };
 
   return (
@@ -77,7 +113,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({
             <div key={option.id} className="space-y-2">
               <label className="text-sm font-medium">{option.label}</label>
               
-              {option.type === 'select' && (
+              {option.type === 'select' && option.options && (
                 <select
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   value={activeFilters[option.id] || ''}
@@ -92,7 +128,60 @@ const FilterButton: React.FC<FilterButtonProps> = ({
                 </select>
               )}
               
-              {/* Additional filter types can be added here */}
+              {option.type === 'search' && (
+                <Input
+                  type="text"
+                  placeholder={`Search ${option.label.toLowerCase()}`}
+                  value={activeFilters[option.id] || ''}
+                  onChange={(e) => handleSearchChange(option.id, e)}
+                  className="w-full"
+                />
+              )}
+              
+              {option.type === 'range' && (
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      placeholder="Min"
+                      value={(activeFilters[option.id]?.min || '')}
+                      onChange={(e) => handleRangeChange(option.id, 'min', e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      placeholder="Max"
+                      value={(activeFilters[option.id]?.max || '')}
+                      onChange={(e) => handleRangeChange(option.id, 'max', e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {option.type === 'checkbox' && option.options && (
+                <div className="space-y-2">
+                  {option.options.map((opt) => {
+                    const values = activeFilters[option.id] || [];
+                    const isChecked = values.includes(opt.value);
+                    
+                    return (
+                      <div key={opt.value} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`${option.id}-${opt.value}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => 
+                            handleCheckboxChange(option.id, opt.value, checked === true)
+                          }
+                        />
+                        <Label htmlFor={`${option.id}-${opt.value}`}>{opt.label}</Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ))}
         </div>

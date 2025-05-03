@@ -3,36 +3,160 @@ import React from 'react';
 import { StockHolding } from '@/types';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Pencil, Trash, History } from 'lucide-react';
+import { TrendingUp, TrendingDown, Pencil, Trash, History, ArrowUpDown } from 'lucide-react';
 import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
+import SortButton, { SortDirection } from '@/components/common/SortButton';
 
 interface StockTableProps {
   stocks: StockHolding[];
   onEdit: (stock: StockHolding) => void;
   onDelete: (stock: StockHolding) => void;
   onViewAudit: (stockId: string) => void;
+  onSortChange?: (field: string, direction: SortDirection) => void;
+  currentSort?: string | null;
+  currentDirection?: SortDirection;
 }
+
+interface SortableTableHeaderProps {
+  field: string;
+  children: React.ReactNode;
+  className?: string;
+  onSortChange?: (field: string, direction: SortDirection) => void;
+  currentSort?: string | null;
+  currentDirection?: SortDirection;
+}
+
+const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({
+  field,
+  children,
+  className = "",
+  onSortChange,
+  currentSort,
+  currentDirection
+}) => {
+  if (!onSortChange) {
+    return <TableHead className={className}>{children}</TableHead>;
+  }
+  
+  const isActive = currentSort === field;
+  
+  return (
+    <TableHead className={`${className} cursor-pointer`}>
+      <div className="flex items-center justify-between">
+        <span>{children}</span>
+        <SortButton
+          minimal
+          options={[{ label: field, value: field }]}
+          currentSort={isActive ? field : null}
+          currentDirection={isActive ? currentDirection || null : null}
+          onSortChange={(_, direction) => onSortChange(field, direction)}
+        />
+      </div>
+    </TableHead>
+  );
+};
 
 export const StockTable: React.FC<StockTableProps> = ({
   stocks,
   onEdit,
   onDelete,
-  onViewAudit
+  onViewAudit,
+  onSortChange,
+  currentSort,
+  currentDirection
 }) => {
   return (
     <Table>
       <TableCaption>Your stock portfolio as of today</TableCaption>
       <TableHeader>
         <TableRow>
-          <TableHead>Symbol</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead className="text-right">Quantity</TableHead>
-          <TableHead className="text-right">Avg. Buy Price</TableHead>
-          <TableHead className="text-right">Current Price</TableHead>
-          <TableHead className="text-right">Change</TableHead>
-          <TableHead className="text-right">Value</TableHead>
-          <TableHead className="text-right">Gain/Loss</TableHead>
-          <TableHead>Owner</TableHead>
+          <SortableTableHeader
+            field="symbol"
+            onSortChange={onSortChange}
+            currentSort={currentSort}
+            currentDirection={currentDirection}
+          >
+            Symbol
+          </SortableTableHeader>
+          
+          <SortableTableHeader
+            field="name"
+            onSortChange={onSortChange}
+            currentSort={currentSort}
+            currentDirection={currentDirection}
+          >
+            Name
+          </SortableTableHeader>
+          
+          <SortableTableHeader
+            field="quantity"
+            className="text-right"
+            onSortChange={onSortChange}
+            currentSort={currentSort}
+            currentDirection={currentDirection}
+          >
+            Quantity
+          </SortableTableHeader>
+          
+          <SortableTableHeader
+            field="averageBuyPrice"
+            className="text-right"
+            onSortChange={onSortChange}
+            currentSort={currentSort}
+            currentDirection={currentDirection}
+          >
+            Avg. Buy Price
+          </SortableTableHeader>
+          
+          <SortableTableHeader
+            field="currentPrice"
+            className="text-right"
+            onSortChange={onSortChange}
+            currentSort={currentSort}
+            currentDirection={currentDirection}
+          >
+            Current Price
+          </SortableTableHeader>
+          
+          <SortableTableHeader
+            field="changePercent"
+            className="text-right"
+            onSortChange={onSortChange}
+            currentSort={currentSort}
+            currentDirection={currentDirection}
+          >
+            Change
+          </SortableTableHeader>
+          
+          <SortableTableHeader
+            field="value"
+            className="text-right"
+            onSortChange={onSortChange}
+            currentSort={currentSort}
+            currentDirection={currentDirection}
+          >
+            Value
+          </SortableTableHeader>
+          
+          <SortableTableHeader
+            field="gainPercent"
+            className="text-right"
+            onSortChange={onSortChange}
+            currentSort={currentSort}
+            currentDirection={currentDirection}
+          >
+            Gain/Loss
+          </SortableTableHeader>
+          
+          <SortableTableHeader
+            field="familyMemberId"
+            onSortChange={onSortChange}
+            currentSort={currentSort}
+            currentDirection={currentDirection}
+          >
+            Owner
+          </SortableTableHeader>
+          
           <TableHead className="text-center">Actions</TableHead>
         </TableRow>
       </TableHeader>

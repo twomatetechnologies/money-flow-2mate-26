@@ -47,6 +47,21 @@ The dashboard provides a comprehensive overview of your financial status with ne
 ### Investment Tracking
 Track various investment types with detailed information about each investment, including purchase price, current value, returns, and more.
 
+#### Stock Portfolio
+The Stock Portfolio module allows users to:
+- Track individual stock holdings across family members
+- Sort any column in the table by clicking on the column header
+- Filter stocks by multiple criteria:
+  - Performance (gainers/losers)
+  - Price range
+  - Value range
+  - Sector
+  - Text search across symbol and name
+- View real-time (or simulated) market data
+- Calculate gains/losses for each investment
+- Import/export stock data in CSV or Excel format
+- View audit history for each stock transaction
+
 ### Financial Goals
 Set and track financial goals with visual progress indicators and recommendations for achieving your targets.
 

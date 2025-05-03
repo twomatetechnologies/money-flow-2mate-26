@@ -21,6 +21,7 @@ interface SortButtonProps {
   currentSort: string | null;
   currentDirection: SortDirection;
   onSortChange: (value: string, direction: SortDirection) => void;
+  minimal?: boolean;
 }
 
 const SortButton: React.FC<SortButtonProps> = ({
@@ -28,6 +29,7 @@ const SortButton: React.FC<SortButtonProps> = ({
   currentSort,
   currentDirection,
   onSortChange,
+  minimal = false,
 }) => {
   const getIcon = () => {
     if (!currentSort || !currentDirection) return <ArrowUpDown className="h-4 w-4 ml-1" />;
@@ -52,6 +54,24 @@ const SortButton: React.FC<SortButtonProps> = ({
     const option = options.find(opt => opt.value === currentSort);
     return option ? option.label : 'Sort';
   };
+
+  if (minimal) {
+    return (
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="h-8 w-8 p-0" 
+        onClick={() => {
+          const option = options[0];
+          if (option) {
+            handleSortClick(option.value);
+          }
+        }}
+      >
+        {getIcon()}
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

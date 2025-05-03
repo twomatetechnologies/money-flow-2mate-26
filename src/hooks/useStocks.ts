@@ -40,20 +40,66 @@ export const useStocks = () => {
   const applyFiltersAndSort = () => {
     let result = [...stocks];
     
+    // Apply filters
     if (Object.keys(activeFilters).length > 0) {
       Object.entries(activeFilters).forEach(([key, value]) => {
-        if (value) {
-          if (key === 'performanceFilter') {
-            if (value === 'gainers') {
-              result = result.filter(stock => calculateGainPercent(stock) > 0);
-            } else if (value === 'losers') {
-              result = result.filter(stock => calculateGainPercent(stock) < 0);
-            }
+        if (value !== null && value !== undefined && value !== '') {
+          switch (key) {
+            case 'performanceFilter':
+              if (value === 'gainers') {
+                result = result.filter(stock => calculateGainPercent(stock) > 0);
+              } else if (value === 'losers') {
+                result = result.filter(stock => calculateGainPercent(stock) < 0);
+              }
+              break;
+              
+            case 'searchFilter':
+              const searchTerm = value.toLowerCase();
+              result = result.filter(stock => 
+                stock.symbol.toLowerCase().includes(searchTerm) || 
+                stock.name.toLowerCase().includes(searchTerm)
+              );
+              break;
+              
+            case 'sectorFilter':
+              result = result.filter(stock => stock.sector === value);
+              break;
+              
+            case 'familyMemberFilter':
+              result = result.filter(stock => stock.familyMemberId === value);
+              break;
+              
+            case 'priceRangeFilter':
+              if (value.min !== null) {
+                result = result.filter(stock => stock.currentPrice >= value.min);
+              }
+              if (value.max !== null) {
+                result = result.filter(stock => stock.currentPrice <= value.max);
+              }
+              break;
+              
+            case 'valueRangeFilter':
+              if (value.min !== null) {
+                result = result.filter(stock => stock.value >= value.min);
+              }
+              if (value.max !== null) {
+                result = result.filter(stock => stock.value <= value.max);
+              }
+              break;
+              
+            case 'selectedSectors':
+              if (Array.isArray(value) && value.length > 0) {
+                result = result.filter(stock => 
+                  stock.sector && value.includes(stock.sector)
+                );
+              }
+              break;
           }
         }
       });
     }
     
+    // Apply sorting
     if (currentSort && currentDirection) {
       result.sort((a, b) => {
         let aValue, bValue;
@@ -61,6 +107,10 @@ export const useStocks = () => {
         if (currentSort === 'gainPercent') {
           aValue = calculateGainPercent(a);
           bValue = calculateGainPercent(b);
+        } else if (currentSort === 'familyMemberId') {
+          // Special case for family member sorting - could be enhanced to use actual names
+          aValue = a.familyMemberId || '';
+          bValue = b.familyMemberId || '';
         } else {
           aValue = a[currentSort as keyof StockHolding];
           bValue = b[currentSort as keyof StockHolding];
