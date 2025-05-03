@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getNetWorth } from '@/services/netWorthService';
@@ -25,7 +24,6 @@ import {
 import { format, subMonths } from 'date-fns';
 import { formatIndianNumber } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card as ChartCard } from "@/components/ui/chart";
 import { 
   ChartContainer,
   ChartTooltipContent,

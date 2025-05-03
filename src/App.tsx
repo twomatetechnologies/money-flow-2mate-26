@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import TwoFactorAuth from './pages/TwoFactorAuth';
@@ -27,7 +27,8 @@ import Goals from './pages/Goals';
 import ProvidentFund from './pages/ProvidentFund';
 
 function App() {
-  const [queryClient] = useState(() => new QueryClient());
+  // Create the QueryClient instance outside of the component body
+  const queryClient = new QueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>
