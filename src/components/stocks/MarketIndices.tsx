@@ -17,18 +17,16 @@ export function MarketIndices() {
 
   if (loading) {
     return (
-      <Card className="finance-card">
+      <Card className="finance-card h-[100px]">
         <CardContent className="p-4">
-          <div className="flex justify-between items-center mb-3">
+          <div className="flex justify-between items-center mb-2">
             <h3 className="text-sm font-medium">Market Indices</h3>
           </div>
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between">
-                <Skeleton className="h-4 w-20" />
-                <div className="flex flex-col items-end">
-                  <Skeleton className="h-4 w-16" />
-                </div>
+          <div className="grid grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex flex-col">
+                <Skeleton className="h-4 w-20 mb-1" />
+                <Skeleton className="h-4 w-16" />
               </div>
             ))}
           </div>
@@ -38,57 +36,53 @@ export function MarketIndices() {
   }
 
   return (
-    <Card className="finance-card bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+    <Card className="finance-card bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 h-[100px]">
       <CardContent className="p-4">
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-2">
           <h3 className="text-sm font-medium">Market Indices</h3>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={refreshIndices} 
-                  disabled={refreshing}
-                  className="h-6 w-6 p-0"
-                >
-                  <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
-                  <span className="sr-only">Refresh</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Refresh market data</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {formatTime(lastUpdated)}
+            </span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={refreshIndices} 
+                    disabled={refreshing}
+                    className="h-6 w-6 p-0"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
+                    <span className="sr-only">Refresh</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Refresh market data</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
         
-        <div className="space-y-2 overflow-y-auto max-h-[120px]">
-          {indices.map((index) => (
+        <div className="grid grid-cols-4 gap-x-6 gap-y-1">
+          {indices.slice(0, 8).map((index) => (
             <div key={index.symbol} className="flex items-center justify-between text-xs">
-              <div className="font-medium">{index.name}</div>
-              <div className="flex items-end space-x-2">
-                <div>{index.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-                <div className={`flex items-center ${index.changePercent >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
-                  {index.changePercent >= 0 ? (
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3 mr-1" />
-                  )}
-                  <span>
-                    {index.changePercent >= 0 ? '+' : ''}{index.changePercent.toFixed(2)}%
-                  </span>
-                </div>
+              <div className="font-medium truncate mr-2">{index.name}</div>
+              <div className={`flex items-center ${index.changePercent >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
+                {index.changePercent >= 0 ? (
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                ) : (
+                  <TrendingDown className="h-3 w-3 mr-1" />
+                )}
+                <span>
+                  {index.changePercent >= 0 ? '+' : ''}{index.changePercent.toFixed(2)}%
+                </span>
               </div>
             </div>
           ))}
         </div>
-        
-        {lastUpdated && (
-          <div className="mt-2 text-xs text-muted-foreground text-right">
-            {formatTime(lastUpdated)}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

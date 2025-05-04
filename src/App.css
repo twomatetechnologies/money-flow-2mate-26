@@ -5,17 +5,12 @@
 
 /* Finance app card styles */
 .finance-card {
-  @apply rounded-lg overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md border border-gray-100 dark:border-gray-800;
+  @apply rounded-lg overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800;
 }
 
 /* Background gradient for finance blue sections */
 .bg-finance-blue {
   @apply bg-gradient-to-br from-[#1A365D] to-[#2A3042];
-}
-
-/* Finance card hover effect */
-.finance-card:hover {
-  @apply transform transition-transform duration-200 hover:scale-[1.01];
 }
 
 /* Chart tooltip styles */

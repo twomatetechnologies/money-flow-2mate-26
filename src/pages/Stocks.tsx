@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { StockHolding } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -275,13 +276,14 @@ const Stocks = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        <div className="col-span-3">
-          <StockStats displayedStocks={displayedStocks} />
-        </div>
-        <div>
-          <MarketIndices />
-        </div>
+      {/* First row: Stats cards */}
+      <div className="grid grid-cols-1 gap-4">
+        <StockStats displayedStocks={displayedStocks} />
+      </div>
+
+      {/* Second row: Market Indices */}
+      <div className="grid grid-cols-1 gap-4">
+        <MarketIndices />
       </div>
 
       <Card className="finance-card">
