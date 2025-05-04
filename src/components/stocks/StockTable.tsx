@@ -6,6 +6,12 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Pencil, Trash, History, ArrowUpDown } from 'lucide-react';
 import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import SortButton, { SortDirection } from '@/components/common/SortButton';
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from '@/components/ui/tooltip';
 
 interface StockTableProps {
   stocks: StockHolding[];
@@ -68,7 +74,7 @@ export const StockTable: React.FC<StockTableProps> = ({
   return (
     <Table>
       <TableCaption>Your stock portfolio as of today</TableCaption>
-      <TableHeader>
+      <TableHeader className="bg-gray-50 dark:bg-gray-900">
         <TableRow>
           <SortableTableHeader
             field="symbol"
@@ -173,8 +179,8 @@ export const StockTable: React.FC<StockTableProps> = ({
             const gainPercent = (gain / (stock.averageBuyPrice * stock.quantity)) * 100;
             
             return (
-              <TableRow key={stock.id}>
-                <TableCell className="font-medium">{stock.symbol}</TableCell>
+              <TableRow key={stock.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors">
+                <TableCell className="font-semibold">{stock.symbol}</TableCell>
                 <TableCell>{stock.name}</TableCell>
                 <TableCell className="text-right">{stock.quantity}</TableCell>
                 <TableCell className="text-right">₹{stock.averageBuyPrice.toLocaleString()}</TableCell>
@@ -182,33 +188,52 @@ export const StockTable: React.FC<StockTableProps> = ({
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end">
                     {stock.changePercent >= 0 ? (
-                      <TrendingUp className="h-4 w-4 mr-1 trend-up" />
+                      <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
                     ) : (
-                      <TrendingDown className="h-4 w-4 mr-1 trend-down" />
+                      <TrendingDown className="h-4 w-4 mr-1 text-red-600" />
                     )}
-                    <span className={stock.changePercent >= 0 ? 'trend-up' : 'trend-down'}>
+                    <span className={stock.changePercent >= 0 ? 'text-green-600' : 'text-red-600'}>
                       {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-right">₹{stock.value.toLocaleString()}</TableCell>
+                <TableCell className="text-right font-medium">₹{stock.value.toLocaleString()}</TableCell>
                 <TableCell className="text-right">
-                  <span className={gain >= 0 ? 'trend-up' : 'trend-down'}>
+                  <span className={gain >= 0 ? 'text-green-600' : 'text-red-600'}>
                     {gain >= 0 ? '+' : ''}₹{gain.toLocaleString()} ({gainPercent.toFixed(2)}%)
                   </span>
                 </TableCell>
                 <TableCell><FamilyMemberDisplay memberId={stock.familyMemberId} /></TableCell>
                 <TableCell>
-                  <div className="flex justify-center space-x-2">
-                    <Button variant="outline" size="icon" onClick={() => onEdit(stock)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => onDelete(stock)}>
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => onViewAudit(stock.id)}>
-                      <History className="h-4 w-4" />
-                    </Button>
+                  <div className="flex justify-center space-x-1">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => onEdit(stock)} className="hover:bg-blue-50 hover:text-blue-600">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit</TooltipContent>
+                      </Tooltip>
+                      
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => onDelete(stock)} className="hover:bg-red-50 hover:text-red-600">
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete</TooltipContent>
+                      </Tooltip>
+                      
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => onViewAudit(stock.id)} className="hover:bg-purple-50 hover:text-purple-600">
+                            <History className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>View History</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </TableCell>
               </TableRow>

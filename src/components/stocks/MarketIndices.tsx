@@ -1,43 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, ArrowUpDown, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MarketIndex, fetchAllMarketIndices } from '@/services/marketIndicesService';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMarketIndices } from '@/hooks/useMarketIndices';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function MarketIndices() {
-  const [indices, setIndices] = useState<MarketIndex[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  const loadIndices = async () => {
-    try {
-      setRefreshing(true);
-      const data = await fetchAllMarketIndices();
-      setIndices(data);
-      setLastUpdated(new Date());
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading market indices:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    loadIndices();
-    
-    // Set up interval to refresh every 60 seconds
-    const intervalId = setInterval(loadIndices, 60000);
-    
-    return () => clearInterval(intervalId);
-  }, []);
-
-  const handleManualRefresh = () => {
-    loadIndices();
-  };
+  const { indices, loading, refreshing, lastUpdated, refreshIndices } = useMarketIndices(60000);
 
   const formatTime = (date: Date | null) => {
     if (!date) return '';
@@ -46,18 +17,21 @@ export function MarketIndices() {
 
   if (loading) {
     return (
-      <Card className="finance-card">
+      <Card className="finance-card h-full">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Market Indices</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="flex items-center justify-between">
                 <Skeleton className="h-5 w-24" />
-                <Skeleton className="h-5 w-20" />
+                <div className="flex flex-col items-end">
+                  <Skeleton className="h-5 w-20" />
+                  <Skeleton className="h-4 w-12 mt-1" />
+                </div>
               </div>
             ))}
           </div>
@@ -67,32 +41,41 @@ export function MarketIndices() {
   }
 
   return (
-    <Card className="finance-card">
+    <Card className="finance-card h-full bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between">
           <span>Market Indices</span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleManualRefresh} 
-            disabled={refreshing}
-            className="h-8 w-8 p-0"
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            <span className="sr-only">Refresh</span>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={refreshIndices} 
+                  disabled={refreshing}
+                  className="h-8 w-8 p-0"
+                >
+                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  <span className="sr-only">Refresh</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Refresh market data</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {indices.map((index) => (
-            <div key={index.symbol} className="flex items-center justify-between">
+            <div key={index.symbol} className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0">
               <div>
                 <div className="text-sm font-medium">{index.name}</div>
               </div>
               <div className="flex flex-col items-end">
                 <div className="font-medium">₹{index.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-                <div className={`text-xs flex items-center ${index.changePercent >= 0 ? 'trend-up' : 'trend-down'}`}>
+                <div className={`text-xs flex items-center ${index.changePercent >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
                   {index.changePercent >= 0 ? (
                     <TrendingUp className="h-3 w-3 mr-1" />
                   ) : (

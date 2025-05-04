@@ -20,17 +20,38 @@ const MARKET_INDICES = [
   { symbol: 'NIFTYMCAP100.NS', name: 'Nifty Midcap 100' }
 ];
 
-// The Alpha Vantage API key (replace with your API key for production)
-const ALPHA_VANTAGE_API_KEY = 'demo'; 
+// The Alpha Vantage API key
+const ALPHA_VANTAGE_API_KEY = 'demo'; // Using demo key for now
+
+// Financial Modeling Prep API key (free tier)
+const FMP_API_KEY = 'demo';
 
 // Fetch the latest data for a market index
 export const fetchMarketIndexData = async (symbol: string, name: string): Promise<MarketIndex | null> => {
+  try {
+    // First, try Alpha Vantage API
+    const avData = await fetchFromAlphaVantage(symbol);
+    if (avData) return avData;
+    
+    // If Alpha Vantage fails, try Financial Modeling Prep API
+    const fmpData = await fetchFromFMP(symbol, name);
+    if (fmpData) return fmpData;
+    
+    // If both APIs fail, fallback to simulated data
+    return simulateMarketIndexData(symbol, name);
+  } catch (error) {
+    console.error(`Failed to fetch index data for ${symbol}:`, error);
+    return simulateMarketIndexData(symbol, name);
+  }
+};
+
+const fetchFromAlphaVantage = async (symbol: string): Promise<MarketIndex | null> => {
   try {
     const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`;
     const response = await fetch(url);
     
     if (!response.ok) {
-      console.error(`Error fetching market index data for ${symbol}: ${response.statusText}`);
+      console.error(`Error fetching market index data from Alpha Vantage for ${symbol}: ${response.statusText}`);
       return null;
     }
     
@@ -43,7 +64,7 @@ export const fetchMarketIndexData = async (symbol: string, name: string): Promis
       
       return {
         symbol,
-        name,
+        name: symbol.replace('^', '').replace('.NS', ''),
         value: price,
         change,
         changePercent,
@@ -51,17 +72,44 @@ export const fetchMarketIndexData = async (symbol: string, name: string): Promis
       };
     }
     
-    // If using the demo key or rate-limited, simulate data
-    if (data['Information'] && data['Information'].includes('demo')) {
-      console.log(`Using simulated data for ${name} due to API limitations`);
-      return simulateMarketIndexData(symbol, name);
+    return null;
+  } catch (error) {
+    console.error(`Alpha Vantage API error for ${symbol}:`, error);
+    return null;
+  }
+};
+
+const fetchFromFMP = async (symbol: string, name: string): Promise<MarketIndex | null> => {
+  try {
+    // Convert Alpha Vantage symbol format to FMP format
+    const fmpSymbol = symbol.replace('^', '%5E');
+    
+    const url = `https://financialmodelingprep.com/api/v3/quote/${fmpSymbol}?apikey=${FMP_API_KEY}`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.error(`Error fetching market index data from FMP for ${symbol}: ${response.statusText}`);
+      return null;
     }
     
-    console.error(`No index data found for ${symbol}`, data);
-    return simulateMarketIndexData(symbol, name);
+    const data = await response.json();
+    
+    if (data && data.length > 0) {
+      const indexData = data[0];
+      return {
+        symbol,
+        name,
+        value: indexData.price,
+        change: indexData.change,
+        changePercent: indexData.changesPercentage,
+        lastUpdated: new Date()
+      };
+    }
+    
+    return null;
   } catch (error) {
-    console.error(`Failed to fetch index data for ${symbol}:`, error);
-    return simulateMarketIndexData(symbol, name);
+    console.error(`FMP API error for ${symbol}:`, error);
+    return null;
   }
 };
 
