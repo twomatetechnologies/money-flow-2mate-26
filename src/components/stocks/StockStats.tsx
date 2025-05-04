@@ -19,46 +19,43 @@ export const StockStats: React.FC<StockStatsProps> = ({ displayedStocks }) => {
 
   return (
     <div className="grid grid-cols-3 gap-4">
-      <Card className="finance-card overflow-hidden relative h-[100px]">
-        <div className={`absolute inset-0 opacity-5 ${totalValue >= totalInvestment ? 'bg-gradient-to-br from-green-300 to-green-800' : 'bg-gradient-to-br from-red-300 to-red-800'}`} />
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-1 text-sm font-medium">
-            <LineChart className="h-4 w-4" />
+      <Card className="kite-card bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm h-[100px]">
+        <div className="h-full flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">
+            <LineChart className="h-3.5 w-3.5" />
             Current Value
           </div>
-          <div className="text-xl font-bold">₹{totalValue.toLocaleString()}</div>
-        </CardContent>
+          <div className="text-lg font-bold text-gray-900 dark:text-gray-100">₹{totalValue.toLocaleString()}</div>
+        </div>
       </Card>
-      <Card className="finance-card overflow-hidden relative h-[100px]">
-        <div className="absolute inset-0 opacity-5 bg-gradient-to-br from-blue-300 to-blue-800" />
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-1 text-sm font-medium">
-            <PieChart className="h-4 w-4" />
+      <Card className="kite-card bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm h-[100px]">
+        <div className="h-full flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">
+            <PieChart className="h-3.5 w-3.5" />
             Investment
           </div>
-          <div className="text-xl font-bold">₹{totalInvestment.toLocaleString()}</div>
-        </CardContent>
+          <div className="text-lg font-bold text-gray-900 dark:text-gray-100">₹{totalInvestment.toLocaleString()}</div>
+        </div>
       </Card>
-      <Card className={`finance-card overflow-hidden relative h-[100px] ${totalGain >= 0 ? 'border-green-100 dark:border-green-900' : 'border-red-100 dark:border-red-900'}`}>
-        <div className={`absolute inset-0 opacity-5 ${totalGain >= 0 ? 'bg-gradient-to-br from-green-300 to-green-800' : 'bg-gradient-to-br from-red-300 to-red-800'}`} />
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-1 text-sm font-medium">
+      <Card className={`kite-card border shadow-sm h-[100px] ${totalGain >= 0 ? 'bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-800'}`}>
+        <div className="h-full flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">
             {totalGain >= 0 ? (
-              <ArrowUpRight className="h-4 w-4" />
+              <ArrowUpRight className="h-3.5 w-3.5" />
             ) : (
-              <TrendingDown className="h-4 w-4" />
+              <TrendingDown className="h-3.5 w-3.5" />
             )}
             Gain/Loss
           </div>
           <div className="flex items-center">
-            <div className={`text-xl font-bold ${totalGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-lg font-bold ${totalGain >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
               {totalGain >= 0 ? '+' : ''}₹{totalGain.toLocaleString()}
             </div>
-            <div className={`ml-2 text-sm ${totalGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`ml-2 text-xs ${totalGain >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
               ({percentGain >= 0 ? '+' : ''}{percentGain.toFixed(2)}%)
             </div>
           </div>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

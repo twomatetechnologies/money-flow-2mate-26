@@ -258,38 +258,39 @@ const Stocks = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="space-y-3">
+      <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800 mb-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Stock Portfolio</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">Stock Portfolio</h1>
+          <p className="text-sm text-muted-foreground">
             Manage and track your stock investments
           </p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" onClick={handleImportClick}>
-            <Import className="mr-2 h-4 w-4" /> Import
+          <Button variant="outline" size="sm" onClick={handleImportClick} className="h-8 text-xs">
+            <Import className="mr-1 h-3 w-3" /> Import
           </Button>
-          <Button onClick={handleAddStock}>
-            <Plus className="mr-2 h-4 w-4" /> Add Stock
+          <Button size="sm" onClick={handleAddStock} className="h-8 text-xs bg-primary hover:bg-primary/90">
+            <Plus className="mr-1 h-3 w-3" /> Add Stock
           </Button>
         </div>
       </div>
 
       {/* First row: Stats cards */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-3">
         <StockStats displayedStocks={displayedStocks} />
       </div>
 
       {/* Second row: Market Indices */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-3">
         <MarketIndices />
       </div>
 
-      <Card className="finance-card">
-        <CardHeader className="py-3 px-4">
+      {/* Third row: Stock table */}
+      <Card className="border border-gray-100 dark:border-gray-800 shadow-sm rounded-lg overflow-hidden">
+        <CardHeader className="py-2 px-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Your Stocks</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-900 dark:text-gray-100">Your Stocks</CardTitle>
             <div className="flex items-center gap-2">
               <FilterButton 
                 options={filterOptions} 
