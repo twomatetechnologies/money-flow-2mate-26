@@ -101,3 +101,31 @@ button:active:not(:disabled) {
 .badge-red {
   @apply bg-red-100 text-red-800;
 }
+
+/* Stats grid consistency */
+.stats-grid {
+  @apply grid gap-6 md:grid-cols-3 h-full;
+}
+
+.stats-grid .finance-card {
+  @apply flex flex-col h-full;
+}
+
+.stats-card {
+  @apply h-full flex flex-col;
+}
+
+.stats-card .card-content {
+  @apply flex-grow;
+}
+
+/* Market indices card */
+.market-indices-card {
+  @apply h-full flex flex-col;
+}
+
+.market-indices-content {
+  @apply overflow-y-auto flex-grow;
+  max-height: 240px;
+  scrollbar-width: thin;
+}

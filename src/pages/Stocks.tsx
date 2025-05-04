@@ -275,11 +275,11 @@ const Stocks = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 min-h-[240px]">
+        <div className="md:col-span-2 h-full">
           <StockStats displayedStocks={displayedStocks} />
         </div>
-        <div>
+        <div className="h-full">
           <MarketIndices />
         </div>
       </div>

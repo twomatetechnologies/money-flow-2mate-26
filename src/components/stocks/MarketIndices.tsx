@@ -18,12 +18,12 @@ export function MarketIndices() {
   if (loading) {
     return (
       <Card className="finance-card h-full">
-        <CardHeader>
+        <CardHeader className="pb-2">
           <CardTitle className="flex items-center justify-between">
             <span>Market Indices</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-y-auto">
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="flex items-center justify-between">
@@ -66,8 +66,8 @@ export function MarketIndices() {
           </TooltipProvider>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="overflow-y-auto max-h-[240px]">
+        <div className="space-y-3">
           {indices.map((index) => (
             <div key={index.symbol} className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0">
               <div>

@@ -18,8 +18,8 @@ export const StockStats: React.FC<StockStatsProps> = ({ displayedStocks }) => {
   const percentGain = totalInvestment > 0 ? (totalGain / totalInvestment) * 100 : 0;
 
   return (
-    <div className="grid gap-6 md:grid-cols-3">
-      <Card className="finance-card overflow-hidden relative">
+    <div className="grid gap-6 md:grid-cols-3 h-full">
+      <Card className="finance-card overflow-hidden relative h-full">
         <div className={`absolute inset-0 opacity-5 ${totalValue >= totalInvestment ? 'bg-gradient-to-br from-green-300 to-green-800' : 'bg-gradient-to-br from-red-300 to-red-800'}`} />
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2">
@@ -32,7 +32,7 @@ export const StockStats: React.FC<StockStatsProps> = ({ displayedStocks }) => {
           <div className="mt-2 text-sm text-muted-foreground">Total portfolio value</div>
         </CardContent>
       </Card>
-      <Card className="finance-card overflow-hidden relative">
+      <Card className="finance-card overflow-hidden relative h-full">
         <div className="absolute inset-0 opacity-5 bg-gradient-to-br from-blue-300 to-blue-800" />
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2">
@@ -45,7 +45,7 @@ export const StockStats: React.FC<StockStatsProps> = ({ displayedStocks }) => {
           <div className="mt-2 text-sm text-muted-foreground">Purchase value</div>
         </CardContent>
       </Card>
-      <Card className={`finance-card overflow-hidden relative ${totalGain >= 0 ? 'border-green-100 dark:border-green-900' : 'border-red-100 dark:border-red-900'}`}>
+      <Card className={`finance-card overflow-hidden relative h-full ${totalGain >= 0 ? 'border-green-100 dark:border-green-900' : 'border-red-100 dark:border-red-900'}`}>
         <div className={`absolute inset-0 opacity-5 ${totalGain >= 0 ? 'bg-gradient-to-br from-green-300 to-green-800' : 'bg-gradient-to-br from-red-300 to-red-800'}`} />
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2">
