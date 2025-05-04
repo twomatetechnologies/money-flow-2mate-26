@@ -257,10 +257,10 @@ const Stocks = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Stock Portfolio</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Stock Portfolio</h1>
           <p className="text-muted-foreground">
             Manage and track your stock investments
           </p>
@@ -275,37 +275,39 @@ const Stocks = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 min-h-[240px]">
-        <div className="md:col-span-2 h-full">
+      <div className="grid grid-cols-4 gap-4">
+        <div className="col-span-3">
           <StockStats displayedStocks={displayedStocks} />
         </div>
-        <div className="h-full">
+        <div>
           <MarketIndices />
         </div>
       </div>
 
       <Card className="finance-card">
-        <CardHeader>
-          <CardTitle>Your Stocks</CardTitle>
-          <div className="flex items-center gap-2 mt-2">
-            <FilterButton 
-              options={filterOptions} 
-              activeFilters={activeFilters}
-              onFilterChange={(filterId, value) => setActiveFilters(prev => ({ ...prev, [filterId]: value }))}
-              onClearFilters={() => setActiveFilters({})}
-            />
-            <SortButton 
-              options={sortOptions}
-              currentSort={currentSort}
-              currentDirection={currentDirection}
-              onSortChange={(sortKey, direction) => {
-                setCurrentSort(direction ? sortKey : null);
-                setCurrentDirection(direction);
-              }}
-            />
+        <CardHeader className="py-3 px-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Your Stocks</CardTitle>
+            <div className="flex items-center gap-2">
+              <FilterButton 
+                options={filterOptions} 
+                activeFilters={activeFilters}
+                onFilterChange={(filterId, value) => setActiveFilters(prev => ({ ...prev, [filterId]: value }))}
+                onClearFilters={() => setActiveFilters({})}
+              />
+              <SortButton 
+                options={sortOptions}
+                currentSort={currentSort}
+                currentDirection={currentDirection}
+                onSortChange={(sortKey, direction) => {
+                  setCurrentSort(direction ? sortKey : null);
+                  setCurrentDirection(direction);
+                }}
+              />
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <StockTable 
             stocks={displayedStocks}
             onEdit={handleEditStock}

@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMarketIndices } from '@/hooks/useMarketIndices';
@@ -17,20 +17,17 @@ export function MarketIndices() {
 
   if (loading) {
     return (
-      <Card className="finance-card h-full">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center justify-between">
-            <span>Market Indices</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-y-auto">
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
+      <Card className="finance-card">
+        <CardContent className="p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-sm font-medium">Market Indices</h3>
+          </div>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center justify-between">
-                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-4 w-20" />
                 <div className="flex flex-col items-end">
-                  <Skeleton className="h-5 w-20" />
-                  <Skeleton className="h-4 w-12 mt-1" />
+                  <Skeleton className="h-4 w-16" />
                 </div>
               </div>
             ))}
@@ -41,10 +38,10 @@ export function MarketIndices() {
   }
 
   return (
-    <Card className="finance-card h-full bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center justify-between">
-          <span>Market Indices</span>
+    <Card className="finance-card bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-sm font-medium">Market Indices</h3>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -53,9 +50,9 @@ export function MarketIndices() {
                   size="sm" 
                   onClick={refreshIndices} 
                   disabled={refreshing}
-                  className="h-8 w-8 p-0"
+                  className="h-6 w-6 p-0"
                 >
-                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
                   <span className="sr-only">Refresh</span>
                 </Button>
               </TooltipTrigger>
@@ -64,18 +61,15 @@ export function MarketIndices() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="overflow-y-auto max-h-[240px]">
-        <div className="space-y-3">
+        </div>
+        
+        <div className="space-y-2 overflow-y-auto max-h-[120px]">
           {indices.map((index) => (
-            <div key={index.symbol} className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0">
-              <div>
-                <div className="text-sm font-medium">{index.name}</div>
-              </div>
-              <div className="flex flex-col items-end">
-                <div className="font-medium">₹{index.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-                <div className={`text-xs flex items-center ${index.changePercent >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
+            <div key={index.symbol} className="flex items-center justify-between text-xs">
+              <div className="font-medium">{index.name}</div>
+              <div className="flex items-end space-x-2">
+                <div>{index.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                <div className={`flex items-center ${index.changePercent >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
                   {index.changePercent >= 0 ? (
                     <TrendingUp className="h-3 w-3 mr-1" />
                   ) : (
@@ -89,9 +83,10 @@ export function MarketIndices() {
             </div>
           ))}
         </div>
+        
         {lastUpdated && (
-          <div className="mt-4 text-xs text-muted-foreground text-center">
-            Last updated: {formatTime(lastUpdated)}
+          <div className="mt-2 text-xs text-muted-foreground text-right">
+            {formatTime(lastUpdated)}
           </div>
         )}
       </CardContent>
