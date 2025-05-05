@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { NetWorthCard } from '@/components/dashboard/NetWorthCard';
 import { AssetAllocationCard } from '@/components/dashboard/AssetAllocationCard';
@@ -7,6 +8,7 @@ import { ProvidentFundSummaryCard } from '@/components/dashboard/ProvidentFundSu
 import FinancialHealthScore from '@/components/dashboard/FinancialHealthScore';
 import { GoalProgressTracking } from '@/components/dashboard/GoalProgressTracking';
 import { PersonalizedRecommendations } from '@/components/dashboard/PersonalizedRecommendations';
+import { InsightsDashboard } from '@/components/insights/InsightsDashboard';
 import { 
   getNetWorth
 } from '@/services/netWorthService';
@@ -17,6 +19,7 @@ import { getGoldInvestments } from '@/services/goldInvestmentService';
 import { getInsurancePolicies } from '@/services/crudService';
 import { getProvidentFunds } from '@/services/providentFundService';
 import { getGoals, calculateGoalProgress } from '@/services/goalService';
+import { generatePersonalizedInsights } from '@/services/insightsService';
 import { 
   NetWorthData, 
   StockHolding, 
@@ -95,6 +98,18 @@ const Dashboard = () => {
       });
       setGoalProgress(progressData);
       
+      // Generate AI insights based on user data
+      if (netWorthData) {
+        generatePersonalizedInsights(
+          netWorthData,
+          stocksData,
+          fdData,
+          sipData,
+          goldData,
+          goalsData
+        );
+      }
+      
     } catch (error) {
       handleError(error, 'Error fetching dashboard data');
     } finally {
@@ -154,6 +169,11 @@ const Dashboard = () => {
         <div>
           <FinancialHealthScore score={75} />
         </div>
+      </div>
+
+      {/* Add AI Insights Dashboard */}
+      <div className="grid gap-6 md:grid-cols-1">
+        <InsightsDashboard />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
