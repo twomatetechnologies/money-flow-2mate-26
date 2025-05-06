@@ -8,7 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { BrainCircuit, InfoIcon, Lock, Shield } from 'lucide-react';
+import { BrainCircuit, InfoIcon, Lock, Pencil, Shield } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
@@ -20,6 +20,7 @@ const Settings = () => {
   const [threshold, setThreshold] = React.useState(settings.stockPriceAlertThreshold);
   const [apiKey, setApiKey] = React.useState(settings.stockApiKey || '');
   const [is2FAEnabled, setIs2FAEnabled] = React.useState(user?.has2FAEnabled || false);
+  const [appName, setAppName] = React.useState(settings.appName || "Money Flow Guardian");
 
   const handleSaveSettings = () => {
     updateSettings({
@@ -30,6 +31,17 @@ const Settings = () => {
     toast({
       title: "Settings Saved",
       description: "Stock settings updated successfully",
+    });
+  };
+
+  const handleSaveAppName = () => {
+    updateSettings({
+      appName: appName
+    });
+
+    toast({
+      title: "App Name Updated",
+      description: "Application name has been updated successfully",
     });
   };
 
@@ -52,6 +64,37 @@ const Settings = () => {
           Configure application preferences and notifications
         </p>
       </div>
+
+      {/* App Customization Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Pencil className="h-5 w-5 text-primary" />
+            <CardTitle>App Customization</CardTitle>
+          </div>
+          <CardDescription>
+            Change the application name and appearance
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="appName">Application Name</Label>
+            <div className="flex gap-2">
+              <Input 
+                id="appName" 
+                value={appName} 
+                onChange={(e) => setAppName(e.target.value)}
+                placeholder="Enter application name"
+                className="flex-1"
+              />
+              <Button onClick={handleSaveAppName}>Save</Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This name will be displayed in the sidebar and browser title
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* AI Settings Card */}
       <Card>

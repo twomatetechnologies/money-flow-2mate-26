@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 interface Settings {
   stockPriceAlertThreshold: number; // Percentage change that triggers an alert
   stockApiKey?: string; // API key for getting real stock prices
+  appName: string; // Application name
 }
 
 interface SettingsContextType {
@@ -14,6 +15,7 @@ interface SettingsContextType {
 const defaultSettings: Settings = {
   stockPriceAlertThreshold: 5, // Default 5% threshold
   stockApiKey: undefined, // No API key by default
+  appName: "Money Flow Guardian", // Default app name
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

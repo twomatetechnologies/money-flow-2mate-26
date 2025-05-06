@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, BarChart2, Settings, Users, Shield, FileText, Gem, PiggyBank, TrendingUp, Lock, Calendar, BrainCircuit, Zap } from 'lucide-react';
@@ -6,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useSettings } from '@/contexts/SettingsContext';
 
 interface NavItem {
   path: string;
@@ -16,6 +16,8 @@ interface NavItem {
 const Sidebar: React.FC<{ collapsed: boolean, onNavItemClick?: () => void }> = ({ collapsed, onNavItemClick }) => {
   const location = useLocation();
   const { user, isDevelopmentMode } = useAuth();
+  const { settings } = useSettings();
+  const appName = settings.appName || "Money Flow Guardian";
 
   const navItems: NavItem[] = [
     { path: '/', label: 'Dashboard', icon: <Home className="h-4 w-4" /> },
@@ -48,11 +50,15 @@ const Sidebar: React.FC<{ collapsed: boolean, onNavItemClick?: () => void }> = (
     )}>
       <div className="p-4">
         <Link to="/" className="flex items-center justify-center">
-          <img src="/logo.png" alt="Logo" className={cn(
-            "h-8 transition-all duration-300 ease-in-out",
-            collapsed ? "w-8" : "w-auto"
-          )} />
-          {!collapsed && <span className="ml-2 text-lg font-bold dark:text-white">Money Flow Guardian</span>}
+          <img 
+            src="/logo.svg" 
+            alt="Logo" 
+            className={cn(
+              "h-8 transition-all duration-300 ease-in-out",
+              collapsed ? "w-8" : "w-auto"
+            )} 
+          />
+          {!collapsed && <span className="ml-2 text-lg font-bold dark:text-white">{appName}</span>}
         </Link>
       </div>
 
