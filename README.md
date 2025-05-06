@@ -1,4 +1,3 @@
-
 # Money Flow Guardian - Lovable Project
 
 This comprehensive guide helps you get your personal finance app running with Docker, supporting both PostgreSQL database (via Docker) and file-only (no database) modes.
@@ -17,10 +16,14 @@ This comprehensive guide helps you get your personal finance app running with Do
 5. [Usage](#usage)
    - [Default Login](#default-login)
    - [Two-Factor Authentication](#two-factor-authentication)
-6. [Documentation](#documentation)
-7. [Troubleshooting](#troubleshooting)
-8. [Version Management](#version-management)
-9. [Contributing](#contributing)
+6. [AI Integration](#ai-integration)
+   - [Current Implementation](#current-implementation)
+   - [Supported AI Providers](#supported-ai-providers)
+   - [Configuration](#configuration)
+7. [Documentation](#documentation)
+8. [Troubleshooting](#troubleshooting)
+9. [Version Management](#version-management)
+10. [Contributing](#contributing)
 
 ---
 
@@ -140,6 +143,87 @@ The application includes a simulated two-factor authentication system:
 - In production, this would be integrated with email or SMS services
 
 See [Security Features](./docs/user-guide/security.md) for detailed implementation information.
+
+## AI Integration
+
+### Current Implementation
+
+Money Flow Guardian integrates with AI services to provide personalized financial insights and answer user queries. The application leverages AI capabilities for:
+
+1. **Personalized Financial Insights**: Analyzes your portfolio to identify opportunities, anomalies, and recommendations.
+2. **Natural Language Queries**: Allows you to ask questions about your finances in plain language.
+3. **Goal Planning Assistance**: Recommends strategies to help you meet your financial goals.
+
+### Supported AI Providers
+
+The application is designed with a flexible AI integration system that currently supports:
+
+1. **Local Ollama**: Default configuration connects to a locally running Ollama instance (http://localhost:11434) for privacy-focused processing without sending data to third-party services.
+2. **Generic LLM API**: The architecture supports connecting to any LLM service that follows standard completion API formats.
+
+### Configuration
+
+#### Setting Up Ollama (Default)
+
+1. **Install Ollama**:
+   - Visit [Ollama's website](https://ollama.ai) for installation instructions
+   - Or use Docker: `docker run -d -p 11434:11434 --name ollama ollama/ollama`
+
+2. **Model Requirements**:
+   - Default model: llama3 (can be changed in `src/hooks/useOllama.ts`)
+   - Recommended: Install models with financial knowledge
+
+3. **Configuration**:
+   ```javascript
+   // Update in src/hooks/useOllama.ts
+   const defaultOptions = {
+     model: 'llama3', // Change to your preferred model
+     temperature: 0.7,
+     topP: 0.9,
+     maxTokens: 1000,
+   };
+   ```
+
+#### Using Alternative AI Providers
+
+The application uses a provider-agnostic approach through the `useAIProvider` hook:
+
+1. **Configure Provider Endpoint and Authentication**:
+   - Update AI provider settings in the application settings page
+   - Or modify the environment variable `AI_PROVIDER_URL`
+
+2. **API Key Management**:
+   - Store your API key securely (not directly in code)
+   - In development: Use environment variables
+   - In production: Use secrets management
+
+3. **Custom AI Providers**:
+   To implement a custom AI provider, create an adapter that implements the `AIProvider` interface:
+
+   ```typescript
+   // Example implementation for a custom provider
+   export class CustomAIProvider implements AIProvider {
+     async generateText(prompt: string, systemPrompt?: string, options?: any): Promise<string> {
+       // Implementation specific to your AI provider
+       // ...
+     }
+   }
+   ```
+
+### Best Practices
+
+1. **Data Privacy**: Consider which data is sent to AI services and inform users
+2. **Error Handling**: Implement graceful fallbacks when AI services are unavailable
+3. **Cost Management**: Monitor API usage and implement rate limiting for external services
+4. **Prompt Engineering**: Carefully design prompts for consistent and useful results
+
+### Future Enhancements
+
+The AI integration roadmap includes:
+- Support for more AI providers (OpenAI, Anthropic, Mistral AI)
+- Fine-tuned models specific to financial analysis
+- Local model support for offline operation
+- User feedback loop to improve AI responses over time
 
 ## Documentation
 

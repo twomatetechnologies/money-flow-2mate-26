@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Insight, getInsights, markInsightAsRead, getInsightSummary, InsightSummary } from '@/services/insightsService';
-import { useOllama } from '@/hooks/useOllama';
+import { useAIProvider } from '@/hooks/useAIProvider';
 import { parseOllamaInsights, updateFinancialData } from '@/services/ollamaInsightsService';
 import { useToast } from '@/hooks/use-toast';
 import { getNetWorth } from '@/services/netWorthService';
@@ -16,10 +16,10 @@ export const useInsights = () => {
   const [summary, setSummary] = useState<InsightSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const { generateText, loading: ollamaLoading } = useOllama();
+  const { generateText, loading: aiLoading } = useAIProvider();
   const { toast } = useToast();
 
-  // Fetch data and generate insights using Ollama
+  // Fetch data and generate insights using AI provider
   const fetchInsights = async () => {
     try {
       setLoading(true);
@@ -51,7 +51,7 @@ export const useInsights = () => {
       // Update the cached financial data
       updateFinancialData(netWorthData, stocksData, fdData, sipData, goldData, goalsData);
       
-      // Generate the prompt for Ollama
+      // Generate the prompt for AI
       const prompt = `
       I need financial insights based on the following portfolio:
       
@@ -84,14 +84,14 @@ export const useInsights = () => {
       const systemPrompt = `You are an AI financial advisor that provides personalized insights by analyzing financial data.
       Be concise, specific, and actionable in your insights. ONLY return valid JSON that can be parsed.`;
       
-      // Call Ollama API to generate insights
-      const ollamaResponse = await generateText(prompt, systemPrompt, { 
+      // Call AI provider to generate insights
+      const aiResponse = await generateText(prompt, systemPrompt, { 
         temperature: 0.3, // Lower temperature for more consistent responses
         maxTokens: 2000
       });
       
       // Parse the response into Insight objects
-      const generatedInsights = parseOllamaInsights(ollamaResponse);
+      const generatedInsights = parseOllamaInsights(aiResponse);
       
       // Update insights with the AI-generated ones
       setInsights(generatedInsights);
@@ -178,7 +178,7 @@ export const useInsights = () => {
   return {
     insights,
     summary,
-    loading: loading || ollamaLoading,
+    loading: loading || aiLoading,
     error,
     fetchInsights,
     markAsRead
