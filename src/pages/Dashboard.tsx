@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { NetWorthCard } from '@/components/dashboard/NetWorthCard';
 import { AssetAllocationCard } from '@/components/dashboard/AssetAllocationCard';
@@ -19,7 +18,7 @@ import { getGoldInvestments } from '@/services/goldInvestmentService';
 import { getInsurancePolicies } from '@/services/crudService';
 import { getProvidentFunds } from '@/services/providentFundService';
 import { getGoals, calculateGoalProgress } from '@/services/goalService';
-import { generatePersonalizedInsights } from '@/services/insightsService';
+import { updateFinancialData } from '@/services/ollamaInsightsService';
 import { 
   NetWorthData, 
   StockHolding, 
@@ -98,17 +97,15 @@ const Dashboard = () => {
       });
       setGoalProgress(progressData);
       
-      // Generate AI insights based on user data
-      if (netWorthData) {
-        generatePersonalizedInsights(
-          netWorthData,
-          stocksData,
-          fdData,
-          sipData,
-          goldData,
-          goalsData
-        );
-      }
+      // Update cached financial data for Ollama insights
+      updateFinancialData(
+        netWorthData,
+        stocksData,
+        fdData,
+        sipData,
+        goldData,
+        goalsData
+      );
       
     } catch (error) {
       handleError(error, 'Error fetching dashboard data');
