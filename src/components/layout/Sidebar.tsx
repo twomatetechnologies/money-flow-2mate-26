@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, BarChart2, Settings, Users, Shield, FileText, Gem, PiggyBank, TrendingUp, Lock, Calendar, BrainCircuit } from 'lucide-react';
+import { Home, BarChart2, Settings, Users, Shield, FileText, Gem, PiggyBank, TrendingUp, Lock, Calendar, BrainCircuit, Zap } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ interface NavItem {
 
 const Sidebar: React.FC<{ collapsed: boolean, onNavItemClick?: () => void }> = ({ collapsed, onNavItemClick }) => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isDevelopmentMode } = useAuth();
 
   const navItems: NavItem[] = [
     { path: '/', label: 'Dashboard', icon: <Home className="h-4 w-4" /> },
@@ -32,6 +33,12 @@ const Sidebar: React.FC<{ collapsed: boolean, onNavItemClick?: () => void }> = (
   const adminNavItems: NavItem[] = [
     { path: '/audit-trail', label: 'Audit Trail', icon: <FileText className="h-4 w-4" /> },
     { path: '/family-members', label: 'Family Members', icon: <Users className="h-4 w-4" /> },
+  ];
+
+  // Add AI Settings to the nav items
+  const settingsNavItems: NavItem[] = [
+    { path: '/settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
+    { path: '/ai-settings', label: 'AI Settings', icon: <Zap className="h-4 w-4" /> },
   ];
 
   return (
@@ -73,7 +80,8 @@ const Sidebar: React.FC<{ collapsed: boolean, onNavItemClick?: () => void }> = (
         ))}
       </nav>
 
-      {user?.isAdmin && (
+      {/* Use isDevelopmentMode from AuthContext instead of user.isAdmin */}
+      {isDevelopmentMode && (
         <>
           <Separator className="my-2 dark:bg-gray-800" />
           <nav className="flex-1 px-2 py-4 space-y-1">
@@ -103,22 +111,25 @@ const Sidebar: React.FC<{ collapsed: boolean, onNavItemClick?: () => void }> = (
       <Separator className="my-2 dark:bg-gray-800" />
 
       <nav className="px-2 py-4 space-y-1">
-        <Button
-          asChild
-          variant="ghost"
-          className={cn(
-            "w-full justify-start font-normal",
-            location.pathname === '/settings' ? "bg-gray-200 dark:bg-gray-700 text-primary" : "hover:bg-gray-100 dark:hover:bg-gray-800",
-            collapsed ? "px-2 py-1.5" : "px-3 py-2"
-          )}
-        >
-          <Link to="/settings" onClick={onNavItemClick}>
-            <div className="flex items-center">
-              <Settings className="h-4 w-4" />
-              {!collapsed && <span className="ml-2">Settings</span>}
-            </div>
-          </Link>
-        </Button>
+        {settingsNavItems.map((item) => (
+          <Button
+            key={item.path}
+            asChild
+            variant="ghost"
+            className={cn(
+              "w-full justify-start font-normal",
+              location.pathname === item.path ? "bg-gray-200 dark:bg-gray-700 text-primary" : "hover:bg-gray-100 dark:hover:bg-gray-800",
+              collapsed ? "px-2 py-1.5" : "px-3 py-2"
+            )}
+          >
+            <Link to={item.path} onClick={onNavItemClick}>
+              <div className="flex items-center">
+                {item.icon}
+                {!collapsed && <span className="ml-2">{item.label}</span>}
+              </div>
+            </Link>
+          </Button>
+        ))}
       </nav>
     </div>
   );
