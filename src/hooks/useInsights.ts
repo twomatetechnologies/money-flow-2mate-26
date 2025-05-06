@@ -62,7 +62,7 @@ export const useInsights = () => {
       - Fixed Deposits: ₹${netWorthData.breakdown.fixedDeposits.toLocaleString()} (${((netWorthData.breakdown.fixedDeposits / netWorthData.total) * 100).toFixed(1)}%)
       - SIPs: ₹${netWorthData.breakdown.sip.toLocaleString()} (${((netWorthData.breakdown.sip / netWorthData.total) * 100).toFixed(1)}%)
       - Gold: ₹${netWorthData.breakdown.gold.toLocaleString()} (${((netWorthData.breakdown.gold / netWorthData.total) * 100).toFixed(1)}%)
-      - Others: ₹${netWorthData.breakdown.others.toLocaleString()} (${((netWorthData.breakdown.others / netWorthData.total) * 100).toFixed(1)}%)
+      - Others: ₹${netWorthData.breakdown.other.toLocaleString()} (${((netWorthData.breakdown.other / netWorthData.total) * 100).toFixed(1)}%)
       
       Based on this information, provide 3-5 personalized financial insights in the following format:
       [

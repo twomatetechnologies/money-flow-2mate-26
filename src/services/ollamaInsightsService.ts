@@ -23,19 +23,19 @@ const generateFinancialPrompt = (
   - Fixed Deposits: ₹${netWorth.breakdown.fixedDeposits.toLocaleString()} (${((netWorth.breakdown.fixedDeposits / netWorth.total) * 100).toFixed(1)}%)
   - SIPs: ₹${netWorth.breakdown.sip.toLocaleString()} (${((netWorth.breakdown.sip / netWorth.total) * 100).toFixed(1)}%)
   - Gold: ₹${netWorth.breakdown.gold.toLocaleString()} (${((netWorth.breakdown.gold / netWorth.total) * 100).toFixed(1)}%)
-  - Others: ₹${netWorth.breakdown.others.toLocaleString()} (${((netWorth.breakdown.others / netWorth.total) * 100).toFixed(1)}%)
+  - Others: ₹${netWorth.breakdown.other.toLocaleString()} (${((netWorth.breakdown.other / netWorth.total) * 100).toFixed(1)}%)
   
   Stock Holdings (${stocks.length}):
-  ${stocks.map(stock => `- ${stock.stockName}: ${stock.quantity} shares at ₹${stock.currentPrice} (Total: ₹${stock.currentValue})`).join('\n')}
+  ${stocks.map(stock => `- ${stock.name}: ${stock.quantity} shares at ₹${stock.currentPrice} (Total: ₹${stock.value})`).join('\n')}
   
   Fixed Deposits (${fixedDeposits.length}):
-  ${fixedDeposits.map(fd => `- ₹${fd.amount} at ${fd.interestRate}% maturing on ${new Date(fd.maturityDate).toLocaleDateString()}`).join('\n')}
+  ${fixedDeposits.map(fd => `- ₹${fd.principal} at ${fd.interestRate}% maturing on ${new Date(fd.maturityDate).toLocaleDateString()}`).join('\n')}
   
   SIP Investments (${sipInvestments.length}):
-  ${sipInvestments.map(sip => `- ${sip.schemeName}: ₹${sip.monthlyAmount} monthly (Current Value: ₹${sip.currentValue})`).join('\n')}
+  ${sipInvestments.map(sip => `- ${sip.name}: ₹${sip.amount} monthly (Current Value: ₹${sip.currentValue})`).join('\n')}
   
   Gold Investments (${goldInvestments.length}):
-  ${goldInvestments.map(gold => `- ${gold.investmentType}: ${gold.quantity}${gold.quantityUnit} (Value: ₹${gold.value})`).join('\n')}
+  ${goldInvestments.map(gold => `- ${gold.type}: ${gold.quantity} (Value: ₹${gold.value})`).join('\n')}
   
   Financial Goals (${goals.length}):
   ${goals.map(goal => `- ${goal.name}: ₹${goal.targetAmount} by ${new Date(goal.targetDate).toLocaleDateString()} (Current: ₹${goal.currentAmount})`).join('\n')}
@@ -97,19 +97,19 @@ const generateQueryPrompt = (
   - Fixed Deposits: ₹${netWorth.breakdown.fixedDeposits.toLocaleString()} (${((netWorth.breakdown.fixedDeposits / netWorth.total) * 100).toFixed(1)}%)
   - SIPs: ₹${netWorth.breakdown.sip.toLocaleString()} (${((netWorth.breakdown.sip / netWorth.total) * 100).toFixed(1)}%)
   - Gold: ₹${netWorth.breakdown.gold.toLocaleString()} (${((netWorth.breakdown.gold / netWorth.total) * 100).toFixed(1)}%)
-  - Others: ₹${netWorth.breakdown.others.toLocaleString()} (${((netWorth.breakdown.others / netWorth.total) * 100).toFixed(1)}%)
+  - Others: ₹${netWorth.breakdown.other.toLocaleString()} (${((netWorth.breakdown.other / netWorth.total) * 100).toFixed(1)}%)
   
   Stock Holdings (${stocks.length}):
-  ${stocks.map(stock => `- ${stock.stockName}: ${stock.quantity} shares at ₹${stock.currentPrice} (Total: ₹${stock.currentValue})`).join('\n')}
+  ${stocks.map(stock => `- ${stock.name}: ${stock.quantity} shares at ₹${stock.currentPrice} (Total: ₹${stock.value})`).join('\n')}
   
   Fixed Deposits (${fixedDeposits.length}):
-  ${fixedDeposits.map(fd => `- ₹${fd.amount} at ${fd.interestRate}% maturing on ${new Date(fd.maturityDate).toLocaleDateString()}`).join('\n')}
+  ${fixedDeposits.map(fd => `- ₹${fd.principal} at ${fd.interestRate}% maturing on ${new Date(fd.maturityDate).toLocaleDateString()}`).join('\n')}
   
   SIP Investments (${sipInvestments.length}):
-  ${sipInvestments.map(sip => `- ${sip.schemeName}: ₹${sip.monthlyAmount} monthly (Current Value: ₹${sip.currentValue})`).join('\n')}
+  ${sipInvestments.map(sip => `- ${sip.name}: ₹${sip.amount} monthly (Current Value: ₹${sip.currentValue})`).join('\n')}
   
   Gold Investments (${goldInvestments.length}):
-  ${goldInvestments.map(gold => `- ${gold.investmentType}: ${gold.quantity}${gold.quantityUnit} (Value: ₹${gold.value})`).join('\n')}
+  ${goldInvestments.map(gold => `- ${gold.type}: ${gold.quantity} (Value: ₹${gold.value})`).join('\n')}
   
   Financial Goals (${goals.length}):
   ${goals.map(goal => `- ${goal.name}: ₹${goal.targetAmount} by ${new Date(goal.targetDate).toLocaleDateString()} (Current: ₹${goal.currentAmount})`).join('\n')}
