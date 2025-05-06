@@ -16,6 +16,7 @@ import Insurance from './pages/Insurance';
 import Gold from './pages/Gold';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import AISettings from './pages/AISettings';
 import AuditTrail from './pages/AuditTrail';
 import FamilyMembers from './pages/FamilyMembers';
 import SavingsAccounts from './pages/SavingsAccounts';
@@ -56,6 +57,7 @@ function App() {
                 <Route path="gold" element={<Gold />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="ai-settings" element={<AISettings />} />
                 <Route path="audit-trail" element={<AuditTrail />} />
                 <Route path="family-members" element={<FamilyMembers />} />
                 <Route path="profile" element={<Profile />} />

@@ -8,9 +8,10 @@ import { Slider } from '@/components/ui/slider';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { InfoIcon, Lock, Shield } from 'lucide-react';
+import { BrainCircuit, InfoIcon, Lock, Shield } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 const Settings = () => {
   const { settings, updateSettings } = useSettings();
@@ -51,6 +52,33 @@ const Settings = () => {
           Configure application preferences and notifications
         </p>
       </div>
+
+      {/* AI Settings Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <BrainCircuit className="h-5 w-5 text-primary" />
+            <CardTitle>AI Configuration</CardTitle>
+          </div>
+          <CardDescription>
+            Configure AI providers, models and parameters
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Money Flow Guardian uses AI to provide financial insights and to power the AI assistant. 
+              Configure your AI providers and models to get the most out of these features.
+            </p>
+            <Button asChild>
+              <Link to="/ai-settings">
+                <BrainCircuit className="mr-2 h-4 w-4" />
+                Manage AI Settings
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Security Settings */}
       <Card>

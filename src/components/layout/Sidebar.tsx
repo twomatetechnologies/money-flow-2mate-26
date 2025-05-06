@@ -1,228 +1,126 @@
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Home, BarChart2, Settings, Users, Shield, FileText, Gem, PiggyBank, TrendingUp, Lock, Calendar, BrainCircuit } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
-import { NavLink } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import {
-  BarChart,
-  Coins,
-  Heart,
-  Home,
-  Package,
-  PiggyBank,
-  ScrollText,
-  Settings,
-  Shield,
-  TrendingUp,
-  Users,
-  Wallet,
-  Award,
-  Layers
-} from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-
-interface SidebarProps {
-  collapsed?: boolean;
-  onNavItemClick?: () => void;
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.ReactNode;
 }
 
-const Sidebar = ({ collapsed = false, onNavItemClick }: SidebarProps) => {
-  const { isDevelopmentMode } = useAuth();
-  
-  const handleNavClick = () => {
-    if (onNavItemClick) {
-      onNavItemClick();
-    }
-  };
-  
+const Sidebar: React.FC<{ collapsed: boolean, onNavItemClick?: () => void }> = ({ collapsed, onNavItemClick }) => {
+  const location = useLocation();
+  const { user } = useAuth();
+
+  const navItems: NavItem[] = [
+    { path: '/', label: 'Dashboard', icon: <Home className="h-4 w-4" /> },
+    { path: '/stocks', label: 'Stocks', icon: <TrendingUp className="h-4 w-4" /> },
+    { path: '/fixed-deposits', label: 'Fixed Deposits', icon: <PiggyBank className="h-4 w-4" /> },
+    { path: '/savings-accounts', label: 'Savings Accounts', icon: <Calendar className="h-4 w-4" /> },
+    { path: '/sip-investments', label: 'SIP Investments', icon: <BarChart2 className="h-4 w-4" /> },
+    { path: '/provident-fund', label: 'Provident Fund', icon: <Lock className="h-4 w-4" /> },
+    { path: '/insurance', label: 'Insurance', icon: <Shield className="h-4 w-4" /> },
+    { path: '/gold', label: 'Gold', icon: <Gem className="h-4 w-4" /> },
+    { path: '/goals', label: 'Goals', icon: <BrainCircuit className="h-4 w-4" /> },
+    { path: '/reports', label: 'Reports', icon: <FileText className="h-4 w-4" /> },
+  ];
+
+  const adminNavItems: NavItem[] = [
+    { path: '/audit-trail', label: 'Audit Trail', icon: <FileText className="h-4 w-4" /> },
+    { path: '/family-members', label: 'Family Members', icon: <Users className="h-4 w-4" /> },
+  ];
+
   return (
-    <aside className={cn(
-      "flex h-screen sticky top-0 flex-col border-r bg-background transition-all duration-300",
+    <div className={cn(
+      "flex flex-col h-full bg-gray-50 border-r border-gray-200 dark:bg-gray-900 dark:border-gray-800",
       collapsed ? "w-16" : "w-56"
     )}>
-      <div className={cn(
-        "px-3 py-2 h-16 flex items-center border-b overflow-hidden",
-        collapsed ? "justify-center" : ""
-      )}>
-        {collapsed ? (
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-semibold">
-            MF
-          </div>
-        ) : (
-          <h2 className="text-lg font-semibold">Money Flow Guardian</h2>
-        )}
+      <div className="p-4">
+        <Link to="/" className="flex items-center justify-center">
+          <img src="/logo.png" alt="Logo" className={cn(
+            "h-8 transition-all duration-300 ease-in-out",
+            collapsed ? "w-8" : "w-auto"
+          )} />
+          {!collapsed && <span className="ml-2 text-lg font-bold dark:text-white">Money Flow Guardian</span>}
+        </Link>
       </div>
-      <div className="flex-1 overflow-auto py-2">
-        <nav className="grid gap-1 px-2">
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0"
-              )
-            }
-            onClick={handleNavClick}
+
+      <Separator className="my-2 dark:bg-gray-800" />
+
+      <nav className="flex-1 px-2 py-4 space-y-1">
+        {navItems.map((item) => (
+          <Button
+            key={item.path}
+            asChild
+            variant="ghost"
+            className={cn(
+              "w-full justify-start font-normal",
+              location.pathname === item.path ? "bg-gray-200 dark:bg-gray-700 text-primary" : "hover:bg-gray-100 dark:hover:bg-gray-800",
+              collapsed ? "px-2 py-1.5" : "px-3 py-2"
+            )}
           >
-            <Home className="h-4 w-4" />
-            {!collapsed && <span>Dashboard</span>}
-          </NavLink>
-          <NavLink
-            to="/stocks"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0"
-              )
-            }
-            onClick={handleNavClick}
-          >
-            <TrendingUp className="h-4 w-4" />
-            {!collapsed && <span>Stocks</span>}
-          </NavLink>
-          <NavLink
-            to="/fixed-deposits"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0" 
-              )
-            }
-            onClick={handleNavClick}
-          >
-            <Package className="h-4 w-4" />
-            {!collapsed && <span>Fixed Deposits</span>}
-          </NavLink>
-          <NavLink
-            to="/sip-investments"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0"
-              )
-            }
-            onClick={handleNavClick}
-          >
-            <BarChart className="h-4 w-4" />
-            {!collapsed && <span>SIP Investments</span>}
-          </NavLink>
-          <NavLink
-            to="/provident-fund"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0"
-              )
-            }
-            onClick={handleNavClick}
-          >
-            <PiggyBank className="h-4 w-4" />
-            {!collapsed && <span>Provident Fund</span>}
-          </NavLink>
-          <NavLink
-            to="/insurance"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0"
-              )
-            }
-            onClick={handleNavClick}
-          >
-            <Shield className="h-4 w-4" />
-            {!collapsed && <span>Insurance</span>}
-          </NavLink>
-          <NavLink
-            to="/gold"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0"
-              )
-            }
-            onClick={handleNavClick}
-          >
-            <Coins className="h-4 w-4" />
-            {!collapsed && <span>Gold</span>}
-          </NavLink>
-          <NavLink
-            to="/savings-accounts"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0"
-              )
-            }
-            onClick={handleNavClick}
-          >
-            <Wallet className="h-4 w-4" />
-            {!collapsed && <span>Savings Accounts</span>}
-          </NavLink>
-          <NavLink
-            to="/goals"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0"
-              )
-            }
-            onClick={handleNavClick}
-          >
-            <Award className="h-4 w-4" />
-            {!collapsed && <span>Financial Goals</span>}
-          </NavLink>
-          <NavLink
-            to="/family-members"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0"
-              )
-            }
-            onClick={handleNavClick}
-          >
-            <Users className="h-4 w-4" />
-            {!collapsed && <span>Family Members</span>}
-          </NavLink>
-          <NavLink
-            to="/reports"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0"
-              )
-            }
-            onClick={handleNavClick}
-          >
-            <ScrollText className="h-4 w-4" />
-            {!collapsed && <span>Reports</span>}
-          </NavLink>
-          <NavLink
-            to="/audit-trail"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
-                collapsed && "justify-center px-0"
-              )
-            }
-            onClick={handleNavClick}
-          >
-            <Layers className="h-4 w-4" />
-            {!collapsed && <span>Audit Logs</span>}
-          </NavLink>
-        </nav>
-      </div>
-    </aside>
+            <Link to={item.path} onClick={onNavItemClick}>
+              <div className="flex items-center">
+                {item.icon}
+                {!collapsed && <span className="ml-2">{item.label}</span>}
+              </div>
+            </Link>
+          </Button>
+        ))}
+      </nav>
+
+      {user?.isAdmin && (
+        <>
+          <Separator className="my-2 dark:bg-gray-800" />
+          <nav className="flex-1 px-2 py-4 space-y-1">
+            {adminNavItems.map((item) => (
+              <Button
+                key={item.path}
+                asChild
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start font-normal",
+                  location.pathname === item.path ? "bg-gray-200 dark:bg-gray-700 text-primary" : "hover:bg-gray-100 dark:hover:bg-gray-800",
+                  collapsed ? "px-2 py-1.5" : "px-3 py-2"
+                )}
+              >
+                <Link to={item.path} onClick={onNavItemClick}>
+                  <div className="flex items-center">
+                    {item.icon}
+                    {!collapsed && <span className="ml-2">{item.label}</span>}
+                  </div>
+                </Link>
+              </Button>
+            ))}
+          </nav>
+        </>
+      )}
+
+      <Separator className="my-2 dark:bg-gray-800" />
+
+      <nav className="px-2 py-4 space-y-1">
+        <Button
+          asChild
+          variant="ghost"
+          className={cn(
+            "w-full justify-start font-normal",
+            location.pathname === '/settings' ? "bg-gray-200 dark:bg-gray-700 text-primary" : "hover:bg-gray-100 dark:hover:bg-gray-800",
+            collapsed ? "px-2 py-1.5" : "px-3 py-2"
+          )}
+        >
+          <Link to="/settings" onClick={onNavItemClick}>
+            <div className="flex items-center">
+              <Settings className="h-4 w-4" />
+              {!collapsed && <span className="ml-2">Settings</span>}
+            </div>
+          </Link>
+        </Button>
+      </nav>
+    </div>
   );
 };
 
