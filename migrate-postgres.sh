@@ -61,7 +61,8 @@ CREATE TABLE IF NOT EXISTS savings_accounts (
   ifsc_code VARCHAR(20),
   family_member_id VARCHAR(36) REFERENCES family_members(id),
   notes TEXT,
-  last_updated TIMESTAMP DEFAULT NOW()
+  last_updated TIMESTAMP DEFAULT NOW(),
+  nominees TEXT[]
 );
 
 -- Stocks
@@ -76,7 +77,8 @@ CREATE TABLE IF NOT EXISTS stocks (
   sector VARCHAR(50),
   family_member_id VARCHAR(36) REFERENCES family_members(id),
   notes TEXT,
-  last_updated TIMESTAMP DEFAULT NOW()
+  last_updated TIMESTAMP DEFAULT NOW(),
+  value NUMERIC(14, 2) GENERATED ALWAYS AS (quantity * COALESCE(current_price, purchase_price)) STORED
 );
 
 -- Fixed Deposits
@@ -92,7 +94,10 @@ CREATE TABLE IF NOT EXISTS fixed_deposits (
   is_auto_renewal BOOLEAN DEFAULT FALSE,
   family_member_id VARCHAR(36) REFERENCES family_members(id),
   notes TEXT,
-  last_updated TIMESTAMP DEFAULT NOW()
+  last_updated TIMESTAMP DEFAULT NOW(),
+  principal NUMERIC(14, 2),
+  maturity_amount NUMERIC(14, 2),
+  account_number VARCHAR(50)
 );
 
 -- SIP Investments
@@ -108,7 +113,12 @@ CREATE TABLE IF NOT EXISTS sip_investments (
   current_nav NUMERIC(10, 2),
   family_member_id VARCHAR(36) REFERENCES family_members(id),
   notes TEXT,
-  last_updated TIMESTAMP DEFAULT NOW()
+  last_updated TIMESTAMP DEFAULT NOW(),
+  current_value NUMERIC(14, 2),
+  returns NUMERIC(12, 2),
+  returns_percent NUMERIC(6, 2),
+  type VARCHAR(50),
+  duration INTEGER
 );
 
 -- Insurance Policies
@@ -139,7 +149,20 @@ CREATE TABLE IF NOT EXISTS provident_fund (
   start_date DATE,
   family_member_id VARCHAR(36) REFERENCES family_members(id),
   notes TEXT,
-  last_updated TIMESTAMP DEFAULT NOW()
+  last_updated TIMESTAMP DEFAULT NOW(),
+  employer_name VARCHAR(100),
+  monthly_contribution NUMERIC(12, 2)
+);
+
+-- User Settings
+CREATE TABLE IF NOT EXISTS user_settings (
+  id VARCHAR(36) PRIMARY KEY,
+  user_id VARCHAR(36) NOT NULL UNIQUE,
+  stock_price_alert_threshold NUMERIC(5, 2) DEFAULT 5.0,
+  stock_api_key VARCHAR(100),
+  app_name VARCHAR(100) DEFAULT 'Money Flow Guardian',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Audit Trail
@@ -151,6 +174,19 @@ CREATE TABLE IF NOT EXISTS audit_records (
   timestamp TIMESTAMP DEFAULT NOW(),
   user_id VARCHAR(36) NOT NULL,
   details JSONB
+);
+
+-- Application Users
+CREATE TABLE IF NOT EXISTS app_users (
+  id VARCHAR(36) PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  name VARCHAR(100),
+  role VARCHAR(20) DEFAULT 'user',
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  last_login TIMESTAMP
 );
 
 -- Insert some initial master data
@@ -170,6 +206,20 @@ VALUES
   ('goal-001', 'Emergency Fund', 500000, 350000, '2025-12-31', 'Savings', 'Six months of expenses', 'High', 'fam-001'),
   ('goal-002', 'Retirement Fund', 10000000, 2500000, '2045-04-15', 'Retirement', 'Retirement corpus target', 'Medium', 'fam-001'),
   ('goal-003', 'Emma''s Education', 5000000, 1000000, '2032-06-01', 'Education', 'College education fund', 'High', 'fam-003')
+ON CONFLICT (id) DO NOTHING;
+
+-- Add Sample Users
+INSERT INTO app_users (id, email, password_hash, name, role, is_active)
+VALUES
+  ('user-001', 'user@example.com', '$2a$10$dPzE4X4FHDYgWWhVzrZAO.f8ZimRWOkr31b/fbwYhh52w2kJ1H5TG', 'Demo User', 'user', true),
+  ('user-002', 'admin@example.com', '$2a$10$dPzE4X4FHDYgWWhVzrZAO.f8ZimRWOkr31b/fbwYhh52w2kJ1H5TG', 'Admin User', 'admin', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Add Default User Settings
+INSERT INTO user_settings (id, user_id, stock_price_alert_threshold, app_name)
+VALUES
+  ('settings-001', 'user-001', 5.0, 'Money Flow Guardian'),
+  ('settings-002', 'user-002', 10.0, 'Financial Portfolio Tracker')
 ON CONFLICT (id) DO NOTHING;
 "
 
