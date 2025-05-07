@@ -6,6 +6,10 @@ set -e
 mkdir -p /data/localStorage
 chmod 755 /data/localStorage
 
+# Create a JS file with environment variables that can be loaded by the frontend
+echo "window.POSTGRES_ENABLED = ${POSTGRES_ENABLED:-true};" > /usr/share/nginx/html/env-config.js
+echo "Environment configuration generated with POSTGRES_ENABLED=${POSTGRES_ENABLED:-true}"
+
 # Run migrations if using PostgreSQL
 if [ "$POSTGRES_ENABLED" = "true" ]; then
   echo "PostgreSQL is enabled, checking database connection..."

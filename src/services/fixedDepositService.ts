@@ -2,6 +2,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { FixedDeposit } from '@/types';
 import { createAuditRecord } from './auditService';
+import { isPostgresEnabled } from './db/dbConnector';
+import * as fixedDepositDbService from './db/fixedDepositDbService';
 
 const FD_STORAGE_KEY = 'fixedDeposits';
 
@@ -28,8 +30,8 @@ const saveFixedDeposits = (deposits: FixedDeposit[]): void => {
 // In-memory datastore with persistence
 let fixedDeposits = loadFixedDeposits();
 
-// Create a sample deposit if none exist
-if (fixedDeposits.length === 0) {
+// Create a sample deposit if none exist (only for localStorage mode)
+if (fixedDeposits.length === 0 && !isPostgresEnabled()) {
   const startDate = new Date();
   const maturityDate = new Date();
   maturityDate.setDate(maturityDate.getDate() + 365); // 1 year maturity
@@ -53,8 +55,15 @@ if (fixedDeposits.length === 0) {
   saveFixedDeposits(fixedDeposits);
 }
 
-// CRUD operations for Fixed Deposits
-export const createFixedDeposit = (fd: Partial<FixedDeposit>): FixedDeposit => {
+// Check if we should use database operations
+const useDatabase = isPostgresEnabled();
+
+// CRUD operations for Fixed Deposits with conditional DB/localStorage usage
+export const createFixedDeposit = async (fd: Partial<FixedDeposit>): Promise<FixedDeposit> => {
+  if (useDatabase) {
+    return await fixedDepositDbService.addFixedDeposit(fd);
+  }
+  
   // Set default values for any missing required fields
   const newFD: FixedDeposit = {
     bankName: fd.bankName || 'Unknown Bank',
@@ -77,7 +86,11 @@ export const createFixedDeposit = (fd: Partial<FixedDeposit>): FixedDeposit => {
   return newFD;
 };
 
-export const updateFixedDeposit = (id: string, updates: Partial<FixedDeposit>): FixedDeposit | null => {
+export const updateFixedDeposit = async (id: string, updates: Partial<FixedDeposit>): Promise<FixedDeposit | null> => {
+  if (useDatabase) {
+    return await fixedDepositDbService.updateFixedDeposit(id, updates);
+  }
+  
   const index = fixedDeposits.findIndex(fd => fd.id === id);
   if (index === -1) return null;
   
@@ -99,7 +112,11 @@ export const updateFixedDeposit = (id: string, updates: Partial<FixedDeposit>): 
   return fixedDeposits[index];
 };
 
-export const deleteFixedDeposit = (id: string): boolean => {
+export const deleteFixedDeposit = async (id: string): Promise<boolean> => {
+  if (useDatabase) {
+    return await fixedDepositDbService.deleteFixedDeposit(id);
+  }
+  
   const index = fixedDeposits.findIndex(fd => fd.id === id);
   if (index === -1) return false;
   
@@ -111,16 +128,23 @@ export const deleteFixedDeposit = (id: string): boolean => {
   return true;
 };
 
-export const getFixedDepositById = (id: string): FixedDeposit | null => {
+export const getFixedDepositById = async (id: string): Promise<FixedDeposit | null> => {
+  if (useDatabase) {
+    return await fixedDepositDbService.getFixedDepositById(id);
+  }
+  
   return fixedDeposits.find(fd => fd.id === id) || null;
 };
 
-export const getFixedDeposits = (): Promise<FixedDeposit[]> => {
+export const getFixedDeposits = async (): Promise<FixedDeposit[]> => {
+  if (useDatabase) {
+    return await fixedDepositDbService.getFixedDeposits();
+  }
+  
   return Promise.resolve([...fixedDeposits]);
 };
 
 // Alias for addFixedDeposit to maintain compatibility with existing code
-export const addFixedDeposit = (deposit: Partial<FixedDeposit>): Promise<FixedDeposit> => {
-  const newDeposit = createFixedDeposit(deposit);
-  return Promise.resolve(newDeposit);
+export const addFixedDeposit = async (deposit: Partial<FixedDeposit>): Promise<FixedDeposit> => {
+  return await createFixedDeposit(deposit);
 };

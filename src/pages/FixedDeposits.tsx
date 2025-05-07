@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { getFixedDeposits, addFixedDeposit, updateFixedDeposit, deleteFixedDeposit } from '@/services/fixedDepositService';
 import { FixedDeposit } from '@/types';
 import FixedDepositForm from '@/components/fixedDeposits/FixedDepositForm';
@@ -11,6 +10,7 @@ import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import { handleError } from '@/utils/errorHandler';
 import ImportExportMenu from '@/components/common/ImportExportMenu';
 import { formatIndianNumber } from '@/lib/utils';
+import { isPostgresEnabled } from '@/services/db/dbConnector';
 
 const FixedDeposits = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -21,6 +21,20 @@ const FixedDeposits = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // On component mount, store the PostgreSQL status from environment in localStorage
+    try {
+      // This value would be injected by the server during SSR or through a global window variable
+      // For this implementation, we'll just check if the URL indicates we're in dev mode
+      const devMode = window.location.hostname === 'localhost';
+      const postgresEnabled = window.POSTGRES_ENABLED || 
+                             process.env.POSTGRES_ENABLED || 
+                             (devMode ? false : true);
+      
+      localStorage.setItem('POSTGRES_ENABLED', String(postgresEnabled));
+    } catch (error) {
+      console.error('Error storing PostgreSQL status:', error);
+    }
+    
     loadFixedDeposits();
   }, []);
 
@@ -214,7 +228,12 @@ const FixedDeposits = () => {
   return (
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Fixed Deposits</h1>
+        <div>
+          <h1 className="text-2xl font-semibold">Fixed Deposits</h1>
+          <p className="text-sm text-muted-foreground">
+            {isPostgresEnabled() ? 'Using PostgreSQL database' : 'Using local storage'}
+          </p>
+        </div>
         <div className="flex space-x-2">
           <ImportExportMenu
             data={fixedDeposits}
@@ -233,7 +252,7 @@ const FixedDeposits = () => {
 
       {isLoading ? (
         <div className="flex justify-center py-10">
-          <p>Loading fixed deposits...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : fixedDeposits.length === 0 ? (
         <div className="text-center py-10 border rounded-lg bg-muted/20">
