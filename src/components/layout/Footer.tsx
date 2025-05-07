@@ -11,15 +11,19 @@ import {
 } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CHANGELOG } from '@/constants/version';
+import { useSettings } from '@/contexts/SettingsContext';
 
 export function Footer({ className }: { className?: string }) {
+  const { settings } = useSettings();
+  const appName = settings.appName || "Money Flow Guardian";
+  
   return (
     <footer className={cn(
       "border-t py-3 px-6 flex justify-between items-center text-sm text-muted-foreground bg-background/80 backdrop-blur-sm",
       className
     )}>
       <div>
-        <span>Money Flow Guardian</span>
+        <span>{appName}</span>
         <span className="mx-2">•</span>
         <span>© 2025</span>
       </div>
