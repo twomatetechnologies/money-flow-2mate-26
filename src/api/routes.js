@@ -8,6 +8,7 @@ const savingsAccounts = require('./savingsAccounts');
 const sipInvestments = require('./sipInvestments');
 const stocks = require('./stocks');
 const providentFunds = require('./providentFunds');
+const auditRecords = require('./auditRecords');
 
 const router = express.Router();
 
@@ -45,5 +46,10 @@ router.get('/provident-funds/:id', providentFunds.getProvidentFundById);
 router.post('/provident-funds', providentFunds.createProvidentFund);
 router.put('/provident-funds/:id', providentFunds.updateProvidentFund);
 router.delete('/provident-funds/:id', providentFunds.deleteProvidentFund);
+
+// Audit Records routes
+router.get('/audit-records', auditRecords.getAllAuditRecords);
+router.get('/audit-records/entity/:entityId', auditRecords.getAuditRecordsByEntityId);
+router.get('/audit-records/type/:entityType', auditRecords.getAuditRecordsByEntityType);
 
 module.exports = router;
