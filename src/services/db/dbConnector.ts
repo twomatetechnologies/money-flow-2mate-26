@@ -25,6 +25,16 @@ export const isPostgresEnabled = (): boolean => {
   }
 };
 
+// Check if database connection has an error
+export const hasConnectionError = (): boolean => {
+  try {
+    return window.DB_CONNECTION_ERROR === true;
+  } catch (error) {
+    console.error('Error checking database connection status:', error);
+    return false;
+  }
+};
+
 // Utility function to determine the API base URL
 export const getApiBaseUrl = (): string => {
   // In production, API calls go to the same host
@@ -98,3 +108,13 @@ export const getPgAdminUrl = (): string => {
   return `http://${host}:5050`;
 };
 
+// Function to test database connection
+export const testDatabaseConnection = async (): Promise<boolean> => {
+  try {
+    await executeQuery('/health-check', 'GET');
+    return true;
+  } catch (error) {
+    console.error('Database connection test failed:', error);
+    return false;
+  }
+};

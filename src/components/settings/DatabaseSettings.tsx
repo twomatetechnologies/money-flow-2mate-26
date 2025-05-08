@@ -1,17 +1,37 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { isPostgresEnabled, toggleDatabaseSource, getPgAdminUrl } from '@/services/db/dbConnector';
+import { 
+  isPostgresEnabled, 
+  toggleDatabaseSource, 
+  getPgAdminUrl, 
+  hasConnectionError,
+  testDatabaseConnection
+} from '@/services/db/dbConnector';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertCircle, Database, HardDrive, ExternalLink } from 'lucide-react';
+import { AlertCircle, Database, HardDrive, ExternalLink, WifiOff, Check, RefreshCw } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function DatabaseSettings() {
   const { toast } = useToast();
   const [usePostgres, setUsePostgres] = useState<boolean>(isPostgresEnabled());
   const [isConfirmingSwitch, setIsConfirmingSwitch] = useState<boolean>(false);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+
+  useEffect(() => {
+    checkDatabaseConnection();
+  }, []);
+
+  const checkDatabaseConnection = async () => {
+    if (usePostgres) {
+      setConnectionStatus('checking');
+      const isConnected = await testDatabaseConnection();
+      setConnectionStatus(isConnected ? 'connected' : 'error');
+    }
+  };
 
   const handleToggle = (checked: boolean) => {
     setUsePostgres(checked);
@@ -99,28 +119,70 @@ export function DatabaseSettings() {
         )}
 
         {usePostgres && (
-          <div className="flex items-center justify-between rounded-lg border p-4 bg-blue-50">
-            <div className="flex items-center space-x-4">
-              <Database className="h-6 w-6 text-blue-500" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Database Administration
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Manage your PostgreSQL database using pgAdmin
-                </p>
+          <>
+            {connectionStatus === 'error' && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Connection Error</AlertTitle>
+                <AlertDescription>
+                  Unable to connect to PostgreSQL database. Please check your Docker configuration or switch to localStorage mode temporarily.
+                </AlertDescription>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2 flex items-center gap-2"
+                  onClick={checkDatabaseConnection}
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  <span>Retry Connection</span>
+                </Button>
+              </Alert>
+            )}
+
+            {connectionStatus === 'connected' && (
+              <Alert className="bg-green-50 text-green-800 border-green-200">
+                <Check className="h-4 w-4 text-green-600" />
+                <AlertTitle>Database Connected</AlertTitle>
+                <AlertDescription className="text-green-700">
+                  Successfully connected to PostgreSQL database.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex items-center justify-between rounded-lg border p-4 bg-blue-50">
+              <div className="flex items-center space-x-4">
+                <Database className="h-6 w-6 text-blue-500" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    Database Administration
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Manage your PostgreSQL database using pgAdmin
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={openPgAdmin} 
+                className="flex items-center gap-2"
+                disabled={connectionStatus === 'error'}
+              >
+                <span>Open pgAdmin</span>
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="rounded-lg border p-4 bg-blue-50">
+              <h4 className="text-sm font-medium mb-2">pgAdmin Login Information</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <span className="text-muted-foreground">Email:</span>
+                <span className="font-mono">admin@example.com</span>
+                <span className="text-muted-foreground">Password:</span>
+                <span className="font-mono">admin123</span>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={openPgAdmin} 
-              className="flex items-center gap-2"
-            >
-              <span>Open pgAdmin</span>
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-          </div>
+          </>
         )}
       </CardContent>
       <CardFooter className="flex justify-between border-t px-6 py-4">

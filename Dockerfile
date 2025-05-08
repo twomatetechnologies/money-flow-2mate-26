@@ -1,3 +1,4 @@
+
 # Use an official Node runtime as the base image
 FROM node:18-alpine
 
@@ -19,6 +20,9 @@ RUN npm run build
 # Use Nginx to serve the application
 FROM nginx:alpine
 
+# Install necessary packages for database operations and health checks
+RUN apk --no-cache add postgresql-client wget curl bash
+
 # Copy the built application
 COPY --from=0 /app/dist /usr/share/nginx/html
 
@@ -33,6 +37,9 @@ VOLUME /data
 COPY ./init-container.sh /docker-entrypoint.d/40-init-container.sh
 COPY ./migrate-postgres.sh /migrate-postgres.sh
 RUN chmod +x /docker-entrypoint.d/40-init-container.sh /migrate-postgres.sh
+
+# Create a health endpoint for the container
+RUN echo "OK" > /usr/share/nginx/html/health
 
 # Expose port 80
 EXPOSE 80
