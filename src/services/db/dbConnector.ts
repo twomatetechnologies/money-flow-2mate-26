@@ -6,9 +6,19 @@
 // Check if PostgreSQL is enabled via environment variable
 export const isPostgresEnabled = (): boolean => {
   try {
-    // For browser environment, we'll use a localStorage flag
-    // This will be set during app initialization based on the server environment
-    return localStorage.getItem('POSTGRES_ENABLED') === 'true';
+    // First check localStorage (set during app initialization)
+    const storedValue = localStorage.getItem('POSTGRES_ENABLED');
+    if (storedValue !== null) {
+      return storedValue === 'true';
+    }
+    
+    // Fall back to window variable if available
+    if (typeof window.POSTGRES_ENABLED !== 'undefined') {
+      return window.POSTGRES_ENABLED === true;
+    }
+    
+    // Default to false if neither is available
+    return false;
   } catch (error) {
     console.error('Error checking PostgreSQL status:', error);
     return false;

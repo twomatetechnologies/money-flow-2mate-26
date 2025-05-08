@@ -24,11 +24,9 @@ const FixedDeposits = () => {
     // On component mount, store the PostgreSQL status from environment in localStorage
     try {
       // This value would be injected by the server during SSR or through a global window variable
-      // For this implementation, we'll just check if the URL indicates we're in dev mode
-      const devMode = window.location.hostname === 'localhost';
-      const postgresEnabled = window.POSTGRES_ENABLED || 
-                             process.env.POSTGRES_ENABLED || 
-                             (devMode ? false : true);
+      const postgresEnabled = typeof window.POSTGRES_ENABLED !== 'undefined' 
+                             ? window.POSTGRES_ENABLED
+                             : process.env.POSTGRES_ENABLED === 'true';
       
       localStorage.setItem('POSTGRES_ENABLED', String(postgresEnabled));
     } catch (error) {
