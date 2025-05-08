@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import { AuditRecord } from '@/types/audit';
 
@@ -26,7 +27,7 @@ let auditRecords: AuditRecord[] = loadAuditRecords();
 
 export const createAuditRecord = (
   entityId: string,
-  entityType: 'stock' | 'fixedDeposit' | 'sip' | 'insurance' | 'gold' | 'familyMember' | 'savingsAccount',
+  entityType: 'stock' | 'fixedDeposit' | 'sip' | 'insurance' | 'gold' | 'familyMember' | 'savingsAccount' | 'providentFund',
   action: 'create' | 'update' | 'delete' | 'import',
   details: any
 ): AuditRecord => {
