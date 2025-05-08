@@ -90,3 +90,11 @@ export const toggleDatabaseSource = (usePostgres: boolean): void => {
     console.error('Error toggling database source:', error);
   }
 };
+
+// Get pgAdmin URL for database administration
+export const getPgAdminUrl = (): string => {
+  // Use the same host but with pgAdmin port
+  const host = window.location.hostname;
+  return `http://${host}:5050`;
+};
+

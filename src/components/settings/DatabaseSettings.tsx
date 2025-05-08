@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { isPostgresEnabled, toggleDatabaseSource } from '@/services/db/dbConnector';
+import { isPostgresEnabled, toggleDatabaseSource, getPgAdminUrl } from '@/services/db/dbConnector';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertCircle, Database, HardDrive } from 'lucide-react';
+import { AlertCircle, Database, HardDrive, ExternalLink } from 'lucide-react';
 
 export function DatabaseSettings() {
   const { toast } = useToast();
@@ -34,6 +34,10 @@ export function DatabaseSettings() {
   const cancelSwitch = () => {
     setUsePostgres(isPostgresEnabled());
     setIsConfirmingSwitch(false);
+  };
+
+  const openPgAdmin = () => {
+    window.open(getPgAdminUrl(), '_blank');
   };
 
   return (
@@ -91,6 +95,31 @@ export function DatabaseSettings() {
                 Confirm
               </Button>
             </div>
+          </div>
+        )}
+
+        {usePostgres && (
+          <div className="flex items-center justify-between rounded-lg border p-4 bg-blue-50">
+            <div className="flex items-center space-x-4">
+              <Database className="h-6 w-6 text-blue-500" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium leading-none">
+                  Database Administration
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Manage your PostgreSQL database using pgAdmin
+                </p>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={openPgAdmin} 
+              className="flex items-center gap-2"
+            >
+              <span>Open pgAdmin</span>
+              <ExternalLink className="h-4 w-4" />
+            </Button>
           </div>
         )}
       </CardContent>

@@ -18,7 +18,8 @@ A comprehensive personal finance management application that helps users track i
 - **Reports & Analytics**: Performance analysis and financial insights
 - **Two-Factor Authentication**: Enhanced security for personal data
 - **Dockerized Deployment**: Easy setup with Docker and Docker Compose
-- **Database Support**: PostgreSQL integration for persistent data storage
+- **Database Support**: PostgreSQL integration with pgAdmin for database management
+- **Database Flexibility**: Toggle between PostgreSQL and localStorage storage
 
 ## Quick Start
 
@@ -33,6 +34,11 @@ POSTGRES_ENABLED=false docker-compose up -d
 ```
 
 The application will be available at http://localhost:8080
+pgAdmin will be available at http://localhost:5050
+
+- pgAdmin default login:
+  - Email: `admin@example.com`
+  - Password: `admin123`
 
 ### Local Development
 
@@ -58,6 +64,19 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres123
 POSTGRES_HOST=db
 ```
+
+### PostgreSQL Administration
+
+The application includes pgAdmin for database administration:
+- Accessible at: http://localhost:5050
+- Default credentials: admin@example.com / admin123
+- To connect to the database server:
+  1. Add a new server in pgAdmin
+  2. Host name/address: `db` (container name)
+  3. Port: `5432`
+  4. Database: `financeapp`
+  5. Username: `postgres`
+  6. Password: `postgres123`
 
 ### Database Migrations
 
