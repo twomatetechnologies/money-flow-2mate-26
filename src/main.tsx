@@ -12,6 +12,9 @@ if (!rootElement) {
   throw new Error("Root element not found");
 }
 
+// Add animation classes to the root element
+rootElement.classList.add("animate-fade-in");
+
 // Create root
 const root = createRoot(rootElement);
 
