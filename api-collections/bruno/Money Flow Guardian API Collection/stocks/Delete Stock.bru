@@ -1,0 +1,22 @@
+
+meta {
+  name: Delete Stock
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/stocks/stock-001
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("Status code is 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

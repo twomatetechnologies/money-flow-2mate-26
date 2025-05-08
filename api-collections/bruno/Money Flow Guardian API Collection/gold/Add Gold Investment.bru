@@ -1,0 +1,38 @@
+
+meta {
+  name: Add Gold Investment
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/gold
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "type": "Physical",
+    "quantity": 10,
+    "purchaseDate": "2024-01-15",
+    "purchasePrice": 5500,
+    "location": "Bank Locker",
+    "notes": "Gold coins",
+    "familyMemberId": "fam-001"
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("Response has id", function() {
+    expect(res.body).to.have.property('id');
+  });
+}

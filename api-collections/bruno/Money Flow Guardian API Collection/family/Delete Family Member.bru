@@ -1,0 +1,22 @@
+
+meta {
+  name: Delete Family Member
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/family/fam-001
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("Status code is 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

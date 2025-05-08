@@ -1,0 +1,34 @@
+
+meta {
+  name: Update Gold Investment
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/gold/gold-001
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "quantity": 15,
+    "location": "Home Safe",
+    "forceUpdatePrice": true
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Response has updated quantity", function() {
+    expect(res.body.quantity).to.equal(15);
+  });
+}

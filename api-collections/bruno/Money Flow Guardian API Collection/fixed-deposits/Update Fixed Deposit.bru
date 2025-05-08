@@ -1,0 +1,34 @@
+
+meta {
+  name: Update Fixed Deposit
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/fixed-deposits/fd-001
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "interestRate": 7.8,
+    "isAutoRenew": true,
+    "notes": "Updated notes"
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Response has updated interest rate", function() {
+    expect(res.body.interestRate).to.equal(7.8);
+  });
+}

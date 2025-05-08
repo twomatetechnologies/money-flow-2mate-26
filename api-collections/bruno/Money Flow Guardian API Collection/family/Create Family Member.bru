@@ -1,0 +1,35 @@
+
+meta {
+  name: Create Family Member
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/family
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "name": "John Smith",
+    "relationship": "Self",
+    "dateOfBirth": "1985-04-15",
+    "color": "#4f46e5"
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("Response has id", function() {
+    expect(res.body).to.have.property('id');
+  });
+}

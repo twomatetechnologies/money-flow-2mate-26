@@ -1,0 +1,39 @@
+
+meta {
+  name: Create Fixed Deposit
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/fixed-deposits
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "bankName": "HDFC Bank",
+    "accountNumber": "FD123456",
+    "principal": 100000,
+    "interestRate": 7.5,
+    "startDate": "2024-01-01",
+    "maturityDate": "2025-01-01",
+    "isAutoRenew": false,
+    "familyMemberId": "fam-001"
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("Response has id", function() {
+    expect(res.body).to.have.property('id');
+  });
+}

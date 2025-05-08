@@ -1,0 +1,34 @@
+
+meta {
+  name: Get Audit Logs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/audit
+  body: none
+  auth: bearer
+}
+
+query {
+  entityType: stocks
+  entityId: stock-001
+  action: create
+  startDate: 2024-01-01
+  endDate: 2024-05-01
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Response is an array", function() {
+    expect(res.body).to.be.an('array');
+  });
+}

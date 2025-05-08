@@ -1,0 +1,34 @@
+
+meta {
+  name: Update Goal
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/goals/goal-001
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "currentAmount": 2750000,
+    "priority": "High",
+    "notes": "Increased priority"
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Response has updated currentAmount", function() {
+    expect(res.body.currentAmount).to.equal(2750000);
+  });
+}

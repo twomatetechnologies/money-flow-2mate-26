@@ -1,0 +1,26 @@
+
+meta {
+  name: Get Family Member By ID
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/family/fam-001
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Response has correct id", function() {
+    expect(res.body.id).to.equal('fam-001');
+  });
+}

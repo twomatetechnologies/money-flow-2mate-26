@@ -1,0 +1,1614 @@
+
+{
+  "info": {
+    "_postman_id": "b8a76c29-f3c9-4ddf-b0ea-7cab74b2e639",
+    "name": "Money Flow Guardian API",
+    "description": "API collection for Money Flow Guardian financial management application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Log in to the application using email and password"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify 2FA Code",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/two-factor",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "two-factor"
+              ]
+            },
+            "description": "Verify two-factor authentication code"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Log out of the application"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh-token"
+              ]
+            },
+            "description": "Refresh authentication token"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for authentication operations"
+    },
+    {
+      "name": "Family Members",
+      "item": [
+        {
+          "name": "Get All Family Members",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/family",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "family"
+              ]
+            },
+            "description": "Get all family members"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Family Member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Smith\",\n  \"relationship\": \"Self\",\n  \"dateOfBirth\": \"1985-04-15\",\n  \"color\": \"#4f46e5\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/family",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "family"
+              ]
+            },
+            "description": "Create a new family member"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Family Member By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/family/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "family",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "fam-001"
+                }
+              ]
+            },
+            "description": "Get a specific family member by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Family Member",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John D. Smith\",\n  \"relationship\": \"Self\",\n  \"dateOfBirth\": \"1985-04-15\",\n  \"color\": \"#4f46e5\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/family/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "family",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "fam-001"
+                }
+              ]
+            },
+            "description": "Update a specific family member"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Family Member",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/family/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "family",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "fam-001"
+                }
+              ]
+            },
+            "description": "Delete a family member"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for family member operations"
+    },
+    {
+      "name": "Stocks",
+      "item": [
+        {
+          "name": "Get All Stocks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stocks"
+              ],
+              "query": [
+                {
+                  "key": "familyMemberId",
+                  "value": "fam-001",
+                  "disabled": true
+                },
+                {
+                  "key": "symbol",
+                  "value": "AAPL",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all stock investments"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"AAPL\",\n  \"companyName\": \"Apple Inc.\",\n  \"quantity\": 10,\n  \"purchasePrice\": 150.25,\n  \"purchaseDate\": \"2024-01-15\",\n  \"sector\": \"Technology\",\n  \"familyMemberId\": \"fam-001\",\n  \"notes\": \"Long-term investment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stocks"
+              ]
+            },
+            "description": "Add a new stock investment"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stock",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 15,\n  \"purchasePrice\": 150.25,\n  \"notes\": \"Updated investment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stocks",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "stock-001"
+                }
+              ]
+            },
+            "description": "Update a stock investment"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Stock",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stocks",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "stock-001"
+                }
+              ]
+            },
+            "description": "Delete a stock investment"
+          },
+          "response": []
+        },
+        {
+          "name": "Import Stocks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stocks",
+                "import"
+              ]
+            },
+            "description": "Import stock investments from a CSV/Excel file"
+          },
+          "response": []
+        },
+        {
+          "name": "Export Stocks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stocks",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv",
+                  "disabled": true
+                },
+                {
+                  "key": "familyMemberId",
+                  "value": "fam-001",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Export stock investments as CSV or Excel"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for stock investment operations"
+    },
+    {
+      "name": "Gold",
+      "item": [
+        {
+          "name": "Get All Gold Investments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/gold",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "gold"
+              ],
+              "query": [
+                {
+                  "key": "familyMemberId",
+                  "value": "fam-001",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "Physical",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all gold investments"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Gold Investment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"Physical\",\n  \"quantity\": 10,\n  \"purchaseDate\": \"2024-01-15\",\n  \"purchasePrice\": 5500,\n  \"location\": \"Bank Locker\",\n  \"notes\": \"Gold coins\",\n  \"familyMemberId\": \"fam-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/gold",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "gold"
+              ]
+            },
+            "description": "Add a new gold investment"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Gold Investment By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/gold/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "gold",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "gold-001"
+                }
+              ]
+            },
+            "description": "Get a specific gold investment by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Gold Investment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 15,\n  \"location\": \"Home Safe\",\n  \"forceUpdatePrice\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/gold/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "gold",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "gold-001"
+                }
+              ]
+            },
+            "description": "Update a gold investment"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Gold Investment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/gold/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "gold",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "gold-001"
+                }
+              ]
+            },
+            "description": "Delete a gold investment"
+          },
+          "response": []
+        },
+        {
+          "name": "Import Gold Investments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/gold/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "gold",
+                "import"
+              ]
+            },
+            "description": "Import gold investments from CSV/Excel file"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for gold investment operations"
+    },
+    {
+      "name": "Fixed Deposits",
+      "item": [
+        {
+          "name": "Get All Fixed Deposits",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/fixed-deposits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fixed-deposits"
+              ],
+              "query": [
+                {
+                  "key": "familyMemberId",
+                  "value": "fam-001",
+                  "disabled": true
+                },
+                {
+                  "key": "bankName",
+                  "value": "HDFC",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all fixed deposits"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Fixed Deposit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bankName\": \"HDFC Bank\",\n  \"accountNumber\": \"FD123456\",\n  \"principal\": 100000,\n  \"interestRate\": 7.5,\n  \"startDate\": \"2024-01-01\",\n  \"maturityDate\": \"2025-01-01\",\n  \"isAutoRenew\": false,\n  \"familyMemberId\": \"fam-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/fixed-deposits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fixed-deposits"
+              ]
+            },
+            "description": "Create a new fixed deposit"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Fixed Deposit By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/fixed-deposits/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fixed-deposits",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "fd-001"
+                }
+              ]
+            },
+            "description": "Get a specific fixed deposit"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Fixed Deposit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"interestRate\": 7.8,\n  \"isAutoRenew\": true,\n  \"notes\": \"Updated notes\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/fixed-deposits/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fixed-deposits",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "fd-001"
+                }
+              ]
+            },
+            "description": "Update a fixed deposit"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Fixed Deposit",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/fixed-deposits/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fixed-deposits",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "fd-001"
+                }
+              ]
+            },
+            "description": "Delete a fixed deposit"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for fixed deposit operations"
+    },
+    {
+      "name": "SIP Investments",
+      "item": [
+        {
+          "name": "Get All SIPs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sips",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sips"
+              ],
+              "query": [
+                {
+                  "key": "familyMemberId",
+                  "value": "fam-001",
+                  "disabled": true
+                },
+                {
+                  "key": "fundType",
+                  "value": "Equity",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all SIP investments"
+          },
+          "response": []
+        },
+        {
+          "name": "Create SIP Investment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"HDFC Top 100 Fund\",\n  \"amount\": 5000,\n  \"frequency\": \"Monthly\",\n  \"startDate\": \"2024-01-01\",\n  \"fundType\": \"Equity\",\n  \"familyMemberId\": \"fam-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sips",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sips"
+              ]
+            },
+            "description": "Create a new SIP investment"
+          },
+          "response": []
+        },
+        {
+          "name": "Get SIP By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sips/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sips",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "sip-001"
+                }
+              ]
+            },
+            "description": "Get a specific SIP investment"
+          },
+          "response": []
+        },
+        {
+          "name": "Update SIP",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 7500,\n  \"notes\": \"Increased monthly contribution\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sips/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sips",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "sip-001"
+                }
+              ]
+            },
+            "description": "Update a SIP investment"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete SIP",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sips/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sips",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "sip-001"
+                }
+              ]
+            },
+            "description": "Delete a SIP investment"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for SIP investment operations"
+    },
+    {
+      "name": "Goals",
+      "item": [
+        {
+          "name": "Get All Goals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/goals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "goals"
+              ],
+              "query": [
+                {
+                  "key": "familyMemberId",
+                  "value": "fam-001",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "Education",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all financial goals"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Goal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Retirement Fund\",\n  \"targetAmount\": 10000000,\n  \"currentAmount\": 2500000,\n  \"deadline\": \"2045-04-15\",\n  \"category\": \"Retirement\",\n  \"priority\": \"Medium\",\n  \"familyMemberId\": \"fam-001\",\n  \"notes\": \"Retirement corpus target\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/goals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "goals"
+              ]
+            },
+            "description": "Create a new financial goal"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Goal By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/goals/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "goals",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "goal-001"
+                }
+              ]
+            },
+            "description": "Get a specific financial goal"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Goal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentAmount\": 2750000,\n  \"priority\": \"High\",\n  \"notes\": \"Increased priority\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/goals/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "goals",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "goal-001"
+                }
+              ]
+            },
+            "description": "Update a financial goal"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Goal",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/goals/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "goals",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "goal-001"
+                }
+              ]
+            },
+            "description": "Delete a financial goal"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Goal Progress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/goals/:id/progress",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "goals",
+                ":id",
+                "progress"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "goal-001"
+                }
+              ]
+            },
+            "description": "Get progress details for a specific goal"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for financial goal operations"
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Get Net Worth Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/net-worth",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "net-worth"
+              ],
+              "query": [
+                {
+                  "key": "familyMemberId",
+                  "value": "fam-001",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-05-01",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get net worth report data"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Asset Allocation Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/asset-allocation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "asset-allocation"
+              ],
+              "query": [
+                {
+                  "key": "familyMemberId",
+                  "value": "fam-001",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get asset allocation report data"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Investment Performance Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/investment-performance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "investment-performance"
+              ],
+              "query": [
+                {
+                  "key": "familyMemberId",
+                  "value": "fam-001",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-05-01",
+                  "disabled": true
+                },
+                {
+                  "key": "investmentType",
+                  "value": "stocks",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get investment performance report data"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Custom Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportType\": \"custom\",\n  \"title\": \"My Custom Report\",\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-05-01\",\n  \"includeAssetClasses\": [\"stocks\", \"fixedDeposits\", \"gold\"],\n  \"familyMemberId\": \"fam-001\",\n  \"groupBy\": \"month\",\n  \"format\": \"pdf\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/custom",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "custom"
+              ]
+            },
+            "description": "Generate a custom report with specific parameters"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for financial report operations"
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "Get Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "stocks",
+                  "disabled": true
+                },
+                {
+                  "key": "entityId",
+                  "value": "stock-001",
+                  "disabled": true
+                },
+                {
+                  "key": "action",
+                  "value": "create",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-05-01",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get audit logs with optional filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Export Audit Logs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-05-01\",\n  \"entityType\": \"stocks\",\n  \"format\": \"csv\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/audit/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit",
+                "export"
+              ]
+            },
+            "description": "Export audit logs as CSV or Excel"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for audit trail operations"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "type": "string"
+    }
+  ]
+}

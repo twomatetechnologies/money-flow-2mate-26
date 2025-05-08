@@ -1,0 +1,39 @@
+
+meta {
+  name: Add Stock
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/stocks
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "symbol": "AAPL",
+    "companyName": "Apple Inc.",
+    "quantity": 10,
+    "purchasePrice": 150.25,
+    "purchaseDate": "2024-01-15",
+    "sector": "Technology",
+    "familyMemberId": "fam-001",
+    "notes": "Long-term investment"
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("Response has id", function() {
+    expect(res.body).to.have.property('id');
+  });
+}

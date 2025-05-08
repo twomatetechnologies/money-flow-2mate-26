@@ -1,0 +1,22 @@
+
+meta {
+  name: Delete Fixed Deposit
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/fixed-deposits/fd-001
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("Status code is 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

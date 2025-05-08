@@ -1,0 +1,39 @@
+
+meta {
+  name: Create Goal
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/goals
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "name": "Retirement Fund",
+    "targetAmount": 10000000,
+    "currentAmount": 2500000,
+    "deadline": "2045-04-15",
+    "category": "Retirement",
+    "priority": "Medium",
+    "familyMemberId": "fam-001",
+    "notes": "Retirement corpus target"
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("Response has id", function() {
+    expect(res.body).to.have.property('id');
+  });
+}

@@ -1,0 +1,7 @@
+
+{
+  "version": "1",
+  "name": "Money Flow Guardian API Collection",
+  "description": "API collection for Money Flow Guardian financial management application",
+  "uid": "shared:collections:money-flow-guardian"
+}

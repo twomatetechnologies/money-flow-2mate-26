@@ -1,0 +1,26 @@
+
+meta {
+  name: Get Asset Allocation Report
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/reports/asset-allocation
+  body: none
+  auth: bearer
+}
+
+query {
+  familyMemberId: fam-001
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

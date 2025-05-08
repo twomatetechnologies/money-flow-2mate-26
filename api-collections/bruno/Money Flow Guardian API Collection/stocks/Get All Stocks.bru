@@ -1,0 +1,31 @@
+
+meta {
+  name: Get All Stocks
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/stocks
+  body: none
+  auth: bearer
+}
+
+query {
+  familyMemberId: fam-001
+  symbol: AAPL
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Response is an array", function() {
+    expect(res.body).to.be.an('array');
+  });
+}
