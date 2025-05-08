@@ -66,3 +66,27 @@ export const executeQuery = async <T>(
     throw error;
   }
 };
+
+// Initialize database connection preferences in localStorage
+export const initDatabasePreferences = (): void => {
+  try {
+    // Only set if not already set
+    if (localStorage.getItem('POSTGRES_ENABLED') === null && 
+        typeof window.POSTGRES_ENABLED !== 'undefined') {
+      localStorage.setItem('POSTGRES_ENABLED', window.POSTGRES_ENABLED ? 'true' : 'false');
+    }
+  } catch (error) {
+    console.error('Error initializing database preferences:', error);
+  }
+};
+
+// Toggle database source between PostgreSQL and localStorage
+export const toggleDatabaseSource = (usePostgres: boolean): void => {
+  try {
+    localStorage.setItem('POSTGRES_ENABLED', usePostgres ? 'true' : 'false');
+    // Reload the application to apply changes
+    window.location.reload();
+  } catch (error) {
+    console.error('Error toggling database source:', error);
+  }
+};
