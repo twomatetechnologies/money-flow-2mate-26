@@ -30,8 +30,14 @@ if [ "$POSTGRES_ENABLED" = "true" ]; then
   
   echo "PostgreSQL is up and running. Running migrations..."
   ./migrate-postgres.sh
+  
+  # Get database size and store it for the frontend
+  DB_SIZE=$(PGPASSWORD=${POSTGRES_PASSWORD:-postgres123} psql -h ${POSTGRES_HOST:-db} -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-financeapp} -t -c "SELECT pg_size_pretty(pg_database_size('${POSTGRES_DB:-financeapp}'));" | xargs)
+  echo "window.DB_SIZE = \"$DB_SIZE\";" >> /usr/share/nginx/html/env-config.js
+  echo "Current database size: $DB_SIZE"
 else
   echo "PostgreSQL is disabled. Running in localStorage-only mode."
+  echo "window.DB_SIZE = \"0 bytes\";" >> /usr/share/nginx/html/env-config.js
 fi
 
 # Set up the container is initialized message

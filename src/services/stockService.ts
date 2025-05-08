@@ -2,6 +2,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { StockHolding } from '@/types';
 import { createAuditRecord } from './auditService';
+import { isPostgresEnabled } from './db/dbConnector';
+import * as stockDbService from './db/stockDbService';
 
 const STOCKS_STORAGE_KEY = 'stocks';
 
@@ -85,8 +87,15 @@ const saveStocks = (stocks: StockHolding[]): void => {
 // In-memory datastore with persistence
 let stocks = loadStocks();
 
+// Check if we should use database operations
+const useDatabase = isPostgresEnabled();
+
 // CRUD operations for Stocks
-export const createStock = (stock: Omit<StockHolding, 'id' | 'lastUpdated'>): StockHolding => {
+export const createStock = async (stock: Omit<StockHolding, 'id' | 'lastUpdated'>): Promise<StockHolding> => {
+  if (useDatabase) {
+    return await stockDbService.addStock(stock);
+  }
+  
   const newStock: StockHolding = {
     ...stock,
     id: uuidv4(),
@@ -99,7 +108,11 @@ export const createStock = (stock: Omit<StockHolding, 'id' | 'lastUpdated'>): St
   return newStock;
 };
 
-export const updateStock = (id: string, updates: Partial<StockHolding>): StockHolding | null => {
+export const updateStock = async (id: string, updates: Partial<StockHolding>): Promise<StockHolding | null> => {
+  if (useDatabase) {
+    return await stockDbService.updateStock(id, updates);
+  }
+  
   const index = stocks.findIndex(stock => stock.id === id);
   if (index === -1) return null;
   
@@ -123,7 +136,11 @@ export const updateStock = (id: string, updates: Partial<StockHolding>): StockHo
   return stocks[index];
 };
 
-export const deleteStock = (id: string): boolean => {
+export const deleteStock = async (id: string): Promise<boolean> => {
+  if (useDatabase) {
+    return await stockDbService.deleteStock(id);
+  }
+  
   const index = stocks.findIndex(stock => stock.id === id);
   if (index === -1) return false;
   
@@ -135,10 +152,18 @@ export const deleteStock = (id: string): boolean => {
   return true;
 };
 
-export const getStockById = (id: string): StockHolding | null => {
+export const getStockById = async (id: string): Promise<StockHolding | null> => {
+  if (useDatabase) {
+    return await stockDbService.getStockById(id);
+  }
+  
   return stocks.find(stock => stock.id === id) || null;
 };
 
-export const getStocks = (): Promise<StockHolding[]> => {
+export const getStocks = async (): Promise<StockHolding[]> => {
+  if (useDatabase) {
+    return await stockDbService.getStocks();
+  }
+  
   return Promise.resolve(stocks);
 };

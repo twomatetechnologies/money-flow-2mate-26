@@ -2,16 +2,54 @@
 import { v4 as uuidv4 } from 'uuid';
 import { SIPInvestment } from '@/types';
 import { createAuditRecord } from './auditService';
+import { isPostgresEnabled } from './db/dbConnector';
+import * as sipDbService from './db/sipDbService';
 
 // In-memory datastore (in a real app, this would use a database)
 let sipInvestments: SIPInvestment[] = [];
 
+const SIP_STORAGE_KEY = 'sipInvestments';
+
+// Load SIP investments from localStorage
+const loadSipInvestments = (): SIPInvestment[] => {
+  try {
+    const stored = localStorage.getItem(SIP_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error loading SIP investments:', error);
+    return [];
+  }
+};
+
+// Save SIP investments to localStorage
+const saveSipInvestments = (investments: SIPInvestment[]): void => {
+  try {
+    localStorage.setItem(SIP_STORAGE_KEY, JSON.stringify(investments));
+  } catch (error) {
+    console.error('Error saving SIP investments:', error);
+  }
+};
+
+// Initialize local storage data
+sipInvestments = loadSipInvestments();
+
+// Check if we should use database operations
+const useDatabase = isPostgresEnabled();
+
 export const getSIPInvestments = (): Promise<SIPInvestment[]> => {
+  if (useDatabase) {
+    return sipDbService.getSIPInvestments();
+  }
+  
   // Return a deep copy of the SIPs to prevent accidental mutations
   return Promise.resolve(JSON.parse(JSON.stringify(sipInvestments)));
 };
 
 export const addSIPInvestment = (sip: Partial<SIPInvestment>): Promise<SIPInvestment> => {
+  if (useDatabase) {
+    return sipDbService.addSIPInvestment(sip);
+  }
+  
   const newSIP: SIPInvestment = {
     id: uuidv4(),
     name: sip.name || '',
@@ -26,11 +64,16 @@ export const addSIPInvestment = (sip: Partial<SIPInvestment>): Promise<SIPInvest
   };
   
   sipInvestments.push(newSIP);
+  saveSipInvestments(sipInvestments);
   createAuditRecord(newSIP.id, 'sip', 'create', newSIP);
   return Promise.resolve(newSIP);
 };
 
 export const updateSIPInvestment = (id: string, updates: Partial<SIPInvestment>): Promise<SIPInvestment> => {
+  if (useDatabase) {
+    return sipDbService.updateSIPInvestment(id, updates);
+  }
+  
   const index = sipInvestments.findIndex(sip => sip.id === id);
   if (index === -1) {
     return Promise.reject(new Error('SIP investment not found'));
@@ -43,6 +86,7 @@ export const updateSIPInvestment = (id: string, updates: Partial<SIPInvestment>)
     ...updates,
   };
   
+  saveSipInvestments(sipInvestments);
   createAuditRecord(id, 'sip', 'update', {
     previous: originalSIP,
     current: sipInvestments[index],
@@ -53,6 +97,10 @@ export const updateSIPInvestment = (id: string, updates: Partial<SIPInvestment>)
 };
 
 export const deleteSIPInvestment = (id: string): Promise<void> => {
+  if (useDatabase) {
+    return sipDbService.deleteSIPInvestment(id).then(() => {});
+  }
+  
   const index = sipInvestments.findIndex(sip => sip.id === id);
   if (index === -1) {
     return Promise.reject(new Error('SIP investment not found'));
@@ -61,6 +109,7 @@ export const deleteSIPInvestment = (id: string): Promise<void> => {
   const deletedSIP = sipInvestments[index];
   sipInvestments.splice(index, 1);
   
+  saveSipInvestments(sipInvestments);
   createAuditRecord(id, 'sip', 'delete', deletedSIP);
   return Promise.resolve();
 };

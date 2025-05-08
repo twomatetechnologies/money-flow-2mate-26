@@ -1,16 +1,53 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import { SavingsAccount } from '@/types';
 import { createAuditRecord } from './auditService';
+import { isPostgresEnabled } from './db/dbConnector';
+import * as savingsDbService from './db/savingsDbService';
 
-// In-memory datastore (in a real app, this would use a database)
-let savingsAccounts: SavingsAccount[] = [];
+const SAVINGS_STORAGE_KEY = 'savingsAccounts';
 
-export const getSavingsAccounts = (): Promise<SavingsAccount[]> => {
-  // Return a deep copy of the savings accounts to prevent accidental mutations
-  return Promise.resolve(JSON.parse(JSON.stringify(savingsAccounts)));
+// Load savings accounts from localStorage
+const loadSavingsAccounts = (): SavingsAccount[] => {
+  try {
+    const stored = localStorage.getItem(SAVINGS_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error loading savings accounts:', error);
+    return [];
+  }
 };
 
-export const addSavingsAccount = (account: Partial<SavingsAccount>): Promise<SavingsAccount> => {
+// Save savings accounts to localStorage
+const saveSavingsAccounts = (accounts: SavingsAccount[]): void => {
+  try {
+    localStorage.setItem(SAVINGS_STORAGE_KEY, JSON.stringify(accounts));
+  } catch (error) {
+    console.error('Error saving savings accounts:', error);
+  }
+};
+
+// In-memory datastore with persistence
+let savingsAccounts = loadSavingsAccounts();
+
+// Check if we should use database operations
+const useDatabase = isPostgresEnabled();
+
+// Get all savings accounts
+export const getSavingsAccounts = async (): Promise<SavingsAccount[]> => {
+  if (useDatabase) {
+    return await savingsDbService.getSavingsAccounts();
+  }
+  
+  return Promise.resolve([...savingsAccounts]);
+};
+
+// Add a new savings account
+export const addSavingsAccount = async (account: Partial<SavingsAccount>): Promise<SavingsAccount> => {
+  if (useDatabase) {
+    return await savingsDbService.addSavingsAccount(account);
+  }
+  
   const newAccount: SavingsAccount = {
     id: uuidv4(),
     bankName: account.bankName || '',
@@ -27,11 +64,17 @@ export const addSavingsAccount = (account: Partial<SavingsAccount>): Promise<Sav
   };
   
   savingsAccounts.push(newAccount);
+  saveSavingsAccounts(savingsAccounts);
   createAuditRecord(newAccount.id, 'savingsAccount', 'create', newAccount);
   return Promise.resolve(newAccount);
 };
 
-export const updateSavingsAccount = (id: string, updates: Partial<SavingsAccount>): Promise<SavingsAccount> => {
+// Update a savings account
+export const updateSavingsAccount = async (id: string, updates: Partial<SavingsAccount>): Promise<SavingsAccount> => {
+  if (useDatabase) {
+    return await savingsDbService.updateSavingsAccount(id, updates);
+  }
+  
   const index = savingsAccounts.findIndex(account => account.id === id);
   if (index === -1) {
     return Promise.reject(new Error('Savings account not found'));
@@ -45,6 +88,7 @@ export const updateSavingsAccount = (id: string, updates: Partial<SavingsAccount
     lastUpdated: new Date()
   };
   
+  saveSavingsAccounts(savingsAccounts);
   createAuditRecord(id, 'savingsAccount', 'update', {
     previous: originalAccount,
     current: savingsAccounts[index],
@@ -54,7 +98,13 @@ export const updateSavingsAccount = (id: string, updates: Partial<SavingsAccount
   return Promise.resolve(savingsAccounts[index]);
 };
 
-export const deleteSavingsAccount = (id: string): Promise<void> => {
+// Delete a savings account
+export const deleteSavingsAccount = async (id: string): Promise<void> => {
+  if (useDatabase) {
+    await savingsDbService.deleteSavingsAccount(id);
+    return;
+  }
+  
   const index = savingsAccounts.findIndex(account => account.id === id);
   if (index === -1) {
     return Promise.reject(new Error('Savings account not found'));
@@ -63,6 +113,7 @@ export const deleteSavingsAccount = (id: string): Promise<void> => {
   const deletedAccount = savingsAccounts[index];
   savingsAccounts.splice(index, 1);
   
+  saveSavingsAccounts(savingsAccounts);
   createAuditRecord(id, 'savingsAccount', 'delete', deletedAccount);
   return Promise.resolve();
 };
