@@ -2,6 +2,7 @@
 /**
  * Database connector utility to connect to PostgreSQL
  */
+import { handleError } from '@/utils/errorHandler';
 
 // Check if PostgreSQL is enabled via environment variable
 export const isPostgresEnabled = (): boolean => {
@@ -41,6 +42,21 @@ export const getApiBaseUrl = (): string => {
   return '';
 };
 
+// Custom error for database operations
+export class DatabaseError extends Error {
+  statusCode: number;
+  operation: string;
+  endpoint: string;
+  
+  constructor(message: string, operation: string, endpoint: string, statusCode: number = 500) {
+    super(message);
+    this.name = 'DatabaseError';
+    this.statusCode = statusCode;
+    this.operation = operation;
+    this.endpoint = endpoint;
+  }
+}
+
 // Execute a database query via API
 export const executeQuery = async <T>(
   endpoint: string, 
@@ -51,6 +67,11 @@ export const executeQuery = async <T>(
     const url = `${getApiBaseUrl()}/api${endpoint}`;
     
     console.log(`API Request: ${method} ${url}`);
+    if (data && (method === 'POST' || method === 'PUT')) {
+      console.log('Request payload:', JSON.stringify(data, null, 2));
+    }
+    
+    const requestStartTime = performance.now();
     
     const options: RequestInit = {
       method,
@@ -66,16 +87,42 @@ export const executeQuery = async <T>(
     }
     
     const response = await fetch(url, options);
+    const requestDuration = performance.now() - requestStartTime;
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`API Error (${response.status}): ${errorText}`);
-      throw new Error(`Database query failed: ${response.status} - ${errorText || response.statusText}`);
+    // Log performance metrics for slow requests
+    if (requestDuration > 1000) { // Log if request took more than 1s
+      console.warn(`Slow API request: ${method} ${url} took ${requestDuration.toFixed(2)}ms`);
     }
     
-    return await response.json();
+    if (!response.ok) {
+      // Try to parse error response if possible
+      let errorDetail: string;
+      try {
+        const errorBody = await response.json();
+        errorDetail = errorBody.error?.message || errorBody.error || JSON.stringify(errorBody);
+      } catch {
+        errorDetail = await response.text() || response.statusText;
+      }
+      
+      const errorMessage = `Database operation failed (${response.status}): ${errorDetail}`;
+      throw new DatabaseError(
+        errorMessage, 
+        method, 
+        endpoint, 
+        response.status
+      );
+    }
+    
+    const responseData = await response.json();
+    return responseData;
   } catch (error) {
-    console.error('Database query error:', error);
+    // Log and re-throw to allow caller-specific handling
+    if (error instanceof DatabaseError) {
+      console.error(`DB Error (${error.statusCode}):`, error.message);
+    } else {
+      console.error('Database query error:', error);
+    }
+    
     throw error;
   }
 };
@@ -101,6 +148,7 @@ export const toggleDatabaseSource = (usePostgres: boolean): void => {
     window.location.reload();
   } catch (error) {
     console.error('Error toggling database source:', error);
+    handleError(error, 'Failed to toggle database source');
   }
 };
 
@@ -114,7 +162,9 @@ export const getPgAdminUrl = (): string => {
 // Function to test database connection
 export const testDatabaseConnection = async (): Promise<boolean> => {
   try {
+    console.log('Testing database connection...');
     await executeQuery('/health-check', 'GET');
+    console.log('Database connection test successful');
     return true;
   } catch (error) {
     console.error('Database connection test failed:', error);
