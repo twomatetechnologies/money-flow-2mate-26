@@ -83,7 +83,7 @@ export function handleError(error: unknown, message?: string, options: ErrorOpti
   }
   
   // Track errors if available
-  if (window.trackError && typeof window.trackError === 'function') {
+  if (typeof window !== 'undefined' && typeof window.trackError === 'function') {
     try {
       window.trackError(errorMessage, { 
         severity: opts.severity,
