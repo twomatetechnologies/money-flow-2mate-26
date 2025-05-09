@@ -37,8 +37,8 @@ export const hasConnectionError = (): boolean => {
 
 // Utility function to determine the API base URL
 export const getApiBaseUrl = (): string => {
-  // In production, API calls go to the same host
-  return window.location.origin;
+  // In development, use relative URL to leverage Vite's proxy
+  return '';
 };
 
 // Execute a database query via API
@@ -49,6 +49,8 @@ export const executeQuery = async <T>(
 ): Promise<T> => {
   try {
     const url = `${getApiBaseUrl()}/api${endpoint}`;
+    
+    console.log(`API Request: ${method} ${url}`);
     
     const options: RequestInit = {
       method,
@@ -67,7 +69,8 @@ export const executeQuery = async <T>(
     
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Database query failed: ${errorText}`);
+      console.error(`API Error (${response.status}): ${errorText}`);
+      throw new Error(`Database query failed: ${response.status} - ${errorText || response.statusText}`);
     }
     
     return await response.json();
