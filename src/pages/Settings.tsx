@@ -12,6 +12,7 @@ import { BrainCircuit, InfoIcon, Lock, Pencil, Shield } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { DatabaseSettings } from '@/components/settings/DatabaseSettings';
 
 const Settings = () => {
   const { settings, updateSettings } = useSettings();
@@ -95,6 +96,9 @@ const Settings = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Database Settings */}
+      <DatabaseSettings />
 
       {/* AI Settings Card */}
       <Card>
