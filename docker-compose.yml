@@ -9,7 +9,7 @@ services:
       - "8080:80"
     restart: unless-stopped
     environment:
-      - POSTGRES_ENABLED=${POSTGRES_ENABLED:-true} # Set to false to disable, true to enable PostgreSQL usage
+      - POSTGRES_ENABLED=true # Always enabled
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_DB=financeapp
@@ -42,7 +42,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # The db service can be commented out to run app without a database.
+    # PostgreSQL is now required
 
   pgadmin:
     image: dpage/pgadmin4

@@ -4,25 +4,14 @@
  */
 import { handleError } from '@/utils/errorHandler';
 
-// Check if PostgreSQL is enabled via environment variable
+// Force PostgreSQL to always be enabled
 export const isPostgresEnabled = (): boolean => {
   try {
-    // First check localStorage (set during app initialization)
-    const storedValue = localStorage.getItem('POSTGRES_ENABLED');
-    if (storedValue !== null) {
-      return storedValue === 'true';
-    }
-    
-    // Fall back to window variable if available
-    if (typeof window.POSTGRES_ENABLED !== 'undefined') {
-      return window.POSTGRES_ENABLED === true;
-    }
-    
-    // Default to false if neither is available
-    return false;
+    // Always return true to force PostgreSQL usage
+    return true;
   } catch (error) {
     console.error('Error checking PostgreSQL status:', error);
-    return false;
+    return true; // Default to true even on error
   }
 };
 
@@ -130,10 +119,12 @@ export const executeQuery = async <T>(
 // Initialize database connection preferences in localStorage
 export const initDatabasePreferences = (): void => {
   try {
-    // Only set if not already set
-    if (localStorage.getItem('POSTGRES_ENABLED') === null && 
-        typeof window.POSTGRES_ENABLED !== 'undefined') {
-      localStorage.setItem('POSTGRES_ENABLED', window.POSTGRES_ENABLED ? 'true' : 'false');
+    // Always set to true for PostgreSQL
+    localStorage.setItem('POSTGRES_ENABLED', 'true');
+    
+    // Set window variable too if it exists
+    if (typeof window !== 'undefined') {
+      window.POSTGRES_ENABLED = true;
     }
   } catch (error) {
     console.error('Error initializing database preferences:', error);
@@ -141,11 +132,18 @@ export const initDatabasePreferences = (): void => {
 };
 
 // Toggle database source between PostgreSQL and localStorage
+// This function is kept for API compatibility but now always sets to PostgreSQL
 export const toggleDatabaseSource = (usePostgres: boolean): void => {
   try {
-    localStorage.setItem('POSTGRES_ENABLED', usePostgres ? 'true' : 'false');
-    // Reload the application to apply changes
-    window.location.reload();
+    // Ignore the parameter and always set to true
+    localStorage.setItem('POSTGRES_ENABLED', 'true');
+    
+    // Only reload if trying to switch to localStorage (which we disallow)
+    if (!usePostgres) {
+      console.warn('Application is configured to use PostgreSQL only. Cannot switch to localStorage.');
+      // Reload the application to ensure PostgreSQL is used
+      window.location.reload();
+    }
   } catch (error) {
     console.error('Error toggling database source:', error);
     handleError(error, 'Failed to toggle database source');

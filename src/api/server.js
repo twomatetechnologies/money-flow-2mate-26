@@ -24,7 +24,7 @@ app.use('/api', routes);
 
 // Health check endpoint
 app.get('/api/health-check', (_req, res) => {
-  res.json({ status: 'OK', timestamp: new Date() });
+  res.json({ status: 'OK', timestamp: new Date(), postgres: true });
 });
 
 // Custom error types
@@ -51,6 +51,16 @@ class AuthorizationError extends Error {
     this.statusCode = 401;
   }
 }
+
+// Force PostgreSQL check middleware
+app.use((req, res, next) => {
+  // Enforce PostgreSQL usage
+  if (process.env.POSTGRES_ENABLED !== 'true') {
+    console.warn('Application is configured to use PostgreSQL only. Setting POSTGRES_ENABLED=true');
+    process.env.POSTGRES_ENABLED = 'true';
+  }
+  next();
+});
 
 // 404 handler for undefined routes
 app.use((req, res, next) => {
@@ -98,6 +108,7 @@ if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`API server running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log('PostgreSQL is ENABLED and required');
   });
 }
 
