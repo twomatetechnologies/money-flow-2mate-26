@@ -3,7 +3,7 @@
  * Start script for Bruno API server
  * This file provides an easy way to start the API server for Bruno testing
  */
-const app = require('./src/api/bruno-server');
+import { app } from './src/api/bruno-server.js';
 
 const PORT = process.env.API_PORT || 8081;
 

@@ -1,8 +1,7 @@
-
 /**
  * SIP Investments API Implementation
  */
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // In-memory data store for development
 let sipInvestments = [
@@ -124,7 +123,7 @@ const deleteSIPInvestment = (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getAllSIPInvestments,
   getSIPInvestmentById,
   createSIPInvestment,

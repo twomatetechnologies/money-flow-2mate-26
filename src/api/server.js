@@ -1,24 +1,46 @@
-
 /**
  * Simple Express server for local development
  */
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
-const routes = require('./routes');
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import { v4 as uuidv4 } from 'uuid';
+import routes from './routes.js';
 
 // Create Express server
 const app = express();
 
+// Health check endpoint
+app.get('/api/health-check', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Enable CORS for all routes with proper options
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:8080'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: true, // Allow all origins in development
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 // Request logging - use 'combined' format for more details in production
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+// Add request ID to each request
+app.use((req, _res, next) => {
+  req.id = uuidv4();
+  next();
+});
+
+// Debug middleware to log request details
+app.use((req, _res, next) => {
+  console.log(`[DEBUG] ${req.method} ${req.path}`);
+  console.log('Headers:', req.headers);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+  }
+  next();
+});
 
 // Parse JSON request body
 app.use(express.json());
@@ -32,13 +54,31 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint with database verification
+app.get('/api/health-check', async (_req, res) => {
+  try {
+    // Check database connection by making a simple query
+    const timestamp = new Date();
+    res.json({ 
+      status: 'OK', 
+      timestamp,
+      postgres: true,
+      env: process.env.NODE_ENV,
+      dbHost: process.env.POSTGRES_HOST,
+      dbName: process.env.POSTGRES_DB
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({ 
+      status: 'ERROR', 
+      timestamp: new Date(),
+      error: error.message 
+    });
+  }
+});
+
 // API routes
 app.use('/api', routes);
-
-// Health check endpoint
-app.get('/api/health-check', (_req, res) => {
-  res.json({ status: 'OK', timestamp: new Date(), postgres: true });
-});
 
 // Custom error types
 class ValidationError extends Error {
@@ -90,7 +130,8 @@ app.use((err, req, res, _next) => {
       type: err.name || 'Error',
       path: req.path,
       method: req.method,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      requestId: req.id // Add request ID for tracking
     }
   };
   
@@ -118,7 +159,8 @@ app.NotFoundError = NotFoundError;
 app.AuthorizationError = AuthorizationError;
 
 // Only start the server if this file is run directly
-if (require.main === module) {
+// Start server if this file is run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
   const PORT = process.env.API_PORT || 8081;
   app.listen(PORT, () => {
     console.log(`API server running on port ${PORT}`);
@@ -127,4 +169,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = app;
+export { app };

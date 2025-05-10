@@ -1,8 +1,7 @@
-
 /**
  * Audit Records API Implementation
  */
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // In-memory data store for development
 let auditRecords = [];
@@ -65,8 +64,34 @@ const getAuditRecordsByEntityType = (req, res) => {
   }
 };
 
-module.exports = {
+// Create a new audit record
+const createAuditRecord = (req, res) => {
+  try {
+    const { entityId, entityType, action, details } = req.body;
+    
+    if (!entityId || !entityType || !action) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const newRecord = {
+      id: `audit-${uuidv4()}`,
+      entityId,
+      entityType,
+      action,
+      details,
+      timestamp: new Date().toISOString()
+    };
+
+    auditRecords.push(newRecord);
+    res.status(201).json(newRecord);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export {
   getAllAuditRecords,
   getAuditRecordsByEntityId,
-  getAuditRecordsByEntityType
+  getAuditRecordsByEntityType,
+  createAuditRecord
 };

@@ -2,7 +2,7 @@
 /**
  * Fixed Deposits API Implementation
  */
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // In-memory data store for development
 let fixedDeposits = [
@@ -128,7 +128,7 @@ const deleteFixedDeposit = (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getAllFixedDeposits,
   getFixedDepositById,
   createFixedDeposit,

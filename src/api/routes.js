@@ -1,14 +1,13 @@
-
 /**
  * API Routes configuration
  */
-const express = require('express');
-const fixedDeposits = require('./fixedDeposits');
-const savingsAccounts = require('./savingsAccounts');
-const sipInvestments = require('./sipInvestments');
-const stocks = require('./stocks');
-const providentFunds = require('./providentFunds');
-const auditRecords = require('./auditRecords');
+import express from 'express';
+import * as fixedDeposits from './fixedDeposits.js';
+import * as savingsAccounts from './savingsAccounts.js';
+import * as sipInvestments from './sipInvestments.js';
+import * as stocks from './stocks.js';
+import * as providentFunds from './providentFunds.js';
+import * as auditRecords from './auditRecords.js';
 
 const router = express.Router();
 
@@ -51,5 +50,6 @@ router.delete('/provident-funds/:id', providentFunds.deleteProvidentFund);
 router.get('/audit-records', auditRecords.getAllAuditRecords);
 router.get('/audit-records/entity/:entityId', auditRecords.getAuditRecordsByEntityId);
 router.get('/audit-records/type/:entityType', auditRecords.getAuditRecordsByEntityType);
+router.post('/audit-records', auditRecords.createAuditRecord);
 
-module.exports = router;
+export default router;

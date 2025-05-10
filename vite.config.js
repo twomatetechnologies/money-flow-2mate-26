@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -13,12 +12,15 @@ export default defineConfig({
         target: 'http://localhost:8081',
         changeOrigin: true,
         secure: false,
+        ws: true,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
             console.log('proxy error', err);
           });
-          proxy.on('proxyReq', (_proxyReq, req, _res) => {
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
             console.log('Sending Request:', req.method, req.url);
+            // Add CORS headers to the proxy request
+            proxyReq.setHeader('origin', 'http://localhost:8081');
           });
           proxy.on('proxyRes', (proxyRes, req, _res) => {
             console.log('Received Response from:', req.method, req.url, proxyRes.statusCode);

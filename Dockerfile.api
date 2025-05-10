@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 8081
 
 # Start API server
-CMD ["node", "start-bruno-api.js"]
+CMD ["node", "start-bruno-api.cjs"]

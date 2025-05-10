@@ -12,8 +12,10 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       // Proxy API requests to the same server during development
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://api:8081',
         changeOrigin: true,
+        secure: false,
+        ws: true,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
             console.log('proxy error', err);
