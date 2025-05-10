@@ -5,6 +5,14 @@
  */
 async function startServer() {
   try {
+    // Set PostgreSQL as enabled for API server
+    process.env.POSTGRES_ENABLED = 'true';
+    process.env.POSTGRES_HOST = process.env.POSTGRES_HOST || 'localhost';
+    process.env.POSTGRES_DB = process.env.POSTGRES_DB || 'financeapp';
+    process.env.POSTGRES_USER = process.env.POSTGRES_USER || 'postgres';
+    process.env.POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || 'postgres123';
+    process.env.POSTGRES_PORT = process.env.POSTGRES_PORT || '5432';
+    
     const { app } = await import('./src/api/bruno-server.js');
     const PORT = process.env.API_PORT || 8081;
 
