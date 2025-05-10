@@ -6,7 +6,7 @@ services:
       - "8080:80"
     restart: unless-stopped
     environment:
-      - POSTGRES_ENABLED=${POSTGRES_ENABLED:-true} # Set to false to disable, true to enable PostgreSQL usage
+      - POSTGRES_ENABLED=true # Always enabled
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_DB=financeapp
