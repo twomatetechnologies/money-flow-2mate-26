@@ -16,6 +16,7 @@ import {
   mockNetWorthData
 } from './mockData';
 import { createAuditRecord } from './auditService';
+import { isPostgresEnabled } from './db/dbConnector';
 
 // Initialize datastores from localStorage or use mock data if not available
 const loadFromStorage = <T>(key: string, mockData: T[]): T[] => {
@@ -322,8 +323,9 @@ export const getGoldById = (id: string): GoldInvestment | null => {
   return goldInvestments.find(gold => gold.id === id) || null;
 };
 
-// Data retrieval methods
+// Data retrieval methods - ensure they work with localStorage
 export const getStocks = (): Promise<StockHolding[]> => {
+  // Always use localStorage in Lovable preview
   return Promise.resolve(stocks);
 };
 

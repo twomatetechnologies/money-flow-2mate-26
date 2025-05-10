@@ -162,15 +162,9 @@ class AuthorizationError extends Error {
   }
 }
 
-// Force PostgreSQL check middleware
-app.use((req, res, next) => {
-  // Enforce PostgreSQL usage
-  if (process.env.POSTGRES_ENABLED !== 'true') {
-    console.warn('Application is configured to use PostgreSQL only. Setting POSTGRES_ENABLED=true');
-    process.env.POSTGRES_ENABLED = 'true';
-  }
-  next();
-});
+// Remove the middleware that forces PostgreSQL
+// This allows the app to work with localStorage in development
+// and in the Lovable preview
 
 // 404 handler for undefined routes
 app.use((req, res, next) => {
@@ -229,7 +223,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   app.listen(PORT, () => {
     console.log(`API server running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log('PostgreSQL is ENABLED and required');
+    console.log(`PostgreSQL is ${process.env.POSTGRES_ENABLED === 'true' ? 'ENABLED' : 'DISABLED - using in-memory storage'}`);
   });
 }
 

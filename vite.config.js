@@ -17,6 +17,7 @@ export default defineConfig({
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
             console.log('proxy error', err);
+            console.log('Continuing with localStorage fallback');
           });
           proxy.on('proxyReq', (proxyReq, req, _res) => {
             console.log('Sending Request:', req.method, req.url);
