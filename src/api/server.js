@@ -10,14 +10,27 @@ const routes = require('./routes');
 // Create Express server
 const app = express();
 
-// Enable CORS for all routes
-app.use(cors());
+// Enable CORS for all routes with proper options
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:8080'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Request logging - use 'combined' format for more details in production
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Parse JSON request body
 app.use(express.json());
+
+// Explicitly set content type for API routes
+app.use((req, res, next) => {
+  // Set for API routes only
+  if (req.path.startsWith('/api')) {
+    res.setHeader('Content-Type', 'application/json');
+  }
+  next();
+});
 
 // API routes
 app.use('/api', routes);
@@ -94,6 +107,8 @@ app.use((err, req, res, _next) => {
     console.warn(`[${req.method}] ${req.path} >> WARN (${statusCode}):`, err.message);
   }
   
+  // Ensure content type is set before sending JSON response
+  res.setHeader('Content-Type', 'application/json');
   res.status(statusCode).json(errorResponse);
 });
 

@@ -1,0 +1,18 @@
+
+# API Server Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Expose API port
+EXPOSE 8081
+
+# Start API server
+CMD ["node", "start-bruno-api.js"]

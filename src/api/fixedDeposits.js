@@ -1,240 +1,137 @@
 
 /**
- * API handlers for Fixed Deposit operations
+ * Fixed Deposits API Implementation
  */
-const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 
-// Create a PostgreSQL connection pool
-const pool = new Pool({
-  host: process.env.POSTGRES_HOST || 'db',
-  port: parseInt(process.env.POSTGRES_PORT || '5432'),
-  database: process.env.POSTGRES_DB || 'financeapp',
-  user: process.env.POSTGRES_USER || 'postgres',
-  password: process.env.POSTGRES_PASSWORD || 'postgres123'
-});
+// In-memory data store for development
+let fixedDeposits = [
+  {
+    id: 'fd-001',
+    bankName: 'HDFC Bank',
+    accountNumber: 'FD123456',
+    principal: 100000,
+    interestRate: 7.5,
+    startDate: '2024-01-01',
+    maturityDate: '2025-01-01',
+    isAutoRenew: false,
+    familyMemberId: 'fam-001'
+  }
+];
 
-// Get all fixed deposits
-exports.getAllFixedDeposits = async (req, res) => {
+// Get all fixed deposits with optional filters
+const getAllFixedDeposits = (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT * FROM fixed_deposits
-      ORDER BY maturity_date ASC
-    `);
+    const { bankName, familyMemberId } = req.query;
+    let filteredDeposits = [...fixedDeposits];
     
-    // Transform from snake_case to camelCase
-    const deposits = result.rows.map(row => ({
-      id: row.id,
-      bankName: row.bank_name,
-      accountNumber: row.account_number,
-      principal: parseFloat(row.principal),
-      interestRate: parseFloat(row.interest_rate),
-      startDate: row.start_date,
-      maturityDate: row.maturity_date,
-      maturityAmount: parseFloat(row.maturity_amount || 0),
-      isAutoRenew: row.is_auto_renewal,
-      notes: row.notes,
-      familyMemberId: row.family_member_id,
-      lastUpdated: row.last_updated
-    }));
+    if (bankName) {
+      filteredDeposits = filteredDeposits.filter(fd => fd.bankName.toLowerCase().includes(bankName.toLowerCase()));
+    }
     
-    res.json(deposits);
+    if (familyMemberId) {
+      filteredDeposits = filteredDeposits.filter(fd => fd.familyMemberId === familyMemberId);
+    }
+    
+    res.json(filteredDeposits);
   } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).json({ error: 'Failed to fetch fixed deposits' });
+    res.status(500).json({ error: error.message });
   }
 };
 
 // Get a specific fixed deposit by ID
-exports.getFixedDepositById = async (req, res) => {
+const getFixedDepositById = (req, res) => {
   try {
     const { id } = req.params;
+    const deposit = fixedDeposits.find(fd => fd.id === id);
     
-    const result = await pool.query(`
-      SELECT * FROM fixed_deposits
-      WHERE id = $1
-    `, [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Fixed deposit not found' });
+    if (!deposit) {
+      return res.status(404).json({ error: `Fixed deposit with ID ${id} not found` });
     }
-    
-    const row = result.rows[0];
-    const deposit = {
-      id: row.id,
-      bankName: row.bank_name,
-      accountNumber: row.account_number,
-      principal: parseFloat(row.principal),
-      interestRate: parseFloat(row.interest_rate),
-      startDate: row.start_date,
-      maturityDate: row.maturity_date,
-      maturityAmount: parseFloat(row.maturity_amount || 0),
-      isAutoRenew: row.is_auto_renewal,
-      notes: row.notes,
-      familyMemberId: row.family_member_id,
-      lastUpdated: row.last_updated
-    };
     
     res.json(deposit);
   } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).json({ error: 'Failed to fetch fixed deposit' });
+    res.status(500).json({ error: error.message });
   }
 };
 
 // Create a new fixed deposit
-exports.createFixedDeposit = async (req, res) => {
+const createFixedDeposit = (req, res) => {
   try {
-    const {
-      id = uuidv4(),
+    const { bankName, accountNumber, principal, interestRate, startDate, maturityDate, isAutoRenew, familyMemberId } = req.body;
+    
+    // Basic validation
+    if (!bankName || !accountNumber || !principal || !interestRate || !startDate || !maturityDate || !familyMemberId) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const newDeposit = {
+      id: `fd-${uuidv4().slice(0, 8)}`,
       bankName,
       accountNumber,
       principal,
       interestRate,
       startDate,
       maturityDate,
-      maturityAmount,
-      isAutoRenew,
-      notes,
-      familyMemberId
-    } = req.body;
-    
-    const result = await pool.query(`
-      INSERT INTO fixed_deposits (
-        id, bank_name, account_number, principal, interest_rate, 
-        start_date, maturity_date, maturity_amount, is_auto_renewal, 
-        notes, family_member_id, last_updated
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-      RETURNING *
-    `, [
-      id, bankName, accountNumber, principal, interestRate,
-      startDate, maturityDate, maturityAmount, isAutoRenew,
-      notes, familyMemberId, new Date()
-    ]);
-    
-    const row = result.rows[0];
-    const deposit = {
-      id: row.id,
-      bankName: row.bank_name,
-      accountNumber: row.account_number,
-      principal: parseFloat(row.principal),
-      interestRate: parseFloat(row.interest_rate),
-      startDate: row.start_date,
-      maturityDate: row.maturity_date,
-      maturityAmount: parseFloat(row.maturity_amount || 0),
-      isAutoRenew: row.is_auto_renewal,
-      notes: row.notes,
-      familyMemberId: row.family_member_id,
-      lastUpdated: row.last_updated
+      isAutoRenew: isAutoRenew || false,
+      familyMemberId,
+      createdAt: new Date().toISOString()
     };
     
-    res.status(201).json(deposit);
+    fixedDeposits.push(newDeposit);
+    res.status(201).json(newDeposit);
   } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).json({ error: 'Failed to create fixed deposit' });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Update a fixed deposit
-exports.updateFixedDeposit = async (req, res) => {
+// Update an existing fixed deposit
+const updateFixedDeposit = (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updateData = req.body;
     
-    // Build dynamic update query based on provided fields
-    const setClauses = [];
-    const values = [];
-    let paramCounter = 1;
+    const depositIndex = fixedDeposits.findIndex(fd => fd.id === id);
     
-    // Map camelCase to snake_case for database columns
-    const fieldMappings = {
-      bankName: 'bank_name',
-      accountNumber: 'account_number',
-      principal: 'principal',
-      interestRate: 'interest_rate',
-      startDate: 'start_date',
-      maturityDate: 'maturity_date',
-      maturityAmount: 'maturity_amount',
-      isAutoRenew: 'is_auto_renewal',
-      notes: 'notes',
-      familyMemberId: 'family_member_id'
-    };
-    
-    // Always update last_updated
-    setClauses.push(`last_updated = $${paramCounter}`);
-    values.push(new Date());
-    paramCounter++;
-    
-    // Add other fields if they exist in the update
-    Object.entries(updates).forEach(([key, value]) => {
-      // Skip id and lastUpdated as they are handled separately
-      if (key === 'id' || key === 'lastUpdated') return;
-      
-      const dbField = fieldMappings[key];
-      if (dbField) {
-        setClauses.push(`${dbField} = $${paramCounter}`);
-        values.push(value);
-        paramCounter++;
-      }
-    });
-    
-    // Add the ID as the last parameter
-    values.push(id);
-    
-    const query = `
-      UPDATE fixed_deposits
-      SET ${setClauses.join(', ')}
-      WHERE id = $${paramCounter}
-      RETURNING *
-    `;
-    
-    const result = await pool.query(query, values);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Fixed deposit not found' });
+    if (depositIndex === -1) {
+      return res.status(404).json({ error: `Fixed deposit with ID ${id} not found` });
     }
     
-    const row = result.rows[0];
-    const deposit = {
-      id: row.id,
-      bankName: row.bank_name,
-      accountNumber: row.account_number,
-      principal: parseFloat(row.principal),
-      interestRate: parseFloat(row.interest_rate),
-      startDate: row.start_date,
-      maturityDate: row.maturity_date,
-      maturityAmount: parseFloat(row.maturity_amount || 0),
-      isAutoRenew: row.is_auto_renewal,
-      notes: row.notes,
-      familyMemberId: row.family_member_id,
-      lastUpdated: row.last_updated
+    // Update only the fields provided in the request body
+    fixedDeposits[depositIndex] = {
+      ...fixedDeposits[depositIndex],
+      ...updateData,
+      updatedAt: new Date().toISOString()
     };
     
-    res.json(deposit);
+    res.json(fixedDeposits[depositIndex]);
   } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).json({ error: 'Failed to update fixed deposit' });
+    res.status(500).json({ error: error.message });
   }
 };
 
 // Delete a fixed deposit
-exports.deleteFixedDeposit = async (req, res) => {
+const deleteFixedDeposit = (req, res) => {
   try {
     const { id } = req.params;
+    const initialLength = fixedDeposits.length;
     
-    const result = await pool.query(`
-      DELETE FROM fixed_deposits
-      WHERE id = $1
-      RETURNING id
-    `, [id]);
+    fixedDeposits = fixedDeposits.filter(fd => fd.id !== id);
     
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Fixed deposit not found' });
+    if (fixedDeposits.length === initialLength) {
+      return res.status(404).json({ error: `Fixed deposit with ID ${id} not found` });
     }
     
-    res.json({ message: 'Fixed deposit deleted successfully', id });
+    res.status(204).send();
   } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).json({ error: 'Failed to delete fixed deposit' });
+    res.status(500).json({ error: error.message });
   }
+};
+
+module.exports = {
+  getAllFixedDeposits,
+  getFixedDepositById,
+  createFixedDeposit,
+  updateFixedDeposit,
+  deleteFixedDeposit
 };

@@ -14,4 +14,3 @@ app.listen(PORT, () => {
   console.log('PostgreSQL is ENABLED and required');
   console.log('Bruno API Collection available in api-collections/bruno');
 });
-
