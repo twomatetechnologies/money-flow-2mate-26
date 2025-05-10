@@ -26,16 +26,24 @@ app.use(cors({
 // Request logging - use 'combined' format for more details in production
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// Add request ID to each request
-app.use((req, _res, next) => {
+// Add request ID and timing
+app.use((req, res, next) => {
   req.id = uuidv4();
+  req.startTime = Date.now();
+  
+  // Log response details after the request is complete
+  res.on('finish', () => {
+    const duration = Date.now() - req.startTime;
+    console.log(`[${req.id}] ${req.method} ${req.path} >> ${res.statusCode} (${duration}ms)`);
+  });
+  
   next();
 });
 
 // Debug middleware to log request details
 app.use((req, _res, next) => {
-  console.log(`[DEBUG] ${req.method} ${req.path}`);
-  console.log('Headers:', req.headers);
+  console.log(`\n[DEBUG] ${req.method} ${req.path}`);
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
   if (req.body && Object.keys(req.body).length > 0) {
     console.log('Body:', JSON.stringify(req.body, null, 2));
   }
@@ -77,7 +85,7 @@ app.get('/api/health-check', async (_req, res) => {
   }
 });
 
-// API routes
+// Mount API routes under /api prefix
 app.use('/api', routes);
 
 // Custom error types
@@ -135,21 +143,15 @@ app.use((err, req, res, _next) => {
     }
   };
   
-  // Log details based on severity
-  if (statusCode >= 500) {
-    console.error(`[${req.method}] ${req.path} >> ERROR (${statusCode}):`, err);
+  // Log error details
+  console.error(`[${req.id}] ${req.method} ${req.path} >> ERROR (${statusCode}):`, err.message);
+  
+  // Only include stack trace in development
+  if (process.env.NODE_ENV === 'development') {
     console.error('Stack:', err.stack);
-    
-    // Only include stack trace in development
-    if (process.env.NODE_ENV === 'development') {
-      errorResponse.error.stack = err.stack;
-    }
-  } else {
-    console.warn(`[${req.method}] ${req.path} >> WARN (${statusCode}):`, err.message);
+    errorResponse.error.stack = err.stack;
   }
   
-  // Ensure content type is set before sending JSON response
-  res.setHeader('Content-Type', 'application/json');
   res.status(statusCode).json(errorResponse);
 });
 

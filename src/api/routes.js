@@ -11,6 +11,11 @@ import * as auditRecords from './auditRecords.js';
 
 const router = express.Router();
 
+// Health check route
+router.get('/health-check', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Fixed Deposits routes
 router.get('/fixed-deposits', fixedDeposits.getAllFixedDeposits);
 router.get('/fixed-deposits/:id', fixedDeposits.getFixedDepositById);
