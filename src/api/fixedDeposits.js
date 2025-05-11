@@ -15,7 +15,8 @@ let fixedDeposits = [
     startDate: '2024-01-01',
     maturityDate: '2025-01-01',
     isAutoRenew: false,
-    familyMemberId: 'fam-001'
+    familyMemberId: 'self-default',
+    notes: ''
   }
 ];
 
@@ -58,10 +59,20 @@ const getFixedDepositById = (req, res) => {
 // Create a new fixed deposit
 const createFixedDeposit = (req, res) => {
   try {
-    const { bankName, accountNumber, principal, interestRate, startDate, maturityDate, isAutoRenew, familyMemberId } = req.body;
+    const { 
+      bankName, 
+      accountNumber, 
+      principal, 
+      interestRate, 
+      startDate, 
+      maturityDate, 
+      isAutoRenew, 
+      familyMemberId, 
+      notes 
+    } = req.body;
     
     // Basic validation
-    if (!bankName || !accountNumber || !principal || !interestRate || !startDate || !maturityDate || !familyMemberId) {
+    if (!bankName || !accountNumber || !principal || !interestRate || !startDate || !maturityDate) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
@@ -74,7 +85,8 @@ const createFixedDeposit = (req, res) => {
       startDate,
       maturityDate,
       isAutoRenew: isAutoRenew || false,
-      familyMemberId,
+      familyMemberId: familyMemberId || 'self-default', // Default to self if not provided
+      notes: notes || '',
       createdAt: new Date().toISOString()
     };
     

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
+import FamilyMemberSelect from '@/components/common/FamilyMemberSelect';
 
 interface FixedDepositFormProps {
   isOpen: boolean;
@@ -27,7 +28,8 @@ const FixedDepositForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Fixe
       maturityDate: new Date(),
       maturityAmount: 0,
       isAutoRenew: false,
-      notes: ''
+      notes: '',
+      familyMemberId: 'self-default' // Default to self
     }
   });
 
@@ -45,7 +47,8 @@ const FixedDepositForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Fixe
         maturityDate: new Date(),
         maturityAmount: 0,
         isAutoRenew: false,
-        notes: ''
+        notes: '',
+        familyMemberId: 'self-default' // Default to self
       });
     }
   }, [initialData, mode, form]);
@@ -189,6 +192,24 @@ const FixedDepositForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Fixe
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            {/* Add the Family Member Select component */}
+            <FormField
+              control={form.control}
+              name="familyMemberId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FamilyMemberSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      label="Owner"
+                    />
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />

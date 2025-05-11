@@ -38,7 +38,7 @@ export const addFixedDeposit = async (deposit: Partial<FixedDeposit>): Promise<F
       maturityDate: deposit.maturityDate || new Date(),
       maturityAmount: deposit.maturityAmount || 0,
       isAutoRenew: deposit.isAutoRenew || false,
-      familyMemberId: deposit.familyMemberId || '',
+      familyMemberId: deposit.familyMemberId || 'self-default', // Default to self if not provided
       notes: deposit.notes || '',
       lastUpdated: new Date(),
     };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { handleError } from '@/utils/errorHandler';
 import ImportExportMenu from '@/components/common/ImportExportMenu';
 import { formatIndianNumber } from '@/lib/utils';
 import { isPostgresEnabled } from '@/services/db/dbConnector';
+import { getActiveFamilyMembers } from '@/services/familyService';
 
 const FixedDeposits = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -19,6 +21,7 @@ const FixedDeposits = () => {
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [familyFilter, setFamilyFilter] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     // On component mount, store the PostgreSQL status from environment in localStorage
@@ -100,6 +103,11 @@ const FixedDeposits = () => {
     }
   };
 
+  // Filter deposits by family member if a filter is set
+  const filteredDeposits = familyFilter 
+    ? fixedDeposits.filter(fd => fd.familyMemberId === familyFilter)
+    : fixedDeposits;
+
   // For export functionality
   const getExportData = (data: FixedDeposit[]) => {
     return data.map(fd => ({
@@ -111,7 +119,7 @@ const FixedDeposits = () => {
       'Maturity Date': fd.maturityDate ? new Date(fd.maturityDate).toISOString().split('T')[0] : '',
       'Maturity Amount': fd.maturityAmount,
       'Auto Renew': fd.isAutoRenew ? 'Yes' : 'No',
-      'Family Member ID': fd.familyMemberId || '',
+      'Owner ID': fd.familyMemberId || '',
       'Notes': fd.notes || ''
     }));
   };
@@ -127,7 +135,7 @@ const FixedDeposits = () => {
       'Maturity Date',
       'Maturity Amount',
       'Auto Renew',
-      'Family Member ID',
+      'Owner ID',
       'Notes'
     ];
     
@@ -141,7 +149,7 @@ const FixedDeposits = () => {
         '2024-01-15',
         '107500',
         'Yes',
-        'member-1',
+        'self-default',
         'Emergency fund FD'
       ],
       [
@@ -153,7 +161,7 @@ const FixedDeposits = () => {
         '2025-05-10',
         '229400',
         'No',
-        'member-2',
+        'spouse-default',
         'Long term saving'
       ]
     ];
@@ -199,7 +207,7 @@ const FixedDeposits = () => {
             maturityDate: new Date(item['Maturity Date']),
             maturityAmount: parseFloat(item['Maturity Amount']) || 0,
             isAutoRenew: item['Auto Renew'] === 'Yes' || item['Auto Renew'] === true,
-            familyMemberId: item['Family Member ID'] || '',
+            familyMemberId: item['Owner ID'] || 'self-default', // Using Owner ID field for import
             notes: item['Notes'] || '',
             lastUpdated: new Date()
           };
@@ -258,10 +266,13 @@ const FixedDeposits = () => {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {fixedDeposits.map(fd => (
+          {filteredDeposits.map(fd => (
             <Card key={fd.id} className="relative">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">{fd.bankName}</CardTitle>
+                <div className="absolute top-4 right-4">
+                  <FamilyMemberDisplay memberId={fd.familyMemberId || 'self-default'} />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -287,7 +298,7 @@ const FixedDeposits = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Owner:</span>
-                    <FamilyMemberDisplay memberId={fd.familyMemberId} />
+                    <FamilyMemberDisplay memberId={fd.familyMemberId || 'self-default'} />
                   </div>
                   <div className="flex justify-end space-x-2 mt-4">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(fd)}>

@@ -75,7 +75,7 @@ export const createFixedDeposit = async (fd: Partial<FixedDeposit>): Promise<Fix
     maturityAmount: fd.maturityAmount || 0,
     isAutoRenew: fd.isAutoRenew || false,
     notes: fd.notes || '',
-    familyMemberId: fd.familyMemberId || 'self-default',
+    familyMemberId: fd.familyMemberId || 'self-default', // Default to "self" if not provided
     id: uuidv4(),
     lastUpdated: new Date()
   };
