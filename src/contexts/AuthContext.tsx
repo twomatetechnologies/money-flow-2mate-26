@@ -1,10 +1,4 @@
-
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-} from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import * as userService from '../services/userService';
 import { User as UserType } from '@/types/user';
 import { toast } from 'sonner';
