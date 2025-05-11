@@ -1,377 +1,522 @@
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
-import { ArrowLeftIcon, ExternalLink } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Search, Code, FileJson, Server, Key, Shield, Database, BarChart } from 'lucide-react';
 
-const ApiEndpoints = () => {
+const ApiEndpoints: React.FC = () => {
   const { settings } = useSettings();
-  const baseUrl = settings.apiBaseUrl || 'http://localhost:8081';
+  const [searchQuery, setSearchQuery] = useState('');
+  const baseUrl = settings.apiBaseUrl || 'http://localhost:8080';
 
+  // Define API categories and endpoints
   const apiCategories = [
-    { id: 'auth', name: 'Authentication' },
-    { id: 'users', name: 'Users' },
-    { id: 'family', name: 'Family' },
-    { id: 'investments', name: 'Investments' },
-    { id: 'reports', name: 'Reports' },
-    { id: 'audit', name: 'Audit' },
-  ];
-
-  const endpoints = [
-    // Authentication endpoints
-    { 
-      category: 'auth', 
-      method: 'POST', 
-      path: '/api/auth/login', 
-      description: 'User login',
-      params: '{ email, password }',
-      response: '{ token, refreshToken, user, requiresTwoFactor }'
+    {
+      id: 'auth',
+      name: 'Authentication',
+      icon: <Shield className="h-4 w-4" />,
+      endpoints: [
+        {
+          method: 'POST',
+          path: '/api/auth/login',
+          description: 'Authenticate user and get token',
+          parameters: [
+            { name: 'email', type: 'string', required: true },
+            { name: 'password', type: 'string', required: true }
+          ],
+          response: '{ "token": string, "user": User, "requiresTwoFactor": boolean }'
+        },
+        {
+          method: 'POST',
+          path: '/api/auth/two-factor',
+          description: 'Verify 2FA code',
+          parameters: [
+            { name: 'code', type: 'string', required: true }
+          ],
+          response: '{ "token": string, "success": boolean }'
+        },
+        {
+          method: 'POST',
+          path: '/api/auth/logout',
+          description: 'Logout user and invalidate token',
+          parameters: [],
+          response: '{ "success": boolean }'
+        },
+        {
+          method: 'POST',
+          path: '/api/auth/refresh-token',
+          description: 'Get a new token using refresh token',
+          parameters: [
+            { name: 'refreshToken', type: 'string', required: true }
+          ],
+          response: '{ "token": string }'
+        }
+      ]
     },
-    { 
-      category: 'auth', 
-      method: 'POST', 
-      path: '/api/auth/two-factor', 
-      description: 'Verify 2FA code',
-      params: '{ code }',
-      response: '{ token }'
+    {
+      id: 'users',
+      name: 'User Management',
+      icon: <Key className="h-4 w-4" />,
+      endpoints: [
+        {
+          method: 'GET',
+          path: '/api/users',
+          description: 'Get all users (admin only)',
+          parameters: [
+            { name: 'role', type: 'string', required: false }
+          ],
+          response: 'User[]'
+        },
+        {
+          method: 'GET',
+          path: '/api/users/:id',
+          description: 'Get user by ID',
+          parameters: [
+            { name: 'id', type: 'string', required: true }
+          ],
+          response: 'User'
+        },
+        {
+          method: 'POST',
+          path: '/api/users',
+          description: 'Create new user',
+          parameters: [
+            { name: 'name', type: 'string', required: true },
+            { name: 'email', type: 'string', required: true },
+            { name: 'password', type: 'string', required: true },
+            { name: 'role', type: 'string', required: false }
+          ],
+          response: 'User'
+        },
+        {
+          method: 'PUT',
+          path: '/api/users/:id',
+          description: 'Update user',
+          parameters: [
+            { name: 'id', type: 'string', required: true },
+            { name: 'name', type: 'string', required: false },
+            { name: 'email', type: 'string', required: false },
+            { name: 'settings', type: 'object', required: false }
+          ],
+          response: 'User'
+        },
+        {
+          method: 'DELETE',
+          path: '/api/users/:id',
+          description: 'Delete user',
+          parameters: [
+            { name: 'id', type: 'string', required: true }
+          ],
+          response: '204 No Content'
+        }
+      ]
     },
-    { 
-      category: 'auth', 
-      method: 'POST', 
-      path: '/api/auth/logout', 
-      description: 'User logout',
-      params: 'None',
-      response: '{ success: true }'
+    {
+      id: 'stocks',
+      name: 'Stocks',
+      icon: <BarChart className="h-4 w-4" />,
+      endpoints: [
+        {
+          method: 'GET',
+          path: '/api/stocks',
+          description: 'Get all stocks',
+          parameters: [
+            { name: 'familyMemberId', type: 'string', required: false },
+            { name: 'symbol', type: 'string', required: false }
+          ],
+          response: 'StockHolding[]'
+        },
+        {
+          method: 'POST',
+          path: '/api/stocks',
+          description: 'Add stock',
+          parameters: [
+            { name: 'symbol', type: 'string', required: true },
+            { name: 'quantity', type: 'number', required: true },
+            { name: 'purchasePrice', type: 'number', required: true },
+            { name: 'purchaseDate', type: 'string', required: true },
+            { name: 'familyMemberId', type: 'string', required: false }
+          ],
+          response: 'StockHolding'
+        },
+        {
+          method: 'PUT',
+          path: '/api/stocks/:id',
+          description: 'Update stock',
+          parameters: [
+            { name: 'id', type: 'string', required: true },
+            { name: 'quantity', type: 'number', required: false },
+            { name: 'purchasePrice', type: 'number', required: false }
+          ],
+          response: 'StockHolding'
+        },
+        {
+          method: 'DELETE',
+          path: '/api/stocks/:id',
+          description: 'Delete stock',
+          parameters: [
+            { name: 'id', type: 'string', required: true }
+          ],
+          response: '204 No Content'
+        }
+      ]
     },
-    { 
-      category: 'auth', 
-      method: 'POST', 
-      path: '/api/auth/refresh-token', 
-      description: 'Refresh authentication token',
-      params: '{ refreshToken }',
-      response: '{ token, refreshToken }'
+    {
+      id: 'reports',
+      name: 'Reports',
+      icon: <FileJson className="h-4 w-4" />,
+      endpoints: [
+        {
+          method: 'GET',
+          path: '/api/reports/net-worth',
+          description: 'Get net worth report',
+          parameters: [
+            { name: 'familyMemberId', type: 'string', required: false },
+            { name: 'startDate', type: 'string', required: false },
+            { name: 'endDate', type: 'string', required: false }
+          ],
+          response: 'NetWorthData'
+        },
+        {
+          method: 'GET',
+          path: '/api/reports/asset-allocation',
+          description: 'Get asset allocation report',
+          parameters: [
+            { name: 'familyMemberId', type: 'string', required: false }
+          ],
+          response: 'AssetAllocationData'
+        }
+      ]
     },
-    
-    // Users endpoints
-    { 
-      category: 'users', 
-      method: 'GET', 
-      path: '/api/users', 
-      description: 'Get all users',
-      params: 'Query: role (optional)',
-      response: 'User[]'
-    },
-    { 
-      category: 'users', 
-      method: 'GET', 
-      path: '/api/users/{id}', 
-      description: 'Get user by ID',
-      params: 'Path: id',
-      response: 'User'
-    },
-    { 
-      category: 'users', 
-      method: 'POST', 
-      path: '/api/users', 
-      description: 'Create new user',
-      params: '{ name, email, password, role, has2FAEnabled, settings }',
-      response: 'User'
-    },
-    { 
-      category: 'users', 
-      method: 'PUT', 
-      path: '/api/users/{id}', 
-      description: 'Update user',
-      params: 'Path: id, Body: { name, email, role, has2FAEnabled, settings }',
-      response: 'User'
-    },
-    { 
-      category: 'users', 
-      method: 'DELETE', 
-      path: '/api/users/{id}', 
-      description: 'Delete user',
-      params: 'Path: id',
-      response: '{ success: true }'
-    },
-    { 
-      category: 'users', 
-      method: 'PUT', 
-      path: '/api/users/{id}/password', 
-      description: 'Update user password',
-      params: 'Path: id, Body: { currentPassword, newPassword }',
-      response: '{ success: true }'
-    },
-    
-    // Family members endpoints
-    { 
-      category: 'family', 
-      method: 'GET', 
-      path: '/api/family', 
-      description: 'Get all family members',
-      params: 'None',
-      response: 'FamilyMember[]'
-    },
-    { 
-      category: 'family', 
-      method: 'POST', 
-      path: '/api/family', 
-      description: 'Create new family member',
-      params: '{ name, relationship, dateOfBirth, color }',
-      response: 'FamilyMember'
-    },
-    { 
-      category: 'family', 
-      method: 'GET', 
-      path: '/api/family/{id}', 
-      description: 'Get family member by ID',
-      params: 'Path: id',
-      response: 'FamilyMember'
-    },
-    { 
-      category: 'family', 
-      method: 'PUT', 
-      path: '/api/family/{id}', 
-      description: 'Update family member',
-      params: 'Path: id, Body: FamilyMember',
-      response: 'FamilyMember'
-    },
-    { 
-      category: 'family', 
-      method: 'DELETE', 
-      path: '/api/family/{id}', 
-      description: 'Delete family member',
-      params: 'Path: id',
-      response: '{ success: true }'
-    },
-    
-    // Investments endpoints
-    { 
-      category: 'investments', 
-      method: 'GET', 
-      path: '/api/stocks', 
-      description: 'Get all stocks',
-      params: 'Query: familyMemberId, symbol (optional)',
-      response: 'Stock[]'
-    },
-    { 
-      category: 'investments', 
-      method: 'POST', 
-      path: '/api/stocks', 
-      description: 'Add new stock',
-      params: '{ symbol, companyName, quantity, purchasePrice, purchaseDate, familyMemberId }',
-      response: 'Stock'
-    },
-    { 
-      category: 'investments', 
-      method: 'GET', 
-      path: '/api/fixed-deposits', 
-      description: 'Get all fixed deposits',
-      params: 'Query: familyMemberId, bankName (optional)',
-      response: 'FixedDeposit[]'
-    },
-    { 
-      category: 'investments', 
-      method: 'POST', 
-      path: '/api/fixed-deposits', 
-      description: 'Create fixed deposit',
-      params: '{ bankName, accountNumber, principal, interestRate, startDate, maturityDate, isAutoRenew, familyMemberId }',
-      response: 'FixedDeposit'
-    },
-    { 
-      category: 'investments', 
-      method: 'GET', 
-      path: '/api/gold', 
-      description: 'Get all gold investments',
-      params: 'Query: familyMemberId, type (optional)',
-      response: 'GoldInvestment[]'
-    },
-    
-    // Reports endpoints
-    { 
-      category: 'reports', 
-      method: 'GET', 
-      path: '/api/reports/net-worth', 
-      description: 'Get net worth report',
-      params: 'Query: familyMemberId, startDate, endDate (optional)',
-      response: '{ total, assets, liabilities, history }'
-    },
-    { 
-      category: 'reports', 
-      method: 'GET', 
-      path: '/api/reports/asset-allocation', 
-      description: 'Get asset allocation report',
-      params: 'Query: familyMemberId (optional)',
-      response: '{ total, categories: [{ name, value, percentage }] }'
-    },
-    
-    // Audit endpoints
-    { 
-      category: 'audit', 
-      method: 'GET', 
-      path: '/api/audit', 
-      description: 'Get audit logs',
-      params: 'Query: entityType, entityId, action, startDate, endDate (optional)',
-      response: 'AuditRecord[]'
-    },
-    { 
-      category: 'audit', 
-      method: 'POST', 
-      path: '/api/audit/export', 
-      description: 'Export audit logs',
-      params: '{ startDate, endDate, entityType, format }',
-      response: 'File download (CSV or JSON)'
+    {
+      id: 'audit',
+      name: 'Audit Logs',
+      icon: <Database className="h-4 w-4" />,
+      endpoints: [
+        {
+          method: 'GET',
+          path: '/api/audit',
+          description: 'Get audit logs',
+          parameters: [
+            { name: 'entityType', type: 'string', required: false },
+            { name: 'entityId', type: 'string', required: false },
+            { name: 'action', type: 'string', required: false },
+            { name: 'startDate', type: 'string', required: false },
+            { name: 'endDate', type: 'string', required: false }
+          ],
+          response: 'AuditRecord[]'
+        },
+        {
+          method: 'POST',
+          path: '/api/audit/export',
+          description: 'Export audit logs',
+          parameters: [
+            { name: 'startDate', type: 'string', required: false },
+            { name: 'endDate', type: 'string', required: false },
+            { name: 'entityType', type: 'string', required: false },
+            { name: 'format', type: 'string', required: true }
+          ],
+          response: 'File (CSV or PDF)'
+        }
+      ]
     }
   ];
 
+  // Filter endpoints based on search query
+  const filteredCategories = searchQuery 
+    ? apiCategories.map(category => ({
+        ...category,
+        endpoints: category.endpoints.filter(endpoint => 
+          endpoint.path.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          endpoint.description.toLowerCase().includes(searchQuery.toLowerCase())
+        ),
+      })).filter(category => category.endpoints.length > 0)
+    : apiCategories;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">API Endpoints</h1>
-          <p className="text-muted-foreground">
-            Browse available API endpoints, parameters, and responses
-          </p>
-        </div>
-        <Button variant="outline" asChild>
-          <Link to="/settings">
-            <ArrowLeftIcon className="mr-2 h-4 w-4" />
-            Back to Settings
-          </Link>
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">API Endpoints</h1>
+        <p className="text-muted-foreground">
+          Documentation for available API endpoints in {settings.appName}
+        </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>API Base Information</CardTitle>
+          <CardTitle>API Base URL</CardTitle>
           <CardDescription>
-            Current configuration and connection details
+            Use this base URL for all API requests
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-medium">Base URL</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
-                {baseUrl}
-              </code>
-              <Badge variant={settings.apiBaseUrl ? "default" : "outline"}>
-                {settings.apiBaseUrl ? "Custom" : "Default"}
-              </Badge>
-            </div>
-          </div>
-          
-          <div>
-            <h3 className="font-medium">Authentication</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Most endpoints require authentication using Bearer token in the Authorization header
-            </p>
-            <code className="bg-muted px-2 py-1 rounded text-sm font-mono block mt-2">
-              Authorization: Bearer &lt;your_token&gt;
+        <CardContent>
+          <div className="flex items-center space-x-2">
+            <Server className="h-4 w-4 text-primary" />
+            <code className="bg-muted p-2 rounded block text-sm flex-1">
+              {baseUrl}
             </code>
           </div>
-          
-          <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-md">
-            <p className="text-sm text-blue-700 dark:text-blue-400">
-              You can use the Bruno API Collection included with the application to test these endpoints.
-              Find the collection in <code>api-collections/bruno/Money Flow Guardian API Collection</code>.
-            </p>
-          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            All endpoints require authentication via Bearer token unless otherwise specified.
+          </p>
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="auth" className="w-full">
-        <TabsList className="mb-4 flex-wrap">
-          {apiCategories.map(category => (
-            <TabsTrigger key={category.id} value={category.id}>
-              {category.name}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input 
+          placeholder="Search endpoints..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
 
-        {apiCategories.map(category => (
-          <TabsContent key={category.id} value={category.id} className="space-y-4">
-            <Card>
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList>
+          <TabsTrigger value="all">All Endpoints</TabsTrigger>
+          <TabsTrigger value="authentication">Authentication</TabsTrigger>
+          <TabsTrigger value="data">Data Endpoints</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="all" className="space-y-6 mt-4">
+          {filteredCategories.map(category => (
+            <Card key={category.id}>
               <CardHeader>
-                <CardTitle>{category.name} API</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  {category.icon}
+                  {category.name}
+                </CardTitle>
                 <CardDescription>
-                  Endpoints related to {category.name.toLowerCase()} operations
+                  API endpoints for {category.name.toLowerCase()} operations
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">Method</TableHead>
-                      <TableHead className="w-[250px]">Endpoint</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Parameters</TableHead>
-                      <TableHead>Response</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {endpoints
-                      .filter(endpoint => endpoint.category === category.id)
-                      .map((endpoint, index) => (
-                        <TableRow key={`${endpoint.category}-${index}`}>
-                          <TableCell>
-                            <Badge variant={
-                              endpoint.method === 'GET' ? 'secondary' :
-                              endpoint.method === 'POST' ? 'default' :
-                              endpoint.method === 'PUT' ? 'outline' : 'destructive'
-                            }>
-                              {endpoint.method}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-mono text-xs">
-                            {endpoint.path}
-                          </TableCell>
-                          <TableCell>{endpoint.description}</TableCell>
-                          <TableCell className="font-mono text-xs">
-                            {endpoint.params}
-                          </TableCell>
-                          <TableCell className="font-mono text-xs">
-                            {endpoint.response}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
+                <div className="space-y-6">
+                  {category.endpoints.map((endpoint, index) => (
+                    <div key={`${category.id}-${index}`} className={index > 0 ? "pt-4 border-t mt-4" : ""}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            className={
+                              endpoint.method === 'GET' ? "bg-blue-500" : 
+                              endpoint.method === 'POST' ? "bg-green-500" : 
+                              endpoint.method === 'PUT' ? "bg-amber-500" : 
+                              "bg-red-500"
+                            }
+                          >
+                            {endpoint.method}
+                          </Badge>
+                          <code className="font-bold">{endpoint.path}</code>
+                        </div>
+                        <Code className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      
+                      <p className="mt-2 text-sm">
+                        {endpoint.description}
+                      </p>
+                      
+                      {endpoint.parameters.length > 0 && (
+                        <div className="mt-3">
+                          <Label className="text-xs uppercase">Parameters</Label>
+                          <div className="bg-muted rounded-md p-2 mt-1">
+                            <table className="text-sm w-full">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left py-1 px-2">Name</th>
+                                  <th className="text-left py-1 px-2">Type</th>
+                                  <th className="text-left py-1 px-2">Required</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {endpoint.parameters.map((param, idx) => (
+                                  <tr key={idx} className={idx > 0 ? "border-t border-gray-200" : ""}>
+                                    <td className="py-1 px-2">{param.name}</td>
+                                    <td className="py-1 px-2 font-mono text-xs">{param.type}</td>
+                                    <td className="py-1 px-2">{param.required ? "Yes" : "No"}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="mt-3">
+                        <Label className="text-xs uppercase">Response</Label>
+                        <div className="bg-muted rounded-md p-2 mt-1">
+                          <code className="text-sm">{endpoint.response}</code>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        ))}
+          ))}
+        </TabsContent>
+        
+        <TabsContent value="authentication" className="space-y-6 mt-4">
+          {filteredCategories
+            .filter(category => category.id === 'auth')
+            .map(category => (
+              <Card key={category.id}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {category.icon}
+                    {category.name}
+                  </CardTitle>
+                  <CardDescription>
+                    API endpoints for authentication and authorization
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {category.endpoints.map((endpoint, index) => (
+                      <div key={`${category.id}-${index}`} className={index > 0 ? "pt-4 border-t mt-4" : ""}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              className={
+                                endpoint.method === 'GET' ? "bg-blue-500" : 
+                                endpoint.method === 'POST' ? "bg-green-500" : 
+                                endpoint.method === 'PUT' ? "bg-amber-500" : 
+                                "bg-red-500"
+                              }
+                            >
+                              {endpoint.method}
+                            </Badge>
+                            <code className="font-bold">{endpoint.path}</code>
+                          </div>
+                        </div>
+                        
+                        <p className="mt-2 text-sm">
+                          {endpoint.description}
+                        </p>
+                        
+                        {endpoint.parameters.length > 0 && (
+                          <div className="mt-3">
+                            <Label className="text-xs uppercase">Parameters</Label>
+                            <div className="bg-muted rounded-md p-2 mt-1">
+                              <table className="text-sm w-full">
+                                <thead>
+                                  <tr className="border-b">
+                                    <th className="text-left py-1 px-2">Name</th>
+                                    <th className="text-left py-1 px-2">Type</th>
+                                    <th className="text-left py-1 px-2">Required</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {endpoint.parameters.map((param, idx) => (
+                                    <tr key={idx} className={idx > 0 ? "border-t border-gray-200" : ""}>
+                                      <td className="py-1 px-2">{param.name}</td>
+                                      <td className="py-1 px-2 font-mono text-xs">{param.type}</td>
+                                      <td className="py-1 px-2">{param.required ? "Yes" : "No"}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="mt-3">
+                          <Label className="text-xs uppercase">Response</Label>
+                          <div className="bg-muted rounded-md p-2 mt-1">
+                            <code className="text-sm">{endpoint.response}</code>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+          ))}
+        </TabsContent>
+        
+        <TabsContent value="data" className="space-y-6 mt-4">
+          {filteredCategories
+            .filter(category => ['stocks', 'reports', 'audit'].includes(category.id))
+            .map(category => (
+              <Card key={category.id}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {category.icon}
+                    {category.name}
+                  </CardTitle>
+                  <CardDescription>
+                    API endpoints for {category.name.toLowerCase()} operations
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {category.endpoints.map((endpoint, index) => (
+                      <div key={`${category.id}-${index}`} className={index > 0 ? "pt-4 border-t mt-4" : ""}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              className={
+                                endpoint.method === 'GET' ? "bg-blue-500" : 
+                                endpoint.method === 'POST' ? "bg-green-500" : 
+                                endpoint.method === 'PUT' ? "bg-amber-500" : 
+                                "bg-red-500"
+                              }
+                            >
+                              {endpoint.method}
+                            </Badge>
+                            <code className="font-bold">{endpoint.path}</code>
+                          </div>
+                        </div>
+                        
+                        <p className="mt-2 text-sm">
+                          {endpoint.description}
+                        </p>
+                        
+                        {endpoint.parameters.length > 0 && (
+                          <div className="mt-3">
+                            <Label className="text-xs uppercase">Parameters</Label>
+                            <div className="bg-muted rounded-md p-2 mt-1">
+                              <table className="text-sm w-full">
+                                <thead>
+                                  <tr className="border-b">
+                                    <th className="text-left py-1 px-2">Name</th>
+                                    <th className="text-left py-1 px-2">Type</th>
+                                    <th className="text-left py-1 px-2">Required</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {endpoint.parameters.map((param, idx) => (
+                                    <tr key={idx} className={idx > 0 ? "border-t border-gray-200" : ""}>
+                                      <td className="py-1 px-2">{param.name}</td>
+                                      <td className="py-1 px-2 font-mono text-xs">{param.type}</td>
+                                      <td className="py-1 px-2">{param.required ? "Yes" : "No"}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="mt-3">
+                          <Label className="text-xs uppercase">Response</Label>
+                          <div className="bg-muted rounded-md p-2 mt-1">
+                            <code className="text-sm">{endpoint.response}</code>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+          ))}
+        </TabsContent>
       </Tabs>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>API Documentation</CardTitle>
-          <CardDescription>
-            Additional resources for API integration
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" className="justify-start" asChild>
-              <Link to="/docs">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                View Full API Documentation
-              </Link>
-            </Button>
-            
-            <Button variant="outline" className="justify-start" asChild>
-              <a href="https://github.com/usebruno/bruno" target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Bruno API Testing Tool Documentation
-              </a>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
