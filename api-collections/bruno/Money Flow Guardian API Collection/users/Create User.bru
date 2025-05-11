@@ -1,0 +1,40 @@
+
+meta {
+  name: Create User
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/users
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "password": "securePassword123",
+    "role": "user",
+    "has2FAEnabled": false,
+    "settings": {
+      "darkMode": true,
+      "notifications": false
+    }
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("Response has id", function() {
+    expect(res.body).to.have.property('id');
+  });
+}

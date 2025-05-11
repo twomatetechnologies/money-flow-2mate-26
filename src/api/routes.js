@@ -8,6 +8,7 @@ import * as sipInvestments from './sipInvestments.js';
 import * as stocks from './stocks.js';
 import * as providentFunds from './providentFunds.js';
 import * as auditRecords from './auditRecords.js';
+import * as users from './users.js';
 
 const router = express.Router();
 
@@ -56,5 +57,13 @@ router.get('/audit-records', auditRecords.getAllAuditRecords);
 router.get('/audit-records/entity/:entityId', auditRecords.getAuditRecordsByEntityId);
 router.get('/audit-records/type/:entityType', auditRecords.getAuditRecordsByEntityType);
 router.post('/audit-records', auditRecords.createAuditRecord);
+
+// User routes
+router.get('/users', users.getAllUsers);
+router.get('/users/:id', users.getUserById);
+router.post('/users', users.createUser);
+router.put('/users/:id', users.updateUser);
+router.delete('/users/:id', users.deleteUser);
+router.put('/users/:id/password', users.updateUserPassword);
 
 export default router;

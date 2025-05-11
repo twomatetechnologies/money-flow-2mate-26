@@ -1,4 +1,3 @@
-
 // Finance data types
 export interface StockHolding {
   id: string;
@@ -138,3 +137,6 @@ export interface Nominee {
   relationship: string;
   sharePercentage: number;
 }
+
+// Re-export User types from user.ts
+export * from './user';
