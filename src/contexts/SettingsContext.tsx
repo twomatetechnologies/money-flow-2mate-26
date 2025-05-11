@@ -5,6 +5,7 @@ interface Settings {
   stockPriceAlertThreshold: number; // Percentage change that triggers an alert
   stockApiKey?: string; // API key for getting real stock prices
   appName: string; // Application name
+  apiBaseUrl?: string; // Base URL for API requests
 }
 
 interface SettingsContextType {
@@ -16,6 +17,7 @@ const defaultSettings: Settings = {
   stockPriceAlertThreshold: 5, // Default 5% threshold
   stockApiKey: undefined, // No API key by default
   appName: "Money Flow Guardian", // Default app name
+  apiBaseUrl: "", // Default empty string for API base URL
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

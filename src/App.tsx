@@ -1,79 +1,125 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import TwoFactorAuth from './pages/TwoFactorAuth';
-import NotFound from './pages/NotFound';
-import { AuthProvider } from './contexts/AuthContext';
-import { SettingsProvider } from './contexts/SettingsContext';
-import AppLayout from './components/layout/AppLayout';
-import { AuthGuard } from './components/auth/AuthGuard';
-import Dashboard from './pages/Dashboard';
-import Stocks from './pages/Stocks';
-import FixedDeposits from './pages/FixedDeposits';
-import SIPInvestments from './pages/SIPInvestments';
-import Insurance from './pages/Insurance';
-import Gold from './pages/Gold';
-import Reports from './pages/Reports';
-import Settings from './pages/Settings';
-import AISettings from './pages/AISettings';
-import AuditTrail from './pages/AuditTrail';
-import FamilyMembers from './pages/FamilyMembers';
-import SavingsAccounts from './pages/SavingsAccounts';
-import { Toaster } from './components/ui/toaster';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import './App.css';
-import Profile from './pages/Profile';
-import Goals from './pages/Goals';
-import ProvidentFund from './pages/ProvidentFund';
-import { initDatabasePreferences } from './services/db/dbConnector';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import Dashboard from '@/pages/Dashboard';
+import Settings from '@/pages/Settings';
+import AISettings from '@/pages/AISettings';
+import AuditLogs from '@/pages/AuditLogs';
+import TwoFactor from '@/pages/TwoFactor';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { SettingsProvider } from '@/contexts/SettingsContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { initDatabasePreferences } from '@/services/db/dbConnector';
+import AppLayout from '@/components/layout/AppLayout';
+import Docs from '@/pages/Docs';
+import ApiEndpoints from '@/pages/ApiEndpoints';
 
-function App() {
-  // Create the QueryClient instance outside of the component body
-  const queryClient = new QueryClient();
+// Initialize database preferences on app start
+initDatabasePreferences();
 
-  // Initialize database preferences - set to localStorage for Lovable
-  initDatabasePreferences();
+// AuthGuard component to protect routes
+const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
 
+  // Wait for authentication status to be determined
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Prevent Back Navigation after Logout
+const PreventBackNavigation: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleBackButton = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBackButton);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBackButton);
+    };
+  }, [location]);
+
+  return <>{children}</>;
+};
+
+const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SettingsProvider>
-          <Router>
+    <AuthProvider>
+      <SettingsProvider>
+        <Router>
+          <PreventBackNavigation>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/two-factor-auth" element={<TwoFactorAuth />} />
-              <Route
-                path="/"
-                element={
-                  <AuthGuard>
-                    <AppLayout />
-                  </AuthGuard>
-                }
-              >
-                <Route index element={<Dashboard />} />
-                <Route path="stocks" element={<Stocks />} />
-                <Route path="fixed-deposits" element={<FixedDeposits />} />
-                <Route path="savings-accounts" element={<SavingsAccounts />} />
-                <Route path="sip-investments" element={<SIPInvestments />} />
-                <Route path="provident-fund" element={<ProvidentFund />} />
-                <Route path="insurance" element={<Insurance />} />
-                <Route path="gold" element={<Gold />} />
-                <Route path="reports" element={<Reports />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="ai-settings" element={<AISettings />} />
-                <Route path="audit-trail" element={<AuditTrail />} />
-                <Route path="family-members" element={<FamilyMembers />} />
-                <Route path="profile" element={<Profile />} />
-                <Route path="goals" element={<Goals />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route path="/two-factor" element={<TwoFactor />} />
+              <Route path="/" element={
+                <AuthGuard>
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                </AuthGuard>
+              } />
+              <Route path="/settings" element={
+                <AuthGuard>
+                  <AppLayout>
+                    <Settings />
+                  </AppLayout>
+                </AuthGuard>
+              } />
+              <Route path="/ai-settings" element={
+                <AuthGuard>
+                  <AppLayout>
+                    <AISettings />
+                  </AppLayout>
+                </AuthGuard>
+              } />
+              <Route path="/audit-logs" element={
+                <AuthGuard>
+                  <AppLayout>
+                    <AuditLogs />
+                  </AppLayout>
+                </AuthGuard>
+              } />
+              <Route path="/docs" element={
+                <AuthGuard>
+                  <AppLayout>
+                    <Docs />
+                  </AppLayout>
+                </AuthGuard>
+              } />
+              <Route path="/api-endpoints" element={
+                <AuthGuard>
+                  <AppLayout>
+                    <ApiEndpoints />
+                  </AppLayout>
+                </AuthGuard>
+              } />
             </Routes>
-          </Router>
-          <Toaster />
-        </SettingsProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+          </PreventBackNavigation>
+        </Router>
+        <ToastContainer position="bottom-right" autoClose={5000} />
+      </SettingsProvider>
+    </AuthProvider>
   );
-}
+};
 
 export default App;

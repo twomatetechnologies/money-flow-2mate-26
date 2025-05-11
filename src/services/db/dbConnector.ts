@@ -1,4 +1,3 @@
-
 /**
  * Database connector utility to connect to PostgreSQL
  */
@@ -33,8 +32,23 @@ export const hasConnectionError = (): boolean => {
 
 // Utility function to determine the API base URL
 export const getApiBaseUrl = (): string => {
-  // In development, use relative URL to leverage Vite's proxy
-  return '';
+  try {
+    // Check if there's a custom API base URL in settings
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const settings = localStorage.getItem('finance-app-settings');
+      if (settings) {
+        const parsedSettings = JSON.parse(settings);
+        if (parsedSettings && parsedSettings.apiBaseUrl) {
+          return parsedSettings.apiBaseUrl;
+        }
+      }
+    }
+    // In development, use relative URL to leverage Vite's proxy
+    return '';
+  } catch (error) {
+    console.error('Error getting API base URL:', error);
+    return '';
+  }
 };
 
 // Custom error for database operations

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -8,10 +7,10 @@ import { Slider } from '@/components/ui/slider';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { BrainCircuit, InfoIcon, Lock, Pencil, Shield } from 'lucide-react';
+import { BrainCircuit, InfoIcon, Lock, Pencil, Shield, Link } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import { DatabaseSettings } from '@/components/settings/DatabaseSettings';
 
 const Settings = () => {
@@ -22,6 +21,7 @@ const Settings = () => {
   const [apiKey, setApiKey] = React.useState(settings.stockApiKey || '');
   const [is2FAEnabled, setIs2FAEnabled] = React.useState(user?.has2FAEnabled || false);
   const [appName, setAppName] = React.useState(settings.appName || "Money Flow Guardian");
+  const [apiBaseUrl, setApiBaseUrl] = React.useState(settings.apiBaseUrl || "");
 
   const handleSaveSettings = () => {
     updateSettings({
@@ -44,6 +44,22 @@ const Settings = () => {
       title: "App Name Updated",
       description: "Application name has been updated successfully",
     });
+  };
+
+  const handleSaveApiSettings = () => {
+    updateSettings({
+      apiBaseUrl: apiBaseUrl
+    });
+
+    toast({
+      title: "API Settings Updated",
+      description: "API base URL has been updated successfully",
+    });
+    
+    // Reload the page to apply the new API base URL
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
   };
 
   const handleToggle2FA = (enabled: boolean) => {
@@ -118,10 +134,10 @@ const Settings = () => {
               Configure your AI providers and models to get the most out of these features.
             </p>
             <Button asChild>
-              <Link to="/ai-settings">
+              <RouterLink to="/ai-settings">
                 <BrainCircuit className="mr-2 h-4 w-4" />
                 Manage AI Settings
-              </Link>
+              </RouterLink>
             </Button>
           </div>
         </CardContent>
@@ -242,6 +258,54 @@ const Settings = () => {
           </div>
           
           <Button onClick={handleSaveSettings} className="mt-4">Save Settings</Button>
+        </CardContent>
+      </Card>
+
+      {/* API Configuration Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Link className="h-5 w-5 text-primary" />
+            <CardTitle>API Configuration</CardTitle>
+          </div>
+          <CardDescription>
+            Configure the API endpoints and view available services
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="apiBaseUrl">API Base URL</Label>
+            <div className="flex gap-2">
+              <Input 
+                id="apiBaseUrl" 
+                value={apiBaseUrl} 
+                onChange={(e) => setApiBaseUrl(e.target.value)}
+                placeholder="Enter API base URL (e.g., https://api.example.com)"
+                className="flex-1"
+              />
+              <Button onClick={handleSaveApiSettings}>Save</Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              The base URL for all API requests. Leave empty to use the default configuration.
+            </p>
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="space-y-3">
+            <Button asChild variant="outline" className="w-full">
+              <RouterLink to="/api-endpoints">
+                <Link className="mr-2 h-4 w-4" />
+                View Available API Endpoints
+              </RouterLink>
+            </Button>
+
+            <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-md mt-2">
+              <p className="text-sm text-blue-700 dark:text-blue-400">
+                Browse the complete list of available API endpoints, their parameters, and response formats to help with integration.
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
