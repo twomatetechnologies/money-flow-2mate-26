@@ -18,6 +18,7 @@ export interface UserUpdatePayload {
   name?: string;
   email?: string;
   role?: string;
+  lastLogin?: Date | null;
   has2FAEnabled?: boolean;
   settings?: {
     darkMode?: boolean;

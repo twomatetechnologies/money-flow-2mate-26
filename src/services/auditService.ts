@@ -36,7 +36,7 @@ let auditRecords: AuditRecord[] = loadAuditRecords();
 // Create an audit record
 export const createAuditRecord = async (
   entityId: string,
-  entityType: 'stock' | 'fixedDeposit' | 'sip' | 'insurance' | 'gold' | 'familyMember' | 'savingsAccount' | 'providentFund',
+  entityType: 'stock' | 'fixedDeposit' | 'sip' | 'insurance' | 'gold' | 'familyMember' | 'savingsAccount' | 'providentFund' | 'user',
   action: 'create' | 'update' | 'delete' | 'import',
   details: any
 ): Promise<AuditRecord> => {

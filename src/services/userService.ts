@@ -79,9 +79,10 @@ export const createUser = async (userData: UserCreatePayload): Promise<User> => 
     createdAt: new Date(),
     lastLogin: null,
     has2FAEnabled: userData.has2FAEnabled || false,
-    settings: userData.settings || {
-      darkMode: false,
-      notifications: true
+    settings: {
+      darkMode: userData.settings?.darkMode ?? false,
+      notifications: userData.settings?.notifications ?? true,
+      ...(userData.settings || {})
     }
   };
   
@@ -104,10 +105,10 @@ export const updateUser = async (id: string, updates: UserUpdatePayload): Promis
   users[index] = {
     ...users[index],
     ...updates,
-    settings: {
+    settings: updates.settings ? {
       ...users[index].settings,
-      ...(updates.settings || {})
-    }
+      ...updates.settings
+    } : users[index].settings
   };
   
   saveUsers(users);
