@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { initDatabasePreferences } from '@/services/db/dbConnector';
 import AppLayout from '@/components/layout/AppLayout';
 import ApiEndpoints from '@/pages/ApiEndpoints';
+import TwoFactorAuth from '@/pages/TwoFactorAuth';
 
 // Initialize database preferences on app start
 initDatabasePreferences();
@@ -61,6 +62,7 @@ const App: React.FC = () => {
           <PreventBackNavigation>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/two-factor-auth" element={<TwoFactorAuth />} />
               <Route path="/" element={
                 <AuthGuard>
                   <AppLayout>

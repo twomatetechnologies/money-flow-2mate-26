@@ -1,6 +1,6 @@
 
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import React from "react";
 
 interface AuthGuardProps {
@@ -9,6 +9,7 @@ interface AuthGuardProps {
 
 export const AuthGuard = ({ children }: AuthGuardProps) => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
