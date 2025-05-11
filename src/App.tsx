@@ -63,34 +63,18 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/two-factor-auth" element={<TwoFactorAuth />} />
-              <Route path="/" element={
-                <AuthGuard>
-                  <AppLayout>
-                    <Dashboard />
-                  </AppLayout>
-                </AuthGuard>
-              } />
-              <Route path="/settings" element={
-                <AuthGuard>
-                  <AppLayout>
-                    <Settings />
-                  </AppLayout>
-                </AuthGuard>
-              } />
-              <Route path="/ai-settings" element={
-                <AuthGuard>
-                  <AppLayout>
-                    <AISettings />
-                  </AppLayout>
-                </AuthGuard>
-              } />
-              <Route path="/api-endpoints" element={
-                <AuthGuard>
-                  <AppLayout>
-                    <ApiEndpoints />
-                  </AppLayout>
-                </AuthGuard>
-              } />
+              <Route
+                element={
+                  <AuthGuard>
+                    <AppLayout />
+                  </AuthGuard>
+                }
+              >
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/ai-settings" element={<AISettings />} />
+                <Route path="/api-endpoints" element={<ApiEndpoints />} />
+              </Route>
             </Routes>
           </PreventBackNavigation>
         </Router>
