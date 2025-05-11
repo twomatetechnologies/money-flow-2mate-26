@@ -1,3 +1,4 @@
+
 /**
  * Simple Express server for local development
  */
@@ -5,14 +6,93 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { v4 as uuidv4 } from 'uuid';
+import pg from 'pg';
 import routes from './routes.js';
 
 // Create Express server
 const app = express();
 
+// Database connection
+let dbClient = null;
+let dbConnected = false;
+
+// Initialize PostgreSQL connection if enabled
+const initializeDatabase = async () => {
+  if (process.env.POSTGRES_ENABLED === 'true') {
+    try {
+      const { Pool } = pg;
+      
+      const pool = new Pool({
+        user: process.env.POSTGRES_USER || 'postgres',
+        host: process.env.POSTGRES_HOST || 'localhost',
+        database: process.env.POSTGRES_DB || 'financeapp',
+        password: process.env.POSTGRES_PASSWORD || 'postgres123',
+        port: parseInt(process.env.POSTGRES_PORT || '5432'),
+      });
+
+      // Test the connection
+      const client = await pool.connect();
+      console.log('✅ PostgreSQL database connected successfully');
+      client.release();
+      
+      dbClient = pool;
+      dbConnected = true;
+      
+      // Attach the database client to the app for route handlers to use
+      app.locals.db = pool;
+      
+      return pool;
+    } catch (error) {
+      console.error('❌ Failed to connect to PostgreSQL:', error);
+      console.error('Falling back to in-memory storage');
+      dbConnected = false;
+      return null;
+    }
+  } else {
+    console.log('PostgreSQL is DISABLED - using in-memory storage');
+    return null;
+  }
+};
+
 // Health check endpoint
-app.get('/api/health-check', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/api/health-check', async (req, res) => {
+  try {
+    // Check database connection if PostgreSQL is enabled
+    if (process.env.POSTGRES_ENABLED === 'true') {
+      if (dbConnected && dbClient) {
+        const result = await dbClient.query('SELECT NOW()');
+        res.json({ 
+          status: 'OK', 
+          timestamp: result.rows[0].now,
+          postgres: true,
+          env: process.env.NODE_ENV,
+          dbHost: process.env.POSTGRES_HOST,
+          dbName: process.env.POSTGRES_DB
+        });
+      } else {
+        res.status(500).json({ 
+          status: 'ERROR', 
+          timestamp: new Date(),
+          error: 'Database connection failed' 
+        });
+      }
+    } else {
+      // In-memory mode
+      res.json({ 
+        status: 'OK', 
+        timestamp: new Date(),
+        postgres: false,
+        env: process.env.NODE_ENV
+      });
+    }
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({ 
+      status: 'ERROR', 
+      timestamp: new Date(),
+      error: error.message 
+    });
+  }
 });
 
 // Enable CORS for all routes with proper options
@@ -113,15 +193,9 @@ class AuthorizationError extends Error {
   }
 }
 
-// Force PostgreSQL check middleware
-app.use((req, res, next) => {
-  // Enforce PostgreSQL usage
-  if (process.env.POSTGRES_ENABLED !== 'true') {
-    console.warn('Application is configured to use PostgreSQL only. Setting POSTGRES_ENABLED=true');
-    process.env.POSTGRES_ENABLED = 'true';
-  }
-  next();
-});
+// Remove the middleware that forces PostgreSQL
+// This allows the app to work with localStorage in development
+// and in the Lovable preview
 
 // 404 handler for undefined routes
 app.use((req, res, next) => {
@@ -160,6 +234,13 @@ app.ValidationError = ValidationError;
 app.NotFoundError = NotFoundError;
 app.AuthorizationError = AuthorizationError;
 
+// Initialize the database connection
+initializeDatabase().then(() => {
+  console.log('Database initialization complete');
+}).catch(err => {
+  console.error('Failed to initialize database:', err);
+});
+
 // Only start the server if this file is run directly
 // Start server if this file is run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -167,7 +248,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   app.listen(PORT, () => {
     console.log(`API server running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log('PostgreSQL is ENABLED and required');
+    console.log(`PostgreSQL is ${process.env.POSTGRES_ENABLED === 'true' ? 'ENABLED' : 'DISABLED - using in-memory storage'}`);
   });
 }
 

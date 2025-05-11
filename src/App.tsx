@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
@@ -26,10 +25,14 @@ import './App.css';
 import Profile from './pages/Profile';
 import Goals from './pages/Goals';
 import ProvidentFund from './pages/ProvidentFund';
+import { initDatabasePreferences } from './services/db/dbConnector';
 
 function App() {
   // Create the QueryClient instance outside of the component body
   const queryClient = new QueryClient();
+
+  // Initialize database preferences - set to localStorage for Lovable
+  initDatabasePreferences();
 
   return (
     <QueryClientProvider client={queryClient}>
