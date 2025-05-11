@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { 
   Search, Code, FileJson, Server, Key, Shield, 
   Database, BarChart, BanknoteIcon, PiggyBank, 
-  TrendingUp, TrophyIcon, Gold, CreditCard 
+  TrendingUp, TrophyIcon, Coins, CreditCard 
 } from 'lucide-react';
 
 const ApiEndpoints: React.FC = () => {
@@ -417,7 +417,7 @@ const ApiEndpoints: React.FC = () => {
     {
       id: 'gold',
       name: 'Gold Investments',
-      icon: <Gold className="h-4 w-4" />,
+      icon: <Coins className="h-4 w-4" />,
       endpoints: [
         {
           method: 'GET',
@@ -887,4 +887,84 @@ const ApiEndpoints: React.FC = () => {
         
         <TabsContent value="finance" className="space-y-6">
           {filteredCategories
-            .filter(category => ['stocks', 'fixedDeposits', 'savingsAccounts', 'sipInvestments', 'providentFunds', 'gold', 'insurance', 'goals'].includes(
+            .filter(category => ['stocks', 'fixedDeposits', 'savingsAccounts', 'sipInvestments', 'providentFunds', 'gold', 'insurance', 'goals'].includes(category.id))
+            .map(category => (
+              <Card key={category.id}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {category.icon}
+                    {category.name}
+                  </CardTitle>
+                  <CardDescription>
+                    API endpoints for {category.name.toLowerCase()} operations
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {category.endpoints.map((endpoint, index) => (
+                      <div key={`${category.id}-${index}`} className={index > 0 ? "pt-4 border-t mt-4" : ""}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              className={
+                                endpoint.method === 'GET' ? "bg-blue-500" : 
+                                endpoint.method === 'POST' ? "bg-green-500" : 
+                                endpoint.method === 'PUT' ? "bg-amber-500" : 
+                                "bg-red-500"
+                              }
+                            >
+                              {endpoint.method}
+                            </Badge>
+                            <code className="font-bold">{endpoint.path}</code>
+                          </div>
+                        </div>
+                        
+                        <p className="mt-2 text-sm">
+                          {endpoint.description}
+                        </p>
+                        
+                        {endpoint.parameters.length > 0 && (
+                          <div className="mt-3">
+                            <Label className="text-xs uppercase">Parameters</Label>
+                            <div className="bg-muted rounded-md p-2 mt-1">
+                              <table className="text-sm w-full">
+                                <thead>
+                                  <tr className="border-b">
+                                    <th className="text-left py-1 px-2">Name</th>
+                                    <th className="text-left py-1 px-2">Type</th>
+                                    <th className="text-left py-1 px-2">Required</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {endpoint.parameters.map((param, idx) => (
+                                    <tr key={idx} className={idx > 0 ? "border-t border-gray-200" : ""}>
+                                      <td className="py-1 px-2">{param.name}</td>
+                                      <td className="py-1 px-2 font-mono text-xs">{param.type}</td>
+                                      <td className="py-1 px-2">{param.required ? "Yes" : "No"}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="mt-3">
+                          <Label className="text-xs uppercase">Response</Label>
+                          <div className="bg-muted rounded-md p-2 mt-1">
+                            <code className="text-sm">{endpoint.response}</code>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+          ))}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default ApiEndpoints;
