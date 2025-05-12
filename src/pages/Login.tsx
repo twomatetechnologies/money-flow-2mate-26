@@ -1,11 +1,13 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
-import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { EyeIcon, EyeOffIcon, BugIcon } from 'lucide-react';
 import { DatabaseConnectionDialog } from '@/components/auth/DatabaseConnectionDialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -44,6 +46,11 @@ const Login: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fillDemoCredentials = () => {
+    setEmail("user@example.com");
+    setPassword("password");
   };
 
   return (
@@ -129,8 +136,27 @@ const Login: React.FC = () => {
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
               
-              <div className="flex justify-center">
+              <div className="flex justify-between w-full">
                 <DatabaseConnectionDialog />
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="flex items-center gap-2 hover:bg-blue-50" 
+                        onClick={fillDemoCredentials}
+                      >
+                        <BugIcon className="h-4 w-4" />
+                        <span>Test Credentials</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Fill form with demo credentials</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </CardFooter>
           </form>
