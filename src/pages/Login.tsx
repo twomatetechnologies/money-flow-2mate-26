@@ -15,6 +15,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showDevMode, setShowDevMode] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
@@ -53,14 +54,39 @@ const Login: React.FC = () => {
     setPassword("password");
   };
 
+  const toggleDevMode = () => {
+    setShowDevMode(!showDevMode);
+  };
+
   return (
     <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
+        <div className="text-center relative">
           <h1 className="text-3xl font-bold tracking-tight">Money Flow Guardian</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
             Sign in to access your financial dashboard
           </p>
+          
+          {/* Bug Icon in top right */}
+          <div className="absolute top-0 right-0">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-red-500 hover:bg-transparent" 
+                    onClick={toggleDevMode}
+                  >
+                    <BugIcon className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Toggle Development Mode</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
         
         <Card>
@@ -162,6 +188,16 @@ const Login: React.FC = () => {
           </form>
         </Card>
         
+        {/* Development Mode Information */}
+        {showDevMode && (
+          <div className="border border-yellow-300 bg-yellow-50 rounded-md p-4 text-center text-sm text-yellow-800">
+            <h4 className="font-medium mb-1">Development Mode</h4>
+            <p>Login with: <span className="font-mono">user@example.com</span> / <span className="font-mono">password</span></p>
+            <p>For 2FA testing: <span className="font-mono">test@example.com</span> / <span className="font-mono">password</span></p>
+          </div>
+        )}
+        
+        {/* Alternative display of credentials at the bottom */}
         <div className="text-center text-sm text-gray-500 dark:text-gray-400">
           Demo credentials: <span className="font-mono">user@example.com</span> / <span className="font-mono">password</span>
           <br />
