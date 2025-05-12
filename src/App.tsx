@@ -13,7 +13,8 @@ import AppLayout from '@/components/layout/AppLayout';
 import ApiEndpoints from '@/pages/ApiEndpoints';
 import TwoFactorAuth from '@/pages/TwoFactorAuth';
 
-// Initialize database preferences on app start
+// Initialize database preferences on app start - before auth provider
+// This ensures the correct storage system is configured before any auth or data operations
 initDatabasePreferences();
 
 // AuthGuard component to protect routes
@@ -55,6 +56,18 @@ const PreventBackNavigation = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App: React.FC = () => {
+  // Add a small initialization state so we can show a loading screen if needed
+  const [initialized, setInitialized] = useState(false);
+  
+  useEffect(() => {
+    // Any additional initialization can go here
+    setInitialized(true);
+  }, []);
+  
+  if (!initialized) {
+    return <div>Initializing application...</div>;
+  }
+
   return (
     <AuthProvider>
       <SettingsProvider>

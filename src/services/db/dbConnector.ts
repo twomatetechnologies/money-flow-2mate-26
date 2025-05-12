@@ -1,3 +1,4 @@
+
 /**
  * Database connector utility to connect to PostgreSQL
  */
@@ -6,17 +7,22 @@ import { handleError } from '@/utils/errorHandler';
 // Check if PostgreSQL is enabled
 export const isPostgresEnabled = (): boolean => {
   try {
+    // Check if environment variables specify PostgreSQL (for Docker)
+    if (import.meta.env.POSTGRES_ENABLED === 'true') {
+      return true;
+    }
+    
     // For Lovable preview compatibility, check if localStorage is available
     if (typeof window !== 'undefined' && window.localStorage) {
       const postgresEnabled = localStorage.getItem('POSTGRES_ENABLED');
-      // Return true if explicitly set to true, otherwise allow localStorage option
       return postgresEnabled === 'true';
     }
-    // Default to true in server environments
-    return true;
+    
+    // Default to false if no configuration is found
+    return false;
   } catch (error) {
     console.error('Error checking PostgreSQL status:', error);
-    return false; // Default to localStorage if there's an error
+    return false;
   }
 };
 
@@ -147,13 +153,27 @@ export const executeQuery = async <T>(
 // Initialize database connection preferences in localStorage
 export const initDatabasePreferences = (): void => {
   try {
+    // For Docker environment, check for environment variables
+    if (import.meta.env.POSTGRES_ENABLED) {
+      const usePostgres = import.meta.env.POSTGRES_ENABLED === 'true';
+      localStorage.setItem('POSTGRES_ENABLED', usePostgres ? 'true' : 'false');
+      
+      if (typeof window !== 'undefined') {
+        window.POSTGRES_ENABLED = usePostgres;
+      }
+      return;
+    }
+    
     // For Lovable preview, default to localStorage
     if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('POSTGRES_ENABLED', 'false');
+      // Only set if not already set
+      if (!localStorage.getItem('POSTGRES_ENABLED')) {
+        localStorage.setItem('POSTGRES_ENABLED', 'false');
+      }
       
       // Set window variable too if it exists
       if (typeof window !== 'undefined') {
-        window.POSTGRES_ENABLED = false;
+        window.POSTGRES_ENABLED = localStorage.getItem('POSTGRES_ENABLED') === 'true';
       }
     }
   } catch (error) {

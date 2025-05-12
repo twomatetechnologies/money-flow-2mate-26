@@ -1,133 +1,147 @@
-
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Lock, Mail, Bug } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { useAuth } from '@/contexts/AuthContext';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { DatabaseConnectionDialog } from '@/components/auth/DatabaseConnectionDialog';
 
-const Login = () => {
+const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, isDevelopmentMode, toggleDevelopmentMode } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const location = useLocation();
+  const { login } = useAuth();
+
+  // Get intended destination from location state or default to dashboard
+  const from = location.state?.from?.pathname || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    
+    setIsLoading(true);
+    setError("");
+
     try {
+      // Attempt login
       const result = await login(email, password);
       
       if (result.requires2FA) {
-        // Redirect to 2FA page
+        // If 2FA is required, navigate to the 2FA page
         navigate('/two-factor-auth', { 
-          state: { requires2FA: true, email }
+          state: { email, from }
         });
-        return;
+      } else {
+        // Otherwise navigate to the intended destination
+        navigate(from);
       }
-      
-      // Normal login, redirect to home
-      navigate('/');
-      
-      toast({
-        title: "Login successful",
-        description: "Welcome back!",
-      });
-    } catch (error) {
-      toast({
-        title: "Login failed",
-        description: "Invalid email or password",
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error('Login error:', err);
+      setError("Invalid email or password. Please try again.");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl font-bold">
-              Money Flow Guardian
-            </CardTitle>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={toggleDevelopmentMode}
-              title={isDevelopmentMode ? "Switch to Production Mode" : "Switch to Development Mode"}
-              className="h-8 w-8"
-            >
-              <Bug className={`h-4 w-4 ${isDevelopmentMode ? "text-red-500" : "text-muted-foreground"}`} />
-            </Button>
-          </div>
-          <CardDescription className="text-center">
-            Enter your credentials to access your account
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+    <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold tracking-tight">Money Flow Guardian</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
+            Sign in to access your financial dashboard
+          </p>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">Sign In</CardTitle>
+          </CardHeader>
+          
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Email
+                </label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@example.com"
-                  className="pl-10"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  placeholder="example@email.com"
                   required
+                  autoFocus
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <a href="#" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </a>
+              
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Password
+                </label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+                  </button>
+                </div>
               </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  className="pl-10"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
+
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-100">
+                  Remember me
+                </label>
               </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex-col">
-            <Button type="submit" className="w-full mb-3" disabled={isSubmitting}>
-              {isSubmitting ? "Signing in..." : "Sign In"}
-            </Button>
-            {isDevelopmentMode && (
-              <div className="px-2 py-2 bg-amber-50 border border-amber-200 rounded-md w-full">
-                <p className="text-amber-800 text-sm font-medium mb-1">Development Mode</p>
-                <p className="text-amber-700 text-sm">Login with: <code>user@example.com</code> / <code>password</code></p>
-                <p className="text-amber-700 text-sm mt-1">For 2FA demo: <code>test@example.com</code> / <code>password</code></p>
+            </CardContent>
+            
+            <CardFooter className="flex flex-col space-y-4">
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+              >
+                {isLoading ? "Signing in..." : "Sign In"}
+              </Button>
+              
+              <div className="flex justify-center">
+                <DatabaseConnectionDialog />
               </div>
-            )}
-          </CardFooter>
-        </form>
-        {!isDevelopmentMode && (
-          <div className="px-8 pb-6 text-center text-sm">
-            <p>Need help? Contact your administrator</p>
-          </div>
-        )}
-      </Card>
+            </CardFooter>
+          </form>
+        </Card>
+        
+        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+          Demo credentials: <span className="font-mono">user@example.com</span> / <span className="font-mono">password</span>
+          <br />
+          For 2FA testing: <span className="font-mono">test@example.com</span> / <span className="font-mono">password</span>
+        </div>
+      </div>
     </div>
   );
 };
