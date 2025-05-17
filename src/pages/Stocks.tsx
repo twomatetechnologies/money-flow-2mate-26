@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { StockHolding } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Import } from 'lucide-react';
+import { Plus, Import, AlertCircle } from 'lucide-react';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -36,12 +36,14 @@ import SortButton, { SortDirection, SortOption } from '@/components/common/SortB
 import FilterButton, { FilterOption } from '@/components/common/FilterButton';
 import { useStocks } from '@/hooks/useStocks';
 import * as XLSX from 'xlsx';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Stocks = () => {
   const {
     stocks,
     displayedStocks,
     loading,
+    error,
     currentSort,
     currentDirection,
     activeFilters,
@@ -60,6 +62,10 @@ const Stocks = () => {
   const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [auditRecords, setAuditRecords] = useState<AuditRecord[]>([]);
   const { toast } = useToast();
+
+  // Ensure we have an array of stocks
+  const safeStocks = Array.isArray(stocks) ? stocks : [];
+  const safeDisplayedStocks = Array.isArray(displayedStocks) ? displayedStocks : [];
 
   // Enhanced filter options
   const filterOptions: FilterOption[] = [
@@ -90,7 +96,7 @@ const Stocks = () => {
   ];
 
   // Get all unique sectors from stocks
-  const uniqueSectors = Array.from(new Set(stocks.filter(s => s.sector).map(s => s.sector)));
+  const uniqueSectors = Array.from(new Set(safeStocks.filter(s => s && s.sector).map(s => s.sector)));
   if (uniqueSectors.length > 0) {
     filterOptions.push({
       id: 'selectedSectors',
@@ -122,6 +128,7 @@ const Stocks = () => {
   };
 
   const handleEditStock = (stock: StockHolding) => {
+    if (!stock) return;
     setFormMode('edit');
     setCurrentStock(stock);
     setIsFormOpen(true);
@@ -160,10 +167,21 @@ const Stocks = () => {
 
   const handleImportStocks = async (stocksToImport: Partial<StockHolding>[]) => {
     try {
+      if (!Array.isArray(stocksToImport) || stocksToImport.length === 0) {
+        toast({
+          title: "Error",
+          description: "No valid stocks to import",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const importedCount = stocksToImport.length;
       
       for (const stock of stocksToImport) {
-        await createStock(stock as Omit<StockHolding, 'id' | 'lastUpdated'>);
+        if (stock) {
+          await createStock(stock as Omit<StockHolding, 'id' | 'lastUpdated'>);
+        }
       }
       
       fetchStocks();
@@ -184,6 +202,7 @@ const Stocks = () => {
   };
 
   const handleDeleteClick = (stock: StockHolding) => {
+    if (!stock) return;
     setStockToDelete(stock);
   };
 
@@ -209,9 +228,11 @@ const Stocks = () => {
   };
 
   const handleViewAudit = async (stockId: string) => {
+    if (!stockId) return;
+    
     try {
       const records = await getAuditRecordsForEntity(stockId);
-      setAuditRecords(records);
+      setAuditRecords(Array.isArray(records) ? records : []);
       setIsAuditOpen(true);
     } catch (error) {
       console.error('Error fetching audit records:', error);
@@ -249,10 +270,54 @@ const Stocks = () => {
     setCurrentDirection(direction);
   };
 
+  // Empty state UI for when there are no stocks
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="rounded-full bg-gray-100 p-3 mb-4">
+        <AlertCircle className="h-6 w-6 text-gray-400" />
+      </div>
+      <h3 className="text-lg font-medium mb-2">No Stocks Found</h3>
+      <p className="text-muted-foreground max-w-md mb-6">
+        Your stock portfolio is empty. Add your first stock or import your portfolio to get started.
+      </p>
+      <div className="flex gap-2">
+        <Button onClick={handleAddStock} className="h-8 text-xs">
+          <Plus className="mr-1 h-3 w-3" /> Add Stock
+        </Button>
+        <Button variant="outline" onClick={handleImportClick} className="h-8 text-xs">
+          <Import className="mr-1 h-3 w-3" /> Import Portfolio
+        </Button>
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-lg">Loading stocks data...</p>
+      <div className="flex h-full items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-pulse rounded-full bg-gray-200 h-12 w-12 mx-auto mb-4"></div>
+          <p className="text-lg font-medium">Loading stocks data...</p>
+          <p className="text-sm text-muted-foreground mt-2">This may take a moment</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-6">
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4 mr-2" />
+          <AlertDescription>
+            {error}. Please try again later or contact support.
+          </AlertDescription>
+        </Alert>
+        
+        <Button onClick={fetchStocks} className="mb-6">
+          Try Again
+        </Button>
+        
+        <EmptyState />
       </div>
     );
   }
@@ -276,52 +341,58 @@ const Stocks = () => {
         </div>
       </div>
 
-      {/* First row: Stats cards */}
-      <div className="grid grid-cols-1 gap-3">
-        <StockStats displayedStocks={displayedStocks} />
-      </div>
+      {safeStocks.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <>
+          {/* First row: Stats cards */}
+          <div className="grid grid-cols-1 gap-3">
+            <StockStats displayedStocks={safeDisplayedStocks} />
+          </div>
 
-      {/* Second row: Market Indices */}
-      <div className="grid grid-cols-1 gap-3">
-        <MarketIndices />
-      </div>
+          {/* Second row: Market Indices */}
+          <div className="grid grid-cols-1 gap-3">
+            <MarketIndices />
+          </div>
 
-      {/* Third row: Stock table */}
-      <Card className="border border-gray-100 dark:border-gray-800 shadow-sm rounded-lg overflow-hidden">
-        <CardHeader className="py-2 px-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-gray-900 dark:text-gray-100">Your Stocks</CardTitle>
-            <div className="flex items-center gap-2">
-              <FilterButton 
-                options={filterOptions} 
-                activeFilters={activeFilters}
-                onFilterChange={(filterId, value) => setActiveFilters(prev => ({ ...prev, [filterId]: value }))}
-                onClearFilters={() => setActiveFilters({})}
-              />
-              <SortButton 
-                options={sortOptions}
+          {/* Third row: Stock table */}
+          <Card className="border border-gray-100 dark:border-gray-800 shadow-sm rounded-lg overflow-hidden">
+            <CardHeader className="py-2 px-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-900 dark:text-gray-100">Your Stocks</CardTitle>
+                <div className="flex items-center gap-2">
+                  <FilterButton 
+                    options={filterOptions} 
+                    activeFilters={activeFilters}
+                    onFilterChange={(filterId, value) => setActiveFilters(prev => ({ ...prev, [filterId]: value }))}
+                    onClearFilters={() => setActiveFilters({})}
+                  />
+                  <SortButton 
+                    options={sortOptions}
+                    currentSort={currentSort}
+                    currentDirection={currentDirection}
+                    onSortChange={(sortKey, direction) => {
+                      setCurrentSort(direction ? sortKey : null);
+                      setCurrentDirection(direction);
+                    }}
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <StockTable 
+                stocks={safeDisplayedStocks}
+                onEdit={handleEditStock}
+                onDelete={handleDeleteClick}
+                onViewAudit={handleViewAudit}
+                onSortChange={handleTableSortChange}
                 currentSort={currentSort}
                 currentDirection={currentDirection}
-                onSortChange={(sortKey, direction) => {
-                  setCurrentSort(direction ? sortKey : null);
-                  setCurrentDirection(direction);
-                }}
               />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <StockTable 
-            stocks={displayedStocks}
-            onEdit={handleEditStock}
-            onDelete={handleDeleteClick}
-            onViewAudit={handleViewAudit}
-            onSortChange={handleTableSortChange}
-            currentSort={currentSort}
-            currentDirection={currentDirection}
-          />
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <StockForm 
         isOpen={isFormOpen}

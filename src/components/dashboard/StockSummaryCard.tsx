@@ -17,14 +17,17 @@ interface StockSummaryCardProps {
   stocks: StockHolding[];
 }
 
-export function StockSummaryCard({ stocks }: StockSummaryCardProps) {
-  const totalValue = stocks.reduce((sum, stock) => sum + (stock.currentPrice * stock.quantity), 0);
+export function StockSummaryCard({ stocks = [] }: StockSummaryCardProps) {
+  // Handle empty stocks array
+  const safeStocks = Array.isArray(stocks) ? stocks : [];
   
-  const totalInvestment = stocks.reduce((sum, stock) => sum + (stock.averageBuyPrice * stock.quantity), 0);
+  const totalValue = safeStocks.reduce((sum, stock) => sum + (stock.currentPrice * stock.quantity), 0);
+  
+  const totalInvestment = safeStocks.reduce((sum, stock) => sum + (stock.averageBuyPrice * stock.quantity), 0);
   const totalGain = totalValue - totalInvestment;
   const percentGain = totalInvestment > 0 ? (totalGain / totalInvestment) * 100 : 0;
   
-  const sortedStocks = [...stocks].sort((a, b) => {
+  const sortedStocks = [...safeStocks].sort((a, b) => {
     const gainA = (a.currentPrice - a.averageBuyPrice) * a.quantity;
     const gainB = (b.currentPrice - b.averageBuyPrice) * b.quantity;
     return gainB - gainA;

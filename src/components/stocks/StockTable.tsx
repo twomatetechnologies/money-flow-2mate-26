@@ -63,7 +63,7 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({
 };
 
 export const StockTable: React.FC<StockTableProps> = ({
-  stocks,
+  stocks = [],
   onEdit,
   onDelete,
   onViewAudit,
@@ -71,6 +71,9 @@ export const StockTable: React.FC<StockTableProps> = ({
   currentSort,
   currentDirection
 }) => {
+  // Ensure stocks is always an array
+  const safeStocks = Array.isArray(stocks) ? stocks : [];
+
   return (
     <Table>
       <TableCaption>Your stock portfolio as of today</TableCaption>
@@ -167,16 +170,18 @@ export const StockTable: React.FC<StockTableProps> = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {stocks.length === 0 ? (
+        {safeStocks.length === 0 ? (
           <TableRow>
             <TableCell colSpan={10} className="text-center py-6 text-muted-foreground">
               No stocks found with the current filters
             </TableCell>
           </TableRow>
         ) : (
-          stocks.map((stock) => {
+          safeStocks.map((stock) => {
+            if (!stock) return null;
+            
             const gain = (stock.currentPrice - stock.averageBuyPrice) * stock.quantity;
-            const gainPercent = (gain / (stock.averageBuyPrice * stock.quantity)) * 100;
+            const gainPercent = stock.averageBuyPrice > 0 ? (gain / (stock.averageBuyPrice * stock.quantity)) * 100 : 0;
             
             return (
               <TableRow key={stock.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors">
@@ -203,7 +208,7 @@ export const StockTable: React.FC<StockTableProps> = ({
                     {gain >= 0 ? '+' : ''}₹{gain.toLocaleString()} ({gainPercent.toFixed(2)}%)
                   </span>
                 </TableCell>
-                <TableCell><FamilyMemberDisplay memberId={stock.familyMemberId} /></TableCell>
+                <TableCell><FamilyMemberDisplay memberId={stock.familyMemberId || ''} /></TableCell>
                 <TableCell>
                   <div className="flex justify-center space-x-1">
                     <TooltipProvider>

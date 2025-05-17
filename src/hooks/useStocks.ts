@@ -10,6 +10,7 @@ export const useStocks = () => {
   const [stocks, setStocks] = useState<StockHolding[]>([]);
   const [displayedStocks, setDisplayedStocks] = useState<StockHolding[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentSort, setCurrentSort] = useState<string | null>(null);
   const [currentDirection, setCurrentDirection] = useState<'asc' | 'desc' | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
@@ -18,26 +19,42 @@ export const useStocks = () => {
 
   const fetchStocks = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const data = await getStocks();
-      setStocks(data);
-      setDisplayedStocks(data);
-      setLoading(false);
+      
+      // Ensure data is an array, if null or undefined provide empty array
+      const safeData = Array.isArray(data) ? data : [];
+      
+      setStocks(safeData);
+      setDisplayedStocks(safeData);
     } catch (error) {
       console.error('Error fetching stocks:', error);
-      setLoading(false);
+      setError('Failed to load stocks data');
+      setStocks([]);
+      setDisplayedStocks([]);
+      
       toast({
         title: "Error",
         description: "Failed to load stocks data",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const calculateGainPercent = (stock: StockHolding) => {
+    if (!stock || stock.averageBuyPrice <= 0) return 0;
     return ((stock.currentPrice - stock.averageBuyPrice) / stock.averageBuyPrice) * 100;
   };
 
   const applyFiltersAndSort = () => {
+    if (!Array.isArray(stocks)) {
+      setDisplayedStocks([]);
+      return;
+    }
+    
     let result = [...stocks];
     
     // Apply filters
@@ -56,8 +73,8 @@ export const useStocks = () => {
             case 'searchFilter':
               const searchTerm = value.toLowerCase();
               result = result.filter(stock => 
-                stock.symbol.toLowerCase().includes(searchTerm) || 
-                stock.name.toLowerCase().includes(searchTerm)
+                (stock.symbol?.toLowerCase() || '').includes(searchTerm) || 
+                (stock.name?.toLowerCase() || '').includes(searchTerm)
               );
               break;
               
@@ -114,6 +131,10 @@ export const useStocks = () => {
         } else {
           aValue = a[currentSort as keyof StockHolding];
           bValue = b[currentSort as keyof StockHolding];
+          
+          // Handle undefined or null values
+          if (aValue === undefined || aValue === null) aValue = '';
+          if (bValue === undefined || bValue === null) bValue = '';
         }
         
         if (aValue < bValue) return currentDirection === 'asc' ? -1 : 1;
@@ -132,18 +153,22 @@ export const useStocks = () => {
     
     (async () => {
       try {
-        stopMonitoringFn = await startStockPriceMonitoring(settings.stockPriceAlertThreshold);
+        stopMonitoringFn = await startStockPriceMonitoring(settings?.stockPriceAlertThreshold || 5);
         console.log("Using real market data for stock prices");
       } catch (error) {
         console.error('Error starting real stock monitoring, falling back to simulation:', error);
-        stopMonitoringFn = await simulateStockPriceUpdates(settings.stockPriceAlertThreshold);
-        console.log("Using simulated market data for stock prices");
-        
-        toast({
-          title: "Using Simulated Data",
-          description: "Could not connect to live market data. Using simulated stock prices instead.",
-          variant: "destructive",
-        });
+        try {
+          stopMonitoringFn = await simulateStockPriceUpdates(settings?.stockPriceAlertThreshold || 5);
+          console.log("Using simulated market data for stock prices");
+          
+          toast({
+            title: "Using Simulated Data",
+            description: "Could not connect to live market data. Using simulated stock prices instead.",
+            variant: "default",
+          });
+        } catch (simError) {
+          console.error('Error setting up stock simulation:', simError);
+        }
       }
     })();
     
@@ -152,7 +177,7 @@ export const useStocks = () => {
         stopMonitoringFn();
       }
     };
-  }, [settings.stockPriceAlertThreshold]);
+  }, [settings?.stockPriceAlertThreshold]);
 
   useEffect(() => {
     applyFiltersAndSort();
@@ -162,6 +187,7 @@ export const useStocks = () => {
     stocks,
     displayedStocks,
     loading,
+    error,
     currentSort,
     currentDirection,
     activeFilters,
