@@ -31,10 +31,10 @@ const Login: React.FC = () => {
     try {
       // Attempt login
       const result = await login(email, password);
-      
+
       if (result.requires2FA) {
         // If 2FA is required, navigate to the 2FA page
-        navigate('/two-factor-auth', { 
+        navigate('/two-factor-auth', {
           state: { email, from }
         });
       } else {
@@ -66,34 +66,22 @@ const Login: React.FC = () => {
           <p className="text-gray-500 dark:text-gray-400 mt-2">
             Sign in to access your financial dashboard
           </p>
-          
-          {/* Bug Icon in top right */}
-          <div className="absolute top-0 right-0">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-red-500 hover:bg-transparent" 
-                    onClick={toggleDevMode}
-                  >
-                    <BugIcon className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Toggle Development Mode</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
         </div>
-        
+
         <Card>
           <CardHeader>
             <CardTitle className="text-center">Sign In</CardTitle>
+            {/* Bug Icon in top right */}
+            <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:bg-transparent"
+                      onClick={toggleDevMode}
+                    >
+                      <BugIcon className="h-5 w-5" />
+                    </Button>
           </CardHeader>
-          
+
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {error && (
@@ -101,7 +89,7 @@ const Login: React.FC = () => {
                   {error}
                 </div>
               )}
-              
+
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Email
@@ -116,7 +104,7 @@ const Login: React.FC = () => {
                   autoFocus
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Password
@@ -152,26 +140,26 @@ const Login: React.FC = () => {
                 </label>
               </div>
             </CardContent>
-            
+
             <CardFooter className="flex flex-col space-y-4">
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 disabled={isLoading}
               >
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
-              
+
               <div className="flex justify-between w-full">
                 <DatabaseConnectionDialog />
-                
+
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="flex items-center gap-2 hover:bg-blue-50" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2 hover:bg-blue-50"
                         onClick={fillDemoCredentials}
                       >
                         <BugIcon className="h-4 w-4" />
@@ -184,25 +172,19 @@ const Login: React.FC = () => {
                   </Tooltip>
                 </TooltipProvider>
               </div>
+              {showDevMode && (
+                <div className="border border-yellow-300 bg-yellow-50 rounded-md p-4 text-center text-sm text-yellow-800">
+                  <h4 className="font-medium mb-1">Development Mode</h4>
+                  <p>Login with: <span className="font-mono">user@example.com</span> / <span className="font-mono">password</span></p>
+                  <p>For 2FA testing: <span className="font-mono">test@example.com</span> / <span className="font-mono">password</span></p>
+                </div>
+              )}
             </CardFooter>
           </form>
         </Card>
-        
+
         {/* Development Mode Information */}
-        {showDevMode && (
-          <div className="border border-yellow-300 bg-yellow-50 rounded-md p-4 text-center text-sm text-yellow-800">
-            <h4 className="font-medium mb-1">Development Mode</h4>
-            <p>Login with: <span className="font-mono">user@example.com</span> / <span className="font-mono">password</span></p>
-            <p>For 2FA testing: <span className="font-mono">test@example.com</span> / <span className="font-mono">password</span></p>
-          </div>
-        )}
-        
-        {/* Alternative display of credentials at the bottom */}
-        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-          Demo credentials: <span className="font-mono">user@example.com</span> / <span className="font-mono">password</span>
-          <br />
-          For 2FA testing: <span className="font-mono">test@example.com</span> / <span className="font-mono">password</span>
-        </div>
+
       </div>
     </div>
   );
