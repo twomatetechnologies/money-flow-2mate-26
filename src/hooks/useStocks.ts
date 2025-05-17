@@ -21,13 +21,31 @@ export const useStocks = () => {
     try {
       setLoading(true);
       setError(null);
+      
+      console.log('Fetching stocks data...');
       const data = await getStocks();
+      console.log('Received stocks data:', data);
       
       // Ensure data is an array, if null or undefined provide empty array
       const safeData = Array.isArray(data) ? data : [];
       
-      setStocks(safeData);
-      setDisplayedStocks(safeData);
+      // Ensure all required fields have default values
+      const processedData = safeData.map(stock => ({
+        id: stock.id || `temp-${Math.random().toString(36).substr(2, 9)}`,
+        symbol: stock.symbol || 'Unknown',
+        name: stock.name || 'Unknown Stock',
+        quantity: stock.quantity || 0,
+        averageBuyPrice: stock.averageBuyPrice || 0,
+        currentPrice: stock.currentPrice || 0,
+        changePercent: stock.changePercent || 0,
+        value: stock.value || 0,
+        sector: stock.sector || 'Uncategorized',
+        familyMemberId: stock.familyMemberId || '',
+        ...stock
+      }));
+      
+      setStocks(processedData);
+      setDisplayedStocks(processedData);
     } catch (error) {
       console.error('Error fetching stocks:', error);
       setError('Failed to load stocks data');
@@ -36,7 +54,7 @@ export const useStocks = () => {
       
       toast({
         title: "Error",
-        description: "Failed to load stocks data",
+        description: "Failed to load stocks data. Please check your connection and try again.",
         variant: "destructive"
       });
     } finally {
@@ -45,12 +63,13 @@ export const useStocks = () => {
   };
 
   const calculateGainPercent = (stock: StockHolding) => {
-    if (!stock || stock.averageBuyPrice <= 0) return 0;
-    return ((stock.currentPrice - stock.averageBuyPrice) / stock.averageBuyPrice) * 100;
+    if (!stock || !(stock.averageBuyPrice) || stock.averageBuyPrice <= 0) return 0;
+    return ((stock.currentPrice || 0) - stock.averageBuyPrice) / stock.averageBuyPrice * 100;
   };
 
   const applyFiltersAndSort = () => {
     if (!Array.isArray(stocks)) {
+      console.log('Stocks is not an array:', stocks);
       setDisplayedStocks([]);
       return;
     }
@@ -73,8 +92,8 @@ export const useStocks = () => {
             case 'searchFilter':
               const searchTerm = value.toLowerCase();
               result = result.filter(stock => 
-                (stock.symbol?.toLowerCase() || '').includes(searchTerm) || 
-                (stock.name?.toLowerCase() || '').includes(searchTerm)
+                ((stock.symbol || '').toLowerCase()).includes(searchTerm) || 
+                ((stock.name || '').toLowerCase()).includes(searchTerm)
               );
               break;
               
@@ -88,19 +107,19 @@ export const useStocks = () => {
               
             case 'priceRangeFilter':
               if (value.min !== null) {
-                result = result.filter(stock => stock.currentPrice >= value.min);
+                result = result.filter(stock => (stock.currentPrice || 0) >= value.min);
               }
               if (value.max !== null) {
-                result = result.filter(stock => stock.currentPrice <= value.max);
+                result = result.filter(stock => (stock.currentPrice || 0) <= value.max);
               }
               break;
               
             case 'valueRangeFilter':
               if (value.min !== null) {
-                result = result.filter(stock => stock.value >= value.min);
+                result = result.filter(stock => (stock.value || 0) >= value.min);
               }
               if (value.max !== null) {
-                result = result.filter(stock => stock.value <= value.max);
+                result = result.filter(stock => (stock.value || 0) <= value.max);
               }
               break;
               
@@ -153,12 +172,16 @@ export const useStocks = () => {
     
     (async () => {
       try {
-        stopMonitoringFn = await startStockPriceMonitoring(settings?.stockPriceAlertThreshold || 5);
+        const threshold = settings?.stockPriceAlertThreshold || 5;
+        console.log('Starting stock price monitoring with threshold:', threshold);
+        
+        stopMonitoringFn = await startStockPriceMonitoring(threshold);
         console.log("Using real market data for stock prices");
       } catch (error) {
         console.error('Error starting real stock monitoring, falling back to simulation:', error);
         try {
-          stopMonitoringFn = await simulateStockPriceUpdates(settings?.stockPriceAlertThreshold || 5);
+          const threshold = settings?.stockPriceAlertThreshold || 5;
+          stopMonitoringFn = await simulateStockPriceUpdates(threshold);
           console.log("Using simulated market data for stock prices");
           
           toast({

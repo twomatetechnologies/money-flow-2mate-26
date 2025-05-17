@@ -71,8 +71,8 @@ export const StockTable: React.FC<StockTableProps> = ({
   currentSort,
   currentDirection
 }) => {
-  // Ensure stocks is always an array
-  const safeStocks = Array.isArray(stocks) ? stocks : [];
+  // Ensure stocks is always an array and handle null/undefined stocks
+  const safeStocks = Array.isArray(stocks) ? stocks.filter(Boolean) : [];
 
   return (
     <Table>
@@ -180,35 +180,42 @@ export const StockTable: React.FC<StockTableProps> = ({
           safeStocks.map((stock) => {
             if (!stock) return null;
             
-            const gain = (stock.currentPrice - stock.averageBuyPrice) * stock.quantity;
-            const gainPercent = stock.averageBuyPrice > 0 ? (gain / (stock.averageBuyPrice * stock.quantity)) * 100 : 0;
+            const currentPrice = stock.currentPrice || 0;
+            const averageBuyPrice = stock.averageBuyPrice || 0;
+            const quantity = stock.quantity || 0;
+            
+            const gain = (currentPrice - averageBuyPrice) * quantity;
+            const gainPercent = averageBuyPrice > 0 ? (gain / (averageBuyPrice * quantity)) * 100 : 0;
+            const changePercent = stock.changePercent || 0;
             
             return (
-              <TableRow key={stock.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors">
-                <TableCell className="font-semibold">{stock.symbol}</TableCell>
-                <TableCell>{stock.name}</TableCell>
-                <TableCell className="text-right">{stock.quantity}</TableCell>
-                <TableCell className="text-right">₹{stock.averageBuyPrice.toLocaleString()}</TableCell>
-                <TableCell className="text-right">₹{stock.currentPrice.toLocaleString()}</TableCell>
+              <TableRow key={stock.id || `stock-${Math.random()}`} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors">
+                <TableCell className="font-semibold">{stock.symbol || 'Unknown'}</TableCell>
+                <TableCell>{stock.name || 'Unknown'}</TableCell>
+                <TableCell className="text-right">{quantity}</TableCell>
+                <TableCell className="text-right">₹{averageBuyPrice.toLocaleString()}</TableCell>
+                <TableCell className="text-right">₹{currentPrice.toLocaleString()}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end">
-                    {stock.changePercent >= 0 ? (
+                    {changePercent >= 0 ? (
                       <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
                     ) : (
                       <TrendingDown className="h-4 w-4 mr-1 text-red-600" />
                     )}
-                    <span className={stock.changePercent >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                    <span className={changePercent >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-right font-medium">₹{stock.value.toLocaleString()}</TableCell>
+                <TableCell className="text-right font-medium">₹{(stock.value || 0).toLocaleString()}</TableCell>
                 <TableCell className="text-right">
                   <span className={gain >= 0 ? 'text-green-600' : 'text-red-600'}>
                     {gain >= 0 ? '+' : ''}₹{gain.toLocaleString()} ({gainPercent.toFixed(2)}%)
                   </span>
                 </TableCell>
-                <TableCell><FamilyMemberDisplay memberId={stock.familyMemberId || ''} /></TableCell>
+                <TableCell>
+                  <FamilyMemberDisplay memberId={stock.familyMemberId || ''} />
+                </TableCell>
                 <TableCell>
                   <div className="flex justify-center space-x-1">
                     <TooltipProvider>
@@ -232,7 +239,7 @@ export const StockTable: React.FC<StockTableProps> = ({
                       
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => onViewAudit(stock.id)} className="hover:bg-purple-50 hover:text-purple-600">
+                          <Button variant="ghost" size="icon" onClick={() => onViewAudit(stock.id || '')} className="hover:bg-purple-50 hover:text-purple-600">
                             <History className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>

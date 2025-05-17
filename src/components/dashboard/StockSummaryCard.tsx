@@ -21,17 +21,29 @@ export function StockSummaryCard({ stocks = [] }: StockSummaryCardProps) {
   // Handle empty stocks array
   const safeStocks = Array.isArray(stocks) ? stocks : [];
   
-  const totalValue = safeStocks.reduce((sum, stock) => sum + (stock.currentPrice * stock.quantity), 0);
+  // Calculate total values, safely handling null/undefined values
+  const totalValue = safeStocks.reduce((sum, stock) => {
+    const currentPrice = stock?.currentPrice || 0;
+    const quantity = stock?.quantity || 0;
+    return sum + (currentPrice * quantity);
+  }, 0);
   
-  const totalInvestment = safeStocks.reduce((sum, stock) => sum + (stock.averageBuyPrice * stock.quantity), 0);
+  const totalInvestment = safeStocks.reduce((sum, stock) => {
+    const buyPrice = stock?.averageBuyPrice || 0;
+    const quantity = stock?.quantity || 0;
+    return sum + (buyPrice * quantity);
+  }, 0);
+  
   const totalGain = totalValue - totalInvestment;
   const percentGain = totalInvestment > 0 ? (totalGain / totalInvestment) * 100 : 0;
   
+  // Sort stocks safely
   const sortedStocks = [...safeStocks].sort((a, b) => {
-    const gainA = (a.currentPrice - a.averageBuyPrice) * a.quantity;
-    const gainB = (b.currentPrice - b.averageBuyPrice) * b.quantity;
+    const gainA = ((a?.currentPrice || 0) - (a?.averageBuyPrice || 0)) * (a?.quantity || 0);
+    const gainB = ((b?.currentPrice || 0) - (b?.averageBuyPrice || 0)) * (b?.quantity || 0);
     return gainB - gainA;
   });
+  
   const topStocks = sortedStocks.slice(0, 3);
 
   return (
@@ -74,15 +86,21 @@ export function StockSummaryCard({ stocks = [] }: StockSummaryCardProps) {
           <div className="text-sm font-medium text-finance-gray">Top Performers</div>
           {topStocks.length > 0 ? (
             topStocks.map(stock => {
-              const gainPercent = ((stock.currentPrice - stock.averageBuyPrice) / stock.averageBuyPrice) * 100;
+              if (!stock) return null;
+              
+              const currentPrice = stock.currentPrice || 0;
+              const averageBuyPrice = stock.averageBuyPrice || 0;
+              const gainPercent = averageBuyPrice > 0 ? 
+                ((currentPrice - averageBuyPrice) / averageBuyPrice) * 100 : 0;
+              
               return (
-                <div key={stock.id} className="flex items-center justify-between">
+                <div key={stock.id || `stock-${Math.random()}`} className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <div className="font-medium">{stock.symbol}</div>
-                    <div className="text-xs text-finance-gray">{stock.name}</div>
+                    <div className="font-medium">{stock.symbol || 'Unknown'}</div>
+                    <div className="text-xs text-finance-gray">{stock.name || ''}</div>
                   </div>
                   <div className="flex flex-col items-end">
-                    <div className="font-medium">{formatIndianNumber(stock.currentPrice)}</div>
+                    <div className="font-medium">{formatIndianNumber(currentPrice)}</div>
                     <div className={`text-xs ${gainPercent >= 0 ? 'trend-up' : 'trend-down'}`}>
                       {gainPercent >= 0 ? '+' : ''}{gainPercent.toFixed(2)}%
                     </div>
