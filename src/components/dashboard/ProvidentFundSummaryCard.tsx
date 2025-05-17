@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -77,7 +76,7 @@ export function ProvidentFundSummaryCard({ providentFunds: propPFs }: ProvidentF
         ) : (
           <>
             <div className="mb-4">
-              <div className="stat-value">{formatIndianNumber(totalBalance)}</div>
+              <div className="stat-value">{formatIndianNumber(totalBalance || 0)}</div>
               <div className="stat-label">Total PF Balance</div>
             </div>
             
@@ -85,7 +84,7 @@ export function ProvidentFundSummaryCard({ providentFunds: propPFs }: ProvidentF
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <div>Monthly Contribution:</div>
-                  <div className="font-semibold">{formatIndianNumber(totalMonthlyContribution)}</div>
+                  <div className="font-semibold">{formatIndianNumber(totalMonthlyContribution || 0)}</div>
                 </div>
                 <div className="flex justify-between items-center">
                   <div>Average Interest Rate:</div>

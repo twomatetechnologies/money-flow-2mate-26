@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -133,7 +132,9 @@ const ProvidentFundPage = () => {
       'Employee Contribution': pf.employeeContribution,
       'Employer Contribution': pf.employerContribution,
       'Total Balance': pf.totalBalance,
-      'Start Date': format(new Date(pf.startDate), 'yyyy-MM-dd'),
+      'Start Date': pf.startDate && !isNaN(new Date(pf.startDate).getTime())
+        ? format(new Date(pf.startDate), 'yyyy-MM-dd')
+        : '',
       'Family Member ID': pf.familyMemberId || '',
       'Notes': pf.notes || ''
     }));
@@ -225,8 +226,11 @@ const ProvidentFundPage = () => {
   };
 
   // Calculate totals
-  const totalBalance = providentFunds.reduce((sum, pf) => sum + pf.totalBalance, 0);
-  const totalMonthlyContribution = providentFunds.reduce((sum, pf) => sum + pf.monthlyContribution, 0);
+  const totalBalance = providentFunds.reduce((sum, pf) => sum + (pf.totalBalance || 0), 0);
+  const totalMonthlyContribution = providentFunds.reduce((sum, pf) => sum + (pf.monthlyContribution || 0), 0);
+  const avgInterestRate = providentFunds.length > 0 
+    ? (providentFunds.reduce((sum, pf) => sum + (pf.interestRate || 0), 0) / providentFunds.length).toFixed(2) 
+    : "0.00";
 
   return (
     <div className="space-y-6">
@@ -289,9 +293,7 @@ const ProvidentFundPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {providentFunds.length > 0 
-                ? (providentFunds.reduce((sum, pf) => sum + pf.interestRate, 0) / providentFunds.length).toFixed(2) 
-                : '0.00'}%
+              {avgInterestRate}%
             </div>
             <p className="text-xs text-muted-foreground">
               Average interest rate across all accounts
@@ -308,7 +310,7 @@ const ProvidentFundPage = () => {
         <>
           {providentFunds.length > 0 ? (
             <Card>
-              <CardContent className="pt-6">
+              <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -327,13 +329,17 @@ const ProvidentFundPage = () => {
                       <TableRow key={pf.id}>
                         <TableCell className="font-medium">{pf.employerName}</TableCell>
                         <TableCell>{pf.accountNumber}</TableCell>
-                        <TableCell>{pf.interestRate.toFixed(2)}%</TableCell>
-                        <TableCell>{formatIndianNumber(pf.monthlyContribution)}</TableCell>
-                        <TableCell>{formatIndianNumber(pf.totalBalance)}</TableCell>
+                        <TableCell>{(pf.interestRate || 0).toFixed(2)}%</TableCell>
+                        <TableCell>{formatIndianNumber(pf.monthlyContribution || 0)}</TableCell>
+                        <TableCell>{formatIndianNumber(pf.totalBalance || 0)}</TableCell>
                         <TableCell>
                           <FamilyMemberDisplay memberId={pf.familyMemberId} />
                         </TableCell>
-                        <TableCell>{format(new Date(pf.lastUpdated), 'dd MMM yyyy')}</TableCell>
+                        <TableCell>
+                          {pf.lastUpdated && !isNaN(new Date(pf.lastUpdated).getTime())
+                            ? format(new Date(pf.lastUpdated), 'dd MMM yyyy')
+                            : 'N/A'}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button

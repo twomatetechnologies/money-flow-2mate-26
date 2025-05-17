@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -115,7 +114,7 @@ const SIPInvestments = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Amount:</span>
-                  <span>₹{sip.amount.toLocaleString()}</span>
+                  <span>₹{(sip.amount ?? 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Frequency:</span>
@@ -123,12 +122,12 @@ const SIPInvestments = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Current Value:</span>
-                  <span>₹{sip.currentValue.toLocaleString()}</span>
+                  <span>₹{(sip.currentValue ?? 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Returns:</span>
                   <span className={sip.returns >= 0 ? 'text-green-600' : 'text-red-600'}>
-                    {sip.returns >= 0 ? '+' : ''}{sip.returnsPercent.toFixed(2)}%
+                    {sip.returns >= 0 ? '+' : ''}{(sip.returnsPercent ?? 0).toFixed(2)}%
                   </span>
                 </div>
                 <div className="flex justify-between">
