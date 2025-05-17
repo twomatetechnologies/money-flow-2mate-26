@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,16 +69,17 @@ const Login: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-center">Sign In</CardTitle>
-            {/* Bug Icon in top right */}
-            <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500 hover:bg-transparent"
-                      onClick={toggleDevMode}
-                    >
-                      <BugIcon className="h-5 w-5" />
-                    </Button>
+            <div className="flex items-center justify-between w-full">
+              <CardTitle className="text-center">Sign In</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:bg-transparent"
+                onClick={toggleDevMode}
+              >
+                <BugIcon className="h-5 w-5" />
+              </Button>
+            </div>
           </CardHeader>
 
           <form onSubmit={handleSubmit}>
@@ -182,9 +182,6 @@ const Login: React.FC = () => {
             </CardFooter>
           </form>
         </Card>
-
-        {/* Development Mode Information */}
-
       </div>
     </div>
   );
