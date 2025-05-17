@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import Login from '@/pages/Login';
@@ -12,6 +11,15 @@ import { initDatabasePreferences } from '@/services/db/dbConnector';
 import AppLayout from '@/components/layout/AppLayout';
 import ApiEndpoints from '@/pages/ApiEndpoints';
 import TwoFactorAuth from '@/pages/TwoFactorAuth';
+import Stocks from '@/pages/Stocks';
+import SIPInvestments from '@/pages/SIPInvestments';
+import FixedDeposits from '@/pages/FixedDeposits';
+import SavingsAccounts from '@/pages/SavingsAccounts';
+import ProvidentFund from '@/pages/ProvidentFund';
+import Insurance from '@/pages/Insurance';
+import Gold from '@/pages/Gold';
+import Goals from '@/pages/Goals';
+import Reports from '@/pages/Reports';
 
 // Initialize database preferences on app start - before auth provider
 // This ensures the correct storage system is configured before any auth or data operations
@@ -84,6 +92,15 @@ const App: React.FC = () => {
                 }
               >
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/stocks" element={<Stocks />} />
+                <Route path="/sip-investments" element={<SIPInvestments />} />
+                <Route path="/fixed-deposits" element={<FixedDeposits />} />
+                <Route path="/savings-accounts" element={<SavingsAccounts />} />
+                <Route path="/provident-fund" element={<ProvidentFund />} />
+                <Route path="/insurance" element={<Insurance />} />
+                <Route path="/gold" element={<Gold />} />
+                <Route path="/goals" element={<Goals />} />
+                <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/ai-settings" element={<AISettings />} />
                 <Route path="/api-endpoints" element={<ApiEndpoints />} />

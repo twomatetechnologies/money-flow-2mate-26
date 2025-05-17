@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { StockHolding } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -136,13 +135,26 @@ const Stocks = () => {
 
   const handleSubmitStock = async (stockData: Partial<StockHolding>) => {
     try {
+      // Validate required fields
+      const requiredFields = ['symbol', 'name', 'quantity', 'averageBuyPrice'] as const;
+      const missingFields = requiredFields.filter(field => !stockData[field]);
+      
+      if (missingFields.length > 0) {
+        toast({
+          title: "Validation Error",
+          description: `Missing required fields: ${missingFields.join(', ')}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
       if (formMode === 'create') {
         await createStock(stockData as Omit<StockHolding, 'id' | 'lastUpdated'>);
         toast({
           title: "Success",
           description: "Stock added successfully",
         });
-      } else if (currentStock) {
+      } else if (currentStock?.id) {
         await updateStock(currentStock.id, stockData);
         toast({
           title: "Success",
@@ -175,13 +187,28 @@ const Stocks = () => {
         });
         return;
       }
+
+      // Validate required fields for each stock
+      const requiredFields = ['symbol', 'name', 'quantity', 'averageBuyPrice'] as const;
+      const invalidStocks = stocksToImport.filter(stock => 
+        !stock || requiredFields.some(field => !stock[field])
+      );
+
+      if (invalidStocks.length > 0) {
+        toast({
+          title: "Validation Error",
+          description: `${invalidStocks.length} stocks are missing required fields`,
+          variant: "destructive"
+        });
+        return;
+      }
       
-      const importedCount = stocksToImport.length;
+      const validStocks = stocksToImport.filter(stock => stock && 
+        requiredFields.every(field => stock[field] !== undefined && stock[field] !== null)
+      );
       
-      for (const stock of stocksToImport) {
-        if (stock) {
-          await createStock(stock as Omit<StockHolding, 'id' | 'lastUpdated'>);
-        }
+      for (const stock of validStocks) {
+        await createStock(stock as Omit<StockHolding, 'id' | 'lastUpdated'>);
       }
       
       fetchStocks();
@@ -189,7 +216,7 @@ const Stocks = () => {
       
       toast({
         title: "Success",
-        description: `Successfully imported ${importedCount} stocks`,
+        description: `Successfully imported ${validStocks.length} stocks`,
       });
     } catch (error) {
       console.error('Error importing stocks:', error);
