@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getNetWorth } from '@/services/netWorthService';
@@ -58,16 +57,16 @@ const Reports = () => {
       setLoading(true); // Ensure loading is true at the start of fetch
       try {
         // Fetch all data in parallel for better performance
-        const [netWorthData, snapshots] = await Promise.all([
+        const [netWorthData, snapshotsData] = await Promise.all([
           getNetWorth(),
           getReportSnapshots()
         ]);
         
         setNetWorth(netWorthData);
-        setReportSnapshots(snapshots || []); // Ensure snapshots is an array
+        setReportSnapshots(snapshotsData || []); // Ensure snapshots is an array
         
         // Calculate growth metrics
-        if (snapshots && snapshots.length > 0) {
+        if (snapshotsData && snapshotsData.length > 0) {
           const growth = await calculateGrowthMetrics(); // Await the async function
           setGrowthMetrics(growth);
         } else {
@@ -86,7 +85,7 @@ const Reports = () => {
     };
 
     fetchData();
-  }, []); // Removed growthMetrics from dependency array to prevent potential loops if it was an object
+  }, []);
 
   if (loading) { // Simplified loading check
     return (
@@ -289,7 +288,7 @@ const Reports = () => {
                     tickLine={false}
                   />
                   <YAxis 
-                    tickFormatter={(value) => `₹${formatIndianNumber(value, true)}`} // Use compact format
+                    tickFormatter={(value) => `₹${formatIndianNumber(value)}`} {/* MODIFIED: Removed second argument */}
                     tick={{ fontSize: 12 }} 
                     axisLine={false} 
                     tickLine={false}
@@ -384,4 +383,3 @@ const Reports = () => {
 };
 
 export default Reports;
-
