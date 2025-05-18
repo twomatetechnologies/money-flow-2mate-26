@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import { getNetWorth } from './netWorthService';
 import { NetWorthData } from '@/types';
@@ -45,10 +46,16 @@ export const getReportSnapshots = async (): Promise<ReportSnapshot[]> => {
     return snapshots;
   } catch (error) {
     console.error('Error loading report snapshots:', error);
-    const netWorthData: NetWorthData = await getNetWorth();
-    const snapshots = generateSnapshotsFromNetWorth(netWorthData.history);
-    saveReportSnapshots(snapshots);
-    return snapshots;
+    // Fallback: if error, try to generate from current net worth, or return empty if that fails
+    try {
+        const netWorthData: NetWorthData = await getNetWorth();
+        const snapshots = generateSnapshotsFromNetWorth(netWorthData.history);
+        saveReportSnapshots(snapshots);
+        return snapshots;
+    } catch (fallbackError) {
+        console.error('Error generating fallback snapshots:', fallbackError);
+        return []; // Return empty array if all fails
+    }
   }
 };
 
@@ -91,18 +98,24 @@ const generateSnapshotsFromNetWorth = (netWorthHistory: Array<{ date: Date; valu
     const total = stockPercent + fdPercent + savingsPercent + goldPercent + pfPercent;
     const normalizer = total > 0 ? totalAssetPercentage / total : 0;
     
-    return {
-      id: uuidv4(),
-      date,
-      netWorth,
-      assetAllocation: {
+    const assetAllocation = {
         stocks: Math.round(stockPercent * normalizer),
         fixedDeposits: Math.round(fdPercent * normalizer),
         savings: Math.round(savingsPercent * normalizer),
         gold: Math.round(goldPercent * normalizer),
         providentFund: Math.round(pfPercent * normalizer),
-        other: 0 // Will be adjusted to make total 100%
-      },
+        other: 0 // Initialize other
+    };
+
+    // Adjust 'other' to make the sum exactly 100%
+    const currentTotalAllocation = Object.values(assetAllocation).reduce((sum, val) => sum + val, 0) - assetAllocation.other;
+    assetAllocation.other = Math.max(0, totalAssetPercentage - currentTotalAllocation);
+    
+    return {
+      id: uuidv4(),
+      date,
+      netWorth,
+      assetAllocation,
       liabilities,
       monthlyExpenses,
       monthlyIncome,
@@ -117,8 +130,11 @@ const generateSnapshotsFromNetWorth = (netWorthHistory: Array<{ date: Date; valu
 };
 
 // Get the most recent snapshot
-export const getLatestSnapshot = (): ReportSnapshot => {
-  const snapshots = getReportSnapshots();
+export const getLatestSnapshot = async (): Promise<ReportSnapshot | undefined> => {
+  const snapshots = await getReportSnapshots();
+  if (!snapshots || snapshots.length === 0) {
+    return undefined;
+  }
   
   const sorted = [...snapshots].sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -128,8 +144,8 @@ export const getLatestSnapshot = (): ReportSnapshot => {
 };
 
 // Create a new financial snapshot
-export const createReportSnapshot = (snapshot: Omit<ReportSnapshot, 'id' | 'createdAt'>): ReportSnapshot => {
-  const snapshots = getReportSnapshots();
+export const createReportSnapshot = async (snapshot: Omit<ReportSnapshot, 'id' | 'createdAt'>): Promise<ReportSnapshot> => {
+  const snapshots = await getReportSnapshots();
   
   const newSnapshot: ReportSnapshot = {
     ...snapshot,
@@ -144,11 +160,11 @@ export const createReportSnapshot = (snapshot: Omit<ReportSnapshot, 'id' | 'crea
 };
 
 // Get data for a specific date range
-export const getReportSnapshotsInRange = (
+export const getReportSnapshotsInRange = async (
   startDate: Date, 
   endDate: Date
-): ReportSnapshot[] => {
-  const snapshots = getReportSnapshots();
+): Promise<ReportSnapshot[]> => {
+  const snapshots = await getReportSnapshots();
   
   return snapshots.filter(snapshot => {
     const snapshotDate = new Date(snapshot.date);
@@ -159,8 +175,8 @@ export const getReportSnapshotsInRange = (
 };
 
 // Calculate growth rates over periods
-export const calculateGrowthMetrics = () => {
-  const snapshots = getReportSnapshots();
+export const calculateGrowthMetrics = async () => {
+  const snapshots = await getReportSnapshots();
   
   if (snapshots.length < 2) {
     return {
@@ -176,6 +192,9 @@ export const calculateGrowthMetrics = () => {
   );
   
   const latest = sorted[sorted.length - 1];
+  if (!latest) { // Should not happen if length >= 2, but good for type safety
+    return { monthOverMonth: 0, threeMonth: 0, sixMonth: 0, yearOverYear: 0 };
+  }
   
   // Find snapshot closest to one month ago
   const oneMonthAgo = findClosestSnapshot(sorted, 1);
@@ -200,21 +219,28 @@ export const calculateGrowthMetrics = () => {
 
 // Find the snapshot closest to X months ago from the most recent snapshot
 const findClosestSnapshot = (sortedSnapshots: ReportSnapshot[], monthsAgo: number): ReportSnapshot | null => {
-  if (sortedSnapshots.length < 2) return null;
+  if (sortedSnapshots.length === 0) return null; // Handle empty array
   
   const latest = sortedSnapshots[sortedSnapshots.length - 1];
+  if (!latest) return null; // Should not happen if length > 0
   const latestDate = new Date(latest.date);
   
   // Calculate target date
   const targetDate = new Date(latestDate);
   targetDate.setMonth(targetDate.getMonth() - monthsAgo);
   
-  // Find closest snapshot to target date
-  let closest = sortedSnapshots[0];
+  // Filter out snapshots newer than the target date (or same month as latest if monthsAgo is small)
+  const relevantSnapshots = sortedSnapshots.filter(s => new Date(s.date) < latestDate);
+  if (relevantSnapshots.length === 0) return null;
+
+  // Find closest snapshot to target date from the relevant ones
+  let closest = relevantSnapshots[0];
+  if (!closest) return null; // Should not happen
   let closestDiff = Math.abs(new Date(closest.date).getTime() - targetDate.getTime());
   
-  for (let i = 1; i < sortedSnapshots.length; i++) {
-    const current = sortedSnapshots[i];
+  for (let i = 1; i < relevantSnapshots.length; i++) {
+    const current = relevantSnapshots[i];
+    if (!current) continue; // Should not happen
     const currentDiff = Math.abs(new Date(current.date).getTime() - targetDate.getTime());
     
     if (currentDiff < closestDiff) {
@@ -240,3 +266,4 @@ export const refreshReportData = async (): Promise<void> => {
   clearReportSnapshots();
   await getReportSnapshots();
 };
+
