@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getNetWorth } from '@/services/netWorthService';
@@ -288,7 +289,7 @@ const Reports = () => {
                     tickLine={false}
                   />
                   <YAxis 
-                    tickFormatter={(value) => `₹${formatIndianNumber(value)}`} {/* MODIFIED: Removed second argument */}
+                    tickFormatter={(value) => `₹${formatIndianNumber(value)}`}
                     tick={{ fontSize: 12 }} 
                     axisLine={false} 
                     tickLine={false}
