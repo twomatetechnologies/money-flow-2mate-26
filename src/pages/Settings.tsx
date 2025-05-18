@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -10,26 +10,61 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { toggleDatabaseSource, isPostgresEnabled, getPgAdminUrl, testDatabaseConnection } from "@/services/db/dbConnector";
 import { DatabaseSettings } from "@/components/settings/DatabaseSettings";
 import { Link } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Save } from 'lucide-react'; // Added Save icon
+import { toast } from '@/hooks/use-toast';
 
 const Settings: React.FC = () => {
-  const { settings, updateSettings } = useSettings();
+  const { settings: contextSettings, updateSettings, isLoading: isLoadingContext } = useSettings();
+  const [localSettings, setLocalSettings] = useState(contextSettings);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleAppNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateSettings({ appName: e.target.value });
+  useEffect(() => {
+    // Update local form state when context settings are loaded or change
+    if (!isLoadingContext) {
+      setLocalSettings(contextSettings);
+    }
+  }, [contextSettings, isLoadingContext]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value, type } = e.target;
+    setLocalSettings(prev => ({
+      ...prev,
+      [id]: type === 'number' ? (value === '' ? '' : Number(value)) : value, // Handle empty string for number input
+    }));
   };
 
-  const handleApiBaseUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateSettings({ apiBaseUrl: e.target.value });
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Validate before saving, e.g., stockPriceAlertThreshold must be a positive number
+      if (localSettings.stockPriceAlertThreshold <= 0) {
+        toast({
+          title: "Invalid Input",
+          description: "Stock price alert threshold must be greater than 0.",
+          variant: "destructive",
+        });
+        setIsSaving(false);
+        return;
+      }
+      await updateSettings(localSettings);
+      // Toast for success/failure is handled within updateSettings in the context
+    } catch (error) {
+      // This catch is more for unexpected errors during the call from this page,
+      // as context's updateSettings also has its own try/catch for the API call.
+      console.error("Error triggering settings save:", error);
+      toast({
+        title: "Save Error",
+        description: "An unexpected error occurred while trying to save settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleStockAlertThresholdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateSettings({ stockPriceAlertThreshold: Number(e.target.value) });
-  };
-
-  const handleStockApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateSettings({ stockApiKey: e.target.value });
-  };
+  if (isLoadingContext) {
+    return <div>Loading settings page...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -52,8 +87,8 @@ const Settings: React.FC = () => {
             <Label htmlFor="appName">Application Name</Label>
             <Input
               id="appName"
-              value={settings.appName}
-              onChange={handleAppNameChange}
+              value={localSettings.appName}
+              onChange={handleInputChange}
               placeholder="Money Flow Guardian"
             />
             <p className="text-sm text-muted-foreground">
@@ -75,8 +110,8 @@ const Settings: React.FC = () => {
             <Label htmlFor="apiBaseUrl">API Base URL</Label>
             <Input
               id="apiBaseUrl"
-              value={settings.apiBaseUrl}
-              onChange={handleApiBaseUrlChange}
+              value={localSettings.apiBaseUrl || ''}
+              onChange={handleInputChange}
               placeholder="http://localhost:8080"
             />
             <p className="text-sm text-muted-foreground">
@@ -102,35 +137,48 @@ const Settings: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="stockAlertThreshold">Price Change Alert Threshold (%)</Label>
+            <Label htmlFor="stockPriceAlertThreshold">Price Change Alert Threshold (%)</Label>
             <Input
-              id="stockAlertThreshold"
+              id="stockPriceAlertThreshold"
               type="number"
               min="1"
-              max="50"
-              value={settings.stockPriceAlertThreshold}
-              onChange={handleStockAlertThresholdChange}
+              max="100" // Sensible max
+              value={localSettings.stockPriceAlertThreshold}
+              onChange={handleInputChange}
             />
             <p className="text-sm text-muted-foreground">
-              Percentage change that triggers a stock price alert
+              Percentage change that triggers a stock price alert (e.g., 5 for 5%)
             </p>
           </div>
           
-          <Separator />
-          
-          <div className="space-y-2">
+          <div className="space-y-2"> {/* Changed from Separator and div to just div for grouping */}
             <Label htmlFor="stockApiKey">Stock API Key</Label>
             <Input
               id="stockApiKey"
               type="password"
-              value={settings.stockApiKey || ''}
-              onChange={handleStockApiKeyChange}
+              value={localSettings.stockApiKey || ''}
+              onChange={handleInputChange}
               placeholder="Enter your API key"
             />
             <p className="text-sm text-muted-foreground">
-              API key for accessing real-time stock data
+              API key for accessing real-time stock data (e.g., Alpha Vantage)
             </p>
           </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Save Configuration</CardTitle>
+          <CardDescription>
+            Apply all changes made above to application, API, and stock settings.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={handleSave} disabled={isSaving || isLoadingContext} className="w-full">
+            <Save className="mr-2 h-4 w-4" />
+            {isSaving ? "Saving..." : "Save All Settings"}
+          </Button>
         </CardContent>
       </Card>
 

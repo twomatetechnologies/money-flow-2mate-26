@@ -1,48 +1,98 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getAppSettings, saveAppSettings } from '@/services/settingsService';
+import { toast } from '@/hooks/use-toast'; // Ensure use-toast is correctly imported
 
-interface Settings {
-  stockPriceAlertThreshold: number; // Percentage change that triggers an alert
-  stockApiKey?: string; // API key for getting real stock prices
-  appName: string; // Application name
-  apiBaseUrl?: string; // Base URL for API requests
+// Export the Settings interface
+export interface Settings {
+  stockPriceAlertThreshold: number;
+  stockApiKey?: string;
+  appName: string;
+  apiBaseUrl?: string;
 }
 
 interface SettingsContextType {
   settings: Settings;
-  updateSettings: (newSettings: Partial<Settings>) => void;
+  updateSettings: (newSettings: Partial<Settings>) => Promise<void>; // Make async
+  isLoading: boolean;
 }
 
 const defaultSettings: Settings = {
-  stockPriceAlertThreshold: 5, // Default 5% threshold
-  stockApiKey: undefined, // No API key by default
-  appName: "Money Flow Guardian", // Default app name
-  apiBaseUrl: "", // Default empty string for API base URL
+  stockPriceAlertThreshold: 5,
+  stockApiKey: undefined,
+  appName: "Money Flow Guardian",
+  apiBaseUrl: "",
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(() => {
-    // Try to load settings from localStorage on initial render
-    const savedSettings = localStorage.getItem('finance-app-settings');
-    return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
-  });
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('finance-app-settings', JSON.stringify(settings));
-  }, [settings]);
+    const loadSettings = async () => {
+      setIsLoading(true);
+      try {
+        const dbSettings = await getAppSettings();
+        if (dbSettings) {
+          setSettings(dbSettings);
+        } else {
+          const savedSettings = localStorage.getItem('finance-app-settings');
+          if (savedSettings) {
+            setSettings(JSON.parse(savedSettings));
+          }
+          // If neither DB nor localStorage, defaultSettings are already set
+        }
+      } catch (error) {
+        console.error("Failed to load settings during init, using defaults/localStorage:", error);
+        const savedSettings = localStorage.getItem('finance-app-settings');
+        if (savedSettings) {
+          setSettings(JSON.parse(savedSettings));
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadSettings();
+  }, []);
 
-  const updateSettings = (newSettings: Partial<Settings>) => {
-    setSettings(prev => ({
-      ...prev,
-      ...newSettings
-    }));
+  useEffect(() => {
+    if (!isLoading) {
+      localStorage.setItem('finance-app-settings', JSON.stringify(settings));
+    }
+  }, [settings, isLoading]);
+
+  const updateSettingsAndPersist = async (newSettings: Partial<Settings>) => {
+    const updatedSettingsData = { ...settings, ...newSettings };
+    setSettings(updatedSettingsData); // Optimistically update UI and localStorage (via useEffect)
+
+    try {
+      await saveAppSettings(updatedSettingsData);
+      toast({
+        title: "Settings Saved",
+        description: "Your settings have been successfully saved to the database.",
+      });
+    } catch (error) {
+      console.error("Failed to save settings to DB:", error);
+      toast({
+        title: "Save Error",
+        description: "Failed to save settings to the database. Changes are saved locally.",
+        variant: "destructive",
+      });
+      // Potentially revert optimistic update or handle error state
+    }
   };
 
+  if (isLoading && typeof window !== 'undefined' ) { // Added typeof window check for SSR safety, though likely not an issue here
+    // Avoid showing loading indicator if it's an SSR environment or not yet mounted.
+    // For a pure CSR app like this, it's generally fine.
+     return <div>Loading application settings...</div>; 
+  }
+
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings }}>
+    <SettingsContext.Provider value={{ settings, updateSettings: updateSettingsAndPersist, isLoading }}>
       {children}
     </SettingsContext.Provider>
   );
