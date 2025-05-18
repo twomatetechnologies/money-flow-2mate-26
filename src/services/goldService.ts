@@ -2,7 +2,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { GoldInvestment } from '@/types';
 import { createAuditRecord } from './auditService';
-import { downloadSampleCSV, exportToCSV } from '@/utils/exportUtils';
+import { downloadSampleCSV, exportToCSV, importFromFile } from '@/utils/exportUtils';
 import * as XLSX from 'xlsx';
 import { getGoldInvestments as fetchGoldInvestments, createGold as addGold } from '@/services/crudService';
 
@@ -63,47 +63,40 @@ export const downloadGoldSample = () => {
 };
 
 export const importGoldInvestments = async (file: File): Promise<GoldInvestment[]> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+  try {
+    // Use the improved importFromFile function
+    const importedData = await importFromFile(file);
     
-    reader.onload = (e) => {
-      try {
-        const text = e.target?.result;
-        if (typeof text !== 'string') {
-          throw new Error('Invalid file content');
-        }
-        
-        const workbook = XLSX.read(text, { type: 'binary' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const data = XLSX.utils.sheet_to_json(worksheet);
-        
-        const investments: GoldInvestment[] = data.map((row: any) => ({
-          id: uuidv4(),
-          type: row['Type'],
-          quantity: parseFloat(row['Quantity']),
-          purchaseDate: new Date(row['Purchase Date']),
-          purchasePrice: parseFloat(row['Purchase Price']),
-          currentPrice: parseFloat(row['Current Price']),
-          value: parseFloat(row['Value']),
-          location: row['Location/Notes'],
-          familyMemberId: row['Family Member ID'],
-          lastUpdated: new Date()
-        }));
-        
-        // Import each investment and create audit record
-        investments.forEach(investment => {
-          addGold(investment);
-          createAuditRecord(investment.id, 'gold', 'import', investment);
-        });
-        
-        resolve(investments);
-      } catch (error) {
-        reject(error);
-      }
-    };
+    const investments: GoldInvestment[] = importedData.map((row: any) => {
+      // Parse numeric values properly
+      const quantity = parseFloat(row['Quantity'] || 0);
+      const purchasePrice = parseFloat(row['Purchase Price'] || 0);
+      const currentPrice = parseFloat(row['Current Price'] || 0);
+      const value = parseFloat(row['Value'] || (quantity * currentPrice));
+      
+      const investment: GoldInvestment = {
+        id: uuidv4(),
+        type: String(row['Type'] || ''),
+        quantity: quantity,
+        purchaseDate: new Date(row['Purchase Date'] || new Date()),
+        purchasePrice: purchasePrice,
+        currentPrice: currentPrice,
+        value: value,
+        location: String(row['Location/Notes'] || ''),
+        familyMemberId: String(row['Family Member ID'] || ''),
+        lastUpdated: new Date()
+      };
+      
+      // Import each investment and create audit record
+      addGold(investment);
+      createAuditRecord(investment.id, 'gold', 'import', investment);
+      
+      return investment;
+    });
     
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsBinaryString(file);
-  });
+    return investments;
+  } catch (error) {
+    console.error("Error importing gold investments:", error);
+    throw error;
+  }
 };

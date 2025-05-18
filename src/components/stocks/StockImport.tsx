@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { StockHolding } from '@/types';
 import { Import, FileText, FileSpreadsheet, AlertCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { importFromFile } from '@/utils/exportUtils';
 
 interface StockImportProps {
   isOpen: boolean;
@@ -58,71 +59,51 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
     }
   };
 
-  const parseFile = (file: File) => {
+  const parseFile = async (file: File) => {
     setIsLoading(true);
     setError(null);
     
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const csvData = event.target?.result as string;
-        const parsedStocks = parseCSV(csvData);
+    try {
+      // Use the improved importFromFile function from exportUtils
+      if (file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        const importedData = await importFromFile(file);
+        
+        // Convert the imported data to ParsedStock format
+        const parsedStocks = importedData.map((row: any) => {
+          return {
+            symbol: String(row['Symbol'] || row['symbol'] || ''),
+            name: String(row['Name'] || row['name'] || row['Symbol'] || row['symbol'] || ''),
+            currentPrice: parseFloat(row['Current Price'] || row['currentPrice'] || 0),
+            change: parseFloat(row['Change'] || row['change'] || 0),
+            prevClose: parseFloat(row['Prev Close'] || row['prevClose'] || 0),
+            volume: parseFloat(row['Volume'] || row['volume'] || 0),
+            quantity: parseFloat(row['Quantity'] || row['quantity'] || 0),
+            averageBuyPrice: parseFloat(row['Average Buy Price'] || row['averageBuyPrice'] || 0),
+            investmentDate: String(row['Investment Date'] || row['investmentDate'] || ''),
+            investmentAmount: parseFloat(row['Investment Amount'] || row['investmentAmount'] || 0),
+            intraHighLow: String(row['Intra High/Low'] || row['intraHighLow'] || ''),
+            weekHighLow: String(row['52 Week High/Low'] || row['weekHighLow'] || ''),
+            todaysGain: parseFloat(row['Today\'s Gain'] || row['todaysGain'] || 0),
+            todaysGainPercent: parseFloat(row['Today\'s Gain %'] || row['todaysGainPercent'] || 0),
+            overallGain: parseFloat(row['Overall Gain'] || row['overallGain'] || 0),
+            overallGainPercent: parseFloat(row['Overall Gain %'] || row['overallGainPercent'] || 0),
+            value: parseFloat(row['Value'] || row['value'] || 0),
+            broker: String(row['Broker'] || row['broker'] || ''),
+            notes: String(row['Notes'] || row['notes'] || '')
+          };
+        });
+        
         setPreviewData(parsedStocks);
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error parsing file:', err);
-        setError('Failed to parse file. Please check the format and try again.');
-        setIsLoading(false);
+      } else {
+        throw new Error('Unsupported file format. Please upload a CSV or Excel file.');
       }
-    };
-    
-    reader.onerror = () => {
-      setError('Error reading file. Please try again.');
+      
       setIsLoading(false);
-    };
-    
-    reader.readAsText(file);
-  };
-
-  const parseCSV = (csvData: string): ParsedStock[] => {
-    const lines = csvData.split('\n');
-    if (lines.length < 2) {
-      throw new Error('File has insufficient data.');
+    } catch (err) {
+      console.error('Error parsing file:', err);
+      setError('Failed to parse file. Please check the format and try again.');
+      setIsLoading(false);
     }
-    
-    // Skip header row and parse data rows
-    const stocks = lines.slice(1)
-      .filter(line => line.trim().length > 0)
-      .map(line => {
-        const values = line.split(',').map(value => value.trim());
-        if (values.length < 5) {
-          throw new Error('Row has insufficient columns.');
-        }
-
-        return {
-          symbol: values[0] || '',
-          name: values[1] || values[0] || '',
-          currentPrice: parseFloat(values[1]) || 0,
-          change: parseFloat(values[2]) || 0,
-          prevClose: parseFloat(values[3]) || 0,
-          volume: parseFloat(values[4]) || 0,
-          quantity: parseFloat(values[5]) || 0,
-          averageBuyPrice: parseFloat(values[6]) || 0,
-          investmentDate: values[7] || '',
-          investmentAmount: parseFloat(values[8]) || 0,
-          intraHighLow: values[9] || '',
-          weekHighLow: values[10] || '',
-          todaysGain: parseFloat(values[11]) || 0,
-          todaysGainPercent: parseFloat(values[12]) || 0,
-          overallGain: parseFloat(values[13]) || 0,
-          overallGainPercent: parseFloat(values[14]) || 0,
-          value: parseFloat(values[15]) || 0,
-          broker: values[16] || '',
-          notes: values[17] || '',
-        };
-      });
-    
-    return stocks;
   };
 
   const handleImport = () => {
@@ -213,7 +194,7 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
               className="cursor-pointer"
             />
             <p className="text-xs text-muted-foreground">
-              Supported formats: .csv
+              Supported formats: .csv, .xlsx, .xls
             </p>
           </div>
 

@@ -57,10 +57,46 @@ export const importFromFile = async (file: File): Promise<any[]> => {
         const workbook = XLSX.read(data, { type: 'binary' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
         
-        resolve(jsonData);
+        // Use raw: false to ensure numbers are properly parsed as numbers
+        // and add header:true to automatically use the first row as headers
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+          raw: false, 
+          defval: '', 
+          header: 1 
+        });
+        
+        // Process the data to ensure proper type conversion
+        if (jsonData.length > 1) {
+          const headers = jsonData[0] as string[];
+          const rows = jsonData.slice(1) as any[][];
+          
+          const processedData = rows.map(row => {
+            const obj: Record<string, any> = {};
+            headers.forEach((header, index) => {
+              if (index < row.length) {
+                const value = row[index];
+                // Try to convert numeric strings to numbers
+                if (typeof value === 'string' && !isNaN(Number(value)) && value.trim() !== '') {
+                  obj[header] = Number(value);
+                } else {
+                  obj[header] = value;
+                }
+              } else {
+                obj[header] = '';
+              }
+            });
+            return obj;
+          });
+          
+          resolve(processedData);
+        } else {
+          // Fallback to the default method if the format is different
+          const defaultData = XLSX.utils.sheet_to_json(worksheet);
+          resolve(defaultData);
+        }
       } catch (error) {
+        console.error("Error parsing file:", error);
         reject(error);
       }
     };
