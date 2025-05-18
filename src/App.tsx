@@ -20,7 +20,8 @@ import Insurance from '@/pages/Insurance';
 import Gold from '@/pages/Gold';
 import Goals from '@/pages/Goals';
 import Reports from '@/pages/Reports';
-
+import FamilyMembers from './pages/FamilyMembers';
+import AuditTrail from './pages/AuditTrail';
 // Initialize database preferences on app start - before auth provider
 // This ensures the correct storage system is configured before any auth or data operations
 initDatabasePreferences();
@@ -99,7 +100,9 @@ const App: React.FC = () => {
                 <Route path="/provident-fund" element={<ProvidentFund />} />
                 <Route path="/insurance" element={<Insurance />} />
                 <Route path="/gold" element={<Gold />} />
-                <Route path="/goals" element={<Goals />} />
+                <Route path="/goals" element={<Goals />} /> 
+                <Route path="/family-members" element={<FamilyMembers />} />
+                <Route path="/audit-trail" element={<AuditTrail />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/ai-settings" element={<AISettings />} />
@@ -113,5 +116,5 @@ const App: React.FC = () => {
     </AuthProvider>
   );
 };
-
+``
 export default App;
