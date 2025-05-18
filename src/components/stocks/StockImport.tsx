@@ -50,11 +50,14 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
   const [error, setError] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<ParsedStock[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{row: number, errors: string[]}[]>([]);
+  const [showDetailedErrors, setShowDetailedErrors] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
       setError(null);
+      setValidationErrors([]);
       parseFile(e.target.files[0]);
     }
   };
@@ -62,38 +65,83 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
   const parseFile = async (file: File) => {
     setIsLoading(true);
     setError(null);
+    setValidationErrors([]);
     
     try {
       // Use the improved importFromFile function from exportUtils
       if (file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
         const importedData = await importFromFile(file);
         
+        if (!Array.isArray(importedData) || importedData.length === 0) {
+          throw new Error('No data found in the file or invalid file format');
+        }
+
+        // Validate each row for required fields
+        const requiredFields = ['Symbol', 'symbol', 'Quantity', 'quantity', 'Average Buy Price', 'averageBuyPrice'];
+        const errors: {row: number, errors: string[]}[] = [];
+        
         // Convert the imported data to ParsedStock format
-        const parsedStocks = importedData.map((row: any) => {
+        const parsedStocks = importedData.map((row: any, index: number) => {
+          const rowErrors: string[] = [];
+          
+          // Check for symbol
+          const symbol = String(row['Symbol'] || row['symbol'] || '').trim();
+          if (!symbol) {
+            rowErrors.push('Symbol is required');
+          }
+          
+          // Check for quantity
+          const quantityValue = row['Quantity'] || row['quantity'];
+          const quantity = typeof quantityValue === 'number' ? quantityValue : parseFloat(String(quantityValue || '0'));
+          if (isNaN(quantity) || quantity <= 0) {
+            rowErrors.push('Quantity must be a positive number');
+          }
+          
+          // Check for average buy price
+          const avgBuyPriceValue = row['Average Buy Price'] || row['averageBuyPrice'];
+          const averageBuyPrice = typeof avgBuyPriceValue === 'number' ? avgBuyPriceValue : parseFloat(String(avgBuyPriceValue || '0'));
+          if (isNaN(averageBuyPrice) || averageBuyPrice <= 0) {
+            rowErrors.push('Average Buy Price must be a positive number');
+          }
+          
+          // If there are errors, add them to the error list
+          if (rowErrors.length > 0) {
+            errors.push({
+              row: index + 1, // +1 because we're 0-indexed but users expect 1-indexed
+              errors: rowErrors
+            });
+          }
+          
           return {
-            symbol: String(row['Symbol'] || row['symbol'] || ''),
+            symbol: symbol,
             name: String(row['Name'] || row['name'] || row['Symbol'] || row['symbol'] || ''),
-            currentPrice: parseFloat(row['Current Price'] || row['currentPrice'] || 0),
-            change: parseFloat(row['Change'] || row['change'] || 0),
-            prevClose: parseFloat(row['Prev Close'] || row['prevClose'] || 0),
-            volume: parseFloat(row['Volume'] || row['volume'] || 0),
-            quantity: parseFloat(row['Quantity'] || row['quantity'] || 0),
-            averageBuyPrice: parseFloat(row['Average Buy Price'] || row['averageBuyPrice'] || 0),
+            currentPrice: parseFloat(String(row['Current Price'] || row['currentPrice'] || 0)),
+            change: parseFloat(String(row['Change'] || row['change'] || 0)),
+            prevClose: parseFloat(String(row['Prev Close'] || row['prevClose'] || 0)),
+            volume: parseFloat(String(row['Volume'] || row['volume'] || 0)),
+            quantity: quantity,
+            averageBuyPrice: averageBuyPrice,
             investmentDate: String(row['Investment Date'] || row['investmentDate'] || ''),
-            investmentAmount: parseFloat(row['Investment Amount'] || row['investmentAmount'] || 0),
+            investmentAmount: parseFloat(String(row['Investment Amount'] || row['investmentAmount'] || 0)),
             intraHighLow: String(row['Intra High/Low'] || row['intraHighLow'] || ''),
             weekHighLow: String(row['52 Week High/Low'] || row['weekHighLow'] || ''),
-            todaysGain: parseFloat(row['Today\'s Gain'] || row['todaysGain'] || 0),
-            todaysGainPercent: parseFloat(row['Today\'s Gain %'] || row['todaysGainPercent'] || 0),
-            overallGain: parseFloat(row['Overall Gain'] || row['overallGain'] || 0),
-            overallGainPercent: parseFloat(row['Overall Gain %'] || row['overallGainPercent'] || 0),
-            value: parseFloat(row['Value'] || row['value'] || 0),
+            todaysGain: parseFloat(String(row['Today\'s Gain'] || row['todaysGain'] || 0)),
+            todaysGainPercent: parseFloat(String(row['Today\'s Gain %'] || row['todaysGainPercent'] || 0)),
+            overallGain: parseFloat(String(row['Overall Gain'] || row['overallGain'] || 0)),
+            overallGainPercent: parseFloat(String(row['Overall Gain %'] || row['overallGainPercent'] || 0)),
+            value: parseFloat(String(row['Value'] || row['value'] || 0)),
             broker: String(row['Broker'] || row['broker'] || ''),
             notes: String(row['Notes'] || row['notes'] || '')
           };
         });
         
-        setPreviewData(parsedStocks);
+        if (errors.length > 0) {
+          setValidationErrors(errors);
+          const totalErrors = errors.reduce((sum, row) => sum + row.errors.length, 0);
+          setError(`Found ${totalErrors} validation error${totalErrors !== 1 ? 's' : ''} in ${errors.length} row${errors.length !== 1 ? 's' : ''}. Please fix them before importing.`);
+        } else {
+          setPreviewData(parsedStocks);
+        }
       } else {
         throw new Error('Unsupported file format. Please upload a CSV or Excel file.');
       }
@@ -101,7 +149,7 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
       setIsLoading(false);
     } catch (err) {
       console.error('Error parsing file:', err);
-      setError('Failed to parse file. Please check the format and try again.');
+      setError(`Failed to parse file: ${err instanceof Error ? err.message : 'Unknown error'}. Please check the format and try again.`);
       setIsLoading(false);
     }
   };
@@ -117,10 +165,10 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
       name: stock.name,
       quantity: stock.quantity,
       averageBuyPrice: stock.averageBuyPrice,
-      currentPrice: stock.currentPrice,
+      currentPrice: stock.currentPrice || stock.averageBuyPrice, // Default to averageBuyPrice if currentPrice is not provided
       change: stock.change,
       changePercent: stock.todaysGainPercent,
-      value: stock.value || (stock.quantity * stock.currentPrice),
+      value: stock.value || (stock.quantity * (stock.currentPrice || stock.averageBuyPrice)),
       sector: '',
       lastUpdated: new Date(),
       notes: stock.notes
@@ -129,6 +177,7 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
     onImport(stocksToImport);
     setFile(null);
     setPreviewData([]);
+    setValidationErrors([]);
   };
 
   const downloadSampleFile = (format: 'csv' | 'xlsx') => {
@@ -201,7 +250,37 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertTitle>Import Error</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p>{error}</p>
+                {validationErrors.length > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setShowDetailedErrors(!showDetailedErrors)}
+                    className="text-xs mt-1"
+                  >
+                    {showDetailedErrors ? 'Hide Details' : 'Show Details'}
+                  </Button>
+                )}
+              </AlertDescription>
+              
+              {showDetailedErrors && validationErrors.length > 0 && (
+                <div className="mt-4 max-h-[200px] overflow-y-auto text-sm border rounded-md p-2">
+                  <ul className="list-disc pl-4">
+                    {validationErrors.map((rowError, idx) => (
+                      <li key={idx} className="mb-2">
+                        <strong>Row {rowError.row}:</strong>
+                        <ul className="list-disc pl-6">
+                          {rowError.errors.map((err, errIdx) => (
+                            <li key={errIdx}>{err}</li>
+                          ))}
+                        </ul>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </Alert>
           )}
 
@@ -225,8 +304,8 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
                         <td className="py-2 px-2">{stock.symbol}</td>
                         <td className="py-2 px-2">{stock.name}</td>
                         <td className="py-2 px-2 text-right">{stock.quantity}</td>
-                        <td className="py-2 px-2 text-right">₹{stock.averageBuyPrice}</td>
-                        <td className="py-2 px-2 text-right">₹{stock.currentPrice}</td>
+                        <td className="py-2 px-2 text-right">₹{stock.averageBuyPrice.toFixed(2)}</td>
+                        <td className="py-2 px-2 text-right">₹{stock.currentPrice.toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
