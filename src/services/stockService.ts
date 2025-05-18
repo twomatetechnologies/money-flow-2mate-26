@@ -164,6 +164,7 @@ export const getStocks = async (): Promise<StockHolding[]> => {
   if (useDatabase) {
     return await stockDbService.getStocks();
   }
-  
-  return Promise.resolve(stocks);
+  // If PostgreSQL is not enabled, return an empty array as per user request.
+  return Promise.resolve([]);
 };
+
