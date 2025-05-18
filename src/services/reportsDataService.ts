@@ -1,6 +1,6 @@
-
 import { v4 as uuidv4 } from 'uuid';
-import { getNetWorthHistory } from './netWorthService';
+import { getNetWorth } from './netWorthService';
+import { NetWorthData } from '@/types';
 
 export interface ReportSnapshot {
   id: string;
@@ -24,7 +24,7 @@ export interface ReportSnapshot {
 const REPORTS_STORAGE_KEY = 'financialReports';
 
 // Function to load report snapshots from localStorage or generate historical data
-export const getReportSnapshots = (): ReportSnapshot[] => {
+export const getReportSnapshots = async (): Promise<ReportSnapshot[]> => {
   try {
     const stored = localStorage.getItem(REPORTS_STORAGE_KEY);
     if (stored) {
@@ -39,12 +39,14 @@ export const getReportSnapshots = (): ReportSnapshot[] => {
     }
     
     // Generate snapshots if none exist
-    const snapshots = generateSnapshotsFromNetWorth();
+    const netWorthData: NetWorthData = await getNetWorth();
+    const snapshots = generateSnapshotsFromNetWorth(netWorthData.history);
     saveReportSnapshots(snapshots);
     return snapshots;
   } catch (error) {
     console.error('Error loading report snapshots:', error);
-    const snapshots = generateSnapshotsFromNetWorth();
+    const netWorthData: NetWorthData = await getNetWorth();
+    const snapshots = generateSnapshotsFromNetWorth(netWorthData.history);
     saveReportSnapshots(snapshots);
     return snapshots;
   }
@@ -59,11 +61,8 @@ const saveReportSnapshots = (snapshots: ReportSnapshot[]): void => {
   }
 };
 
-// Generate snapshots from existing net worth history
-const generateSnapshotsFromNetWorth = (): ReportSnapshot[] => {
-  // Get the stored net worth history
-  const netWorthHistory = getNetWorthHistory();
-  
+// Generate snapshots from provided net worth history
+const generateSnapshotsFromNetWorth = (netWorthHistory: Array<{ date: Date; value: number }>): ReportSnapshot[] => {
   // Convert each history point to a snapshot with additional financial data
   const snapshots: ReportSnapshot[] = netWorthHistory.map(historyItem => {
     const netWorth = historyItem.value;
@@ -74,7 +73,7 @@ const generateSnapshotsFromNetWorth = (): ReportSnapshot[] => {
     const liabilities = Math.round(netWorth * (0.2 + Math.random() * 0.15)); // 20-35% of net worth
     const monthlyIncome = Math.round(netWorth * 0.04 / 12); // Roughly 4% annual return divided by 12
     const monthlyExpenses = Math.round(monthlyIncome * (0.6 + Math.random() * 0.2)); // 60-80% of income
-    const savingsRate = Math.round(100 * (1 - (monthlyExpenses / monthlyIncome)));
+    const savingsRate = monthlyIncome > 0 ? Math.round(100 * (1 - (monthlyExpenses / monthlyIncome))) : 0;
     
     // Generate realistic asset allocation based on the date
     // This mimics changing allocation strategies over time
@@ -90,7 +89,7 @@ const generateSnapshotsFromNetWorth = (): ReportSnapshot[] => {
     
     // Normalize to ensure they add up to 100%
     const total = stockPercent + fdPercent + savingsPercent + goldPercent + pfPercent;
-    const normalizer = totalAssetPercentage / total;
+    const normalizer = total > 0 ? totalAssetPercentage / total : 0;
     
     return {
       id: uuidv4(),
@@ -237,7 +236,7 @@ export const clearReportSnapshots = (): void => {
 };
 
 // Refresh report data from net worth history
-export const refreshReportData = (): void => {
+export const refreshReportData = async (): Promise<void> => {
   clearReportSnapshots();
-  getReportSnapshots(); // This will regenerate and save new data
+  await getReportSnapshots();
 };
