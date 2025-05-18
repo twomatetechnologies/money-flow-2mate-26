@@ -6,6 +6,26 @@ import { downloadSampleCSV, exportToCSV, importFromFile } from '@/utils/exportUt
 import * as XLSX from 'xlsx';
 import { getGoldInvestments as fetchGoldInvestments, createGold as addGold } from '@/services/crudService';
 
+// Helper function to validate gold type
+const validateGoldType = (typeValue: string): "Physical" | "Digital" | "ETF" | "SGB" => {
+  const type = String(typeValue).trim();
+  
+  switch (type) {
+    case "Physical":
+      return "Physical";
+    case "Digital":
+      return "Digital";
+    case "ETF":
+      return "ETF";
+    case "SGB":
+      return "SGB";
+    default:
+      // Default to "Physical" if invalid value is provided
+      console.warn(`Invalid gold type "${type}" received. Defaulting to "Physical".`);
+      return "Physical";
+  }
+};
+
 export const exportGoldInvestments = () => {
   const investments = fetchGoldInvestments();
   investments.then(data => {
@@ -74,9 +94,12 @@ export const importGoldInvestments = async (file: File): Promise<GoldInvestment[
       const currentPrice = parseFloat(row['Current Price'] || 0);
       const value = parseFloat(row['Value'] || (quantity * currentPrice));
       
+      // Use the validateGoldType function to ensure we have a valid type
+      const validatedType = validateGoldType(row['Type'] || '');
+      
       const investment: GoldInvestment = {
         id: uuidv4(),
-        type: String(row['Type'] || ''),
+        type: validatedType,
         quantity: quantity,
         purchaseDate: new Date(row['Purchase Date'] || new Date()),
         purchasePrice: purchasePrice,
