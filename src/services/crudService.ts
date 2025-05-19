@@ -8,7 +8,6 @@ import {
   NetWorthData 
 } from '@/types';
 import { 
-  mockStocks, 
   mockFixedDeposits, 
   mockSIPInvestments, 
   mockInsurancePolicies, 
@@ -16,9 +15,9 @@ import {
   mockNetWorthData
 } from './mockData';
 import { createAuditRecord } from './auditService';
-import { isPostgresEnabled } from './db/dbConnector';
+import * as stockService from './stockService';
 
-// Initialize datastores from localStorage or use mock data if not available
+// Helper function to load from localStorage or use mock data (for non-stock entities)
 const loadFromStorage = <T>(key: string, mockData: T[]): T[] => {
   try {
     const storedData = localStorage.getItem(key);
@@ -29,7 +28,7 @@ const loadFromStorage = <T>(key: string, mockData: T[]): T[] => {
   }
 };
 
-// Save data to localStorage
+// Helper function to save data to localStorage (for non-stock entities)
 const saveToStorage = <T>(key: string, data: T[]): void => {
   try {
     localStorage.setItem(key, JSON.stringify(data));
@@ -38,65 +37,31 @@ const saveToStorage = <T>(key: string, data: T[]): void => {
   }
 };
 
-// In-memory datastores with persistence
-let stocks = loadFromStorage<StockHolding>('stocks', mockStocks);
+// In-memory datastores with persistence for non-stock entities
 let fixedDeposits = loadFromStorage<FixedDeposit>('fixedDeposits', mockFixedDeposits);
 let sipInvestments = loadFromStorage<SIPInvestment>('sipInvestments', mockSIPInvestments);
 let insurancePolicies = loadFromStorage<InsurancePolicy>('insurancePolicies', mockInsurancePolicies);
 let goldInvestments = loadFromStorage<GoldInvestment>('goldInvestments', mockGoldInvestments);
 
-// CRUD operations for Stocks
-export const createStock = (stock: Omit<StockHolding, 'id' | 'lastUpdated'>): StockHolding => {
-  const newStock: StockHolding = {
-    ...stock,
-    id: uuidv4(),
-    lastUpdated: new Date()
-  };
-  
-  stocks.push(newStock);
-  saveToStorage('stocks', stocks);
-  createAuditRecord(newStock.id, 'stock', 'create', newStock);
-  return newStock;
+// CRUD operations for Stocks - Delegated to stockService
+export const createStock = async (stock: Omit<StockHolding, 'id' | 'lastUpdated'>): Promise<StockHolding> => {
+  return stockService.createStock(stock);
 };
 
-export const updateStock = (id: string, updates: Partial<StockHolding>): StockHolding | null => {
-  const index = stocks.findIndex(stock => stock.id === id);
-  if (index === -1) return null;
-  
-  // Get the original stock for audit purposes
-  const originalStock = { ...stocks[index] };
-  
-  // Update the stock
-  stocks[index] = {
-    ...stocks[index],
-    ...updates,
-    lastUpdated: new Date()
-  };
-  
-  saveToStorage('stocks', stocks);
-  createAuditRecord(id, 'stock', 'update', {
-    previous: originalStock,
-    current: stocks[index],
-    changes: updates
-  });
-  
-  return stocks[index];
+export const updateStock = async (id: string, updates: Partial<StockHolding>): Promise<StockHolding | null> => {
+  return stockService.updateStock(id, updates);
 };
 
-export const deleteStock = (id: string): boolean => {
-  const index = stocks.findIndex(stock => stock.id === id);
-  if (index === -1) return false;
-  
-  const deletedStock = stocks[index];
-  stocks.splice(index, 1);
-  
-  saveToStorage('stocks', stocks);
-  createAuditRecord(id, 'stock', 'delete', deletedStock);
-  return true;
+export const deleteStock = async (id: string): Promise<boolean> => {
+  return stockService.deleteStock(id);
 };
 
-export const getStockById = (id: string): StockHolding | null => {
-  return stocks.find(stock => stock.id === id) || null;
+export const getStockById = async (id: string): Promise<StockHolding | null> => {
+  return stockService.getStockById(id);
+};
+
+export const getStocks = async (): Promise<StockHolding[]> => {
+  return stockService.getStocks();
 };
 
 // CRUD operations for Fixed Deposits
@@ -323,12 +288,7 @@ export const getGoldById = (id: string): GoldInvestment | null => {
   return goldInvestments.find(gold => gold.id === id) || null;
 };
 
-// Data retrieval methods - ensure they work with localStorage
-export const getStocks = (): Promise<StockHolding[]> => {
-  // Always use localStorage in Lovable preview
-  return Promise.resolve(stocks);
-};
-
+// Data retrieval methods for non-stock entities
 export const getFixedDeposits = (): Promise<FixedDeposit[]> => {
   return Promise.resolve(fixedDeposits);
 };
@@ -345,27 +305,37 @@ export const getGoldInvestments = (): Promise<GoldInvestment[]> => {
   return Promise.resolve(goldInvestments);
 };
 
-// Add the missing getNetWorth function
+// Add the missing getNetWorth function - this one calculates based on current data from various services
 export const getNetWorth = async (): Promise<NetWorthData> => {
-  // Calculate live net worth based on current data
-  const stocksData = await getStocks();
+  const stocksData = await getStocks(); // Uses the new getStocks path
   const fdData = await getFixedDeposits();
   const sipData = await getSIPInvestments();
   const goldData = await getGoldInvestments();
-  const insuranceData = await getInsurancePolicies();
+  const insuranceData = await getInsurancePolicies(); // Assuming this is for 'other' or similar calculation
   
-  const stocksTotal = stocksData.reduce((sum, stock) => sum + stock.value, 0);
+  // Ensure 'value' is used for stocks, or calculate if not present
+  const stocksTotal = stocksData.reduce((sum, stock) => {
+      const value = typeof stock.value === 'number' ? stock.value : (stock.currentPrice || 0) * (stock.quantity || 0);
+      return sum + value;
+  }, 0);
   const fdTotal = fdData.reduce((sum, fd) => sum + fd.principal, 0);
   const sipTotal = sipData.reduce((sum, sip) => sum + sip.currentValue, 0);
   const goldTotal = goldData.reduce((sum, gold) => sum + gold.value, 0);
-  const otherTotal = insuranceData.reduce((sum, insurance) => sum + insurance.premium * 12, 0);
   
-  const total = stocksTotal + fdTotal + sipTotal + goldTotal + otherTotal;
+  // Example: 'other' could be sum of annual insurance premiums or some other calculation
+  // For simplicity, let's use a simple sum of premiums if that's the intent.
+  // Or, if 'other' is meant for a different category, it might be 0.
+  // Let's assume 'other' is not directly from insurance premiums for net worth.
+  const otherTotal = 0; // Or a more specific calculation if defined.
+  // Note: The original mockNetWorthData had 'other' with a value. This might need a dedicated service.
+  // For now, we'll keep it simple, if providentFund needs a sum, it needs its own service call too.
+  // const providentFundTotal = providentFundsData.reduce((sum, pf) => sum + pf.totalBalance, 0); // Assuming getProvidentFunds()
+  const providentFundTotal = 0; // Placeholder, needs its own data source if part of this getNetWorth
   
-  // Get the history from mock data but use live calculated total for current value
-  const history = [...mockNetWorthData.history];
+  const total = stocksTotal + fdTotal + sipTotal + goldTotal + otherTotal + providentFundTotal;
+  
+  const history = [...mockNetWorthData.history]; // Keep mock history for now
   if (history.length > 0) {
-    // Update the latest history entry with the current calculated total
     history[history.length - 1] = {
       date: new Date(),
       value: total
@@ -379,8 +349,8 @@ export const getNetWorth = async (): Promise<NetWorthData> => {
       fixedDeposits: fdTotal,
       sip: sipTotal,
       gold: goldTotal,
-      other: otherTotal,
-      providentFund: 0  // Add the missing property
+      other: otherTotal, 
+      providentFund: providentFundTotal 
     },
     history: history
   };

@@ -1,86 +1,11 @@
-
 import { 
-  StockHolding, 
   FixedDeposit, 
   SIPInvestment, 
   InsurancePolicy, 
   GoldInvestment,
-  NetWorthData
+  NetWorthData,
+  ProvidentFund
 } from '@/types';
-
-// Mock stock data
-export const mockStocks: StockHolding[] = [
-  {
-    id: '1',
-    symbol: 'RELIANCE',
-    name: 'Reliance Industries',
-    quantity: 50,
-    averageBuyPrice: 2400,
-    currentPrice: 2580,
-    change: 35,
-    changePercent: 1.37,
-    value: 129000,
-    sector: 'Energy',
-    lastUpdated: new Date(),
-    familyMemberId: 'self-default'
-  },
-  {
-    id: '2',
-    symbol: 'INFY',
-    name: 'Infosys',
-    quantity: 100,
-    averageBuyPrice: 1500,
-    currentPrice: 1420,
-    change: -28,
-    changePercent: -1.93,
-    value: 142000,
-    sector: 'Technology',
-    lastUpdated: new Date(),
-    familyMemberId: 'spouse-default'
-  },
-  {
-    id: '3',
-    symbol: 'HDFCBANK',
-    name: 'HDFC Bank',
-    quantity: 75,
-    averageBuyPrice: 1650,
-    currentPrice: 1720,
-    change: 12,
-    changePercent: 0.7,
-    value: 129000,
-    sector: 'Banking',
-    lastUpdated: new Date(),
-    familyMemberId: 'parent-default'
-  },
-  {
-    id: '4',
-    symbol: 'TCS',
-    name: 'Tata Consultancy Services',
-    quantity: 30,
-    averageBuyPrice: 3200,
-    currentPrice: 3450,
-    change: 75,
-    changePercent: 2.22,
-    value: 103500,
-    sector: 'Technology',
-    lastUpdated: new Date(),
-    familyMemberId: 'self-default'
-  },
-  {
-    id: '5',
-    symbol: 'BAJFINANCE',
-    name: 'Bajaj Finance',
-    quantity: 25,
-    averageBuyPrice: 7100,
-    currentPrice: 6800,
-    change: -120,
-    changePercent: -1.73,
-    value: 170000,
-    sector: 'Financial Services',
-    lastUpdated: new Date(),
-    familyMemberId: 'spouse-default'
-  }
-];
 
 // Mock fixed deposit data
 export const mockFixedDeposits: FixedDeposit[] = [
@@ -95,7 +20,7 @@ export const mockFixedDeposits: FixedDeposit[] = [
     maturityAmount: 105700,
     isAutoRenew: true,
     familyMemberId: 'self-default',
-    lastUpdated: new Date() // Add this line
+    lastUpdated: new Date()
   },
   {
     id: '2',
@@ -109,7 +34,7 @@ export const mockFixedDeposits: FixedDeposit[] = [
     isAutoRenew: false,
     notes: 'For home renovation',
     familyMemberId: 'spouse-default',
-    lastUpdated: new Date() // Add this line
+    lastUpdated: new Date()
   },
   {
     id: '3',
@@ -123,7 +48,7 @@ export const mockFixedDeposits: FixedDeposit[] = [
     isAutoRenew: true,
     notes: 'Short term FD',
     familyMemberId: 'parent-default',
-    lastUpdated: new Date() // Add this line
+    lastUpdated: new Date()
   }
 ];
 
@@ -227,7 +152,7 @@ export const mockGoldInvestments: GoldInvestment[] = [
     location: 'Bank locker',
     notes: 'Gold coins purchased during Diwali',
     familyMemberId: 'self-default',
-    lastUpdated: new Date() // Add this line
+    lastUpdated: new Date()
   },
   {
     id: '2',
@@ -239,7 +164,7 @@ export const mockGoldInvestments: GoldInvestment[] = [
     value: 232000, // current value
     notes: 'Sovereign Gold Bond 2021-22 Series',
     familyMemberId: 'spouse-default',
-    lastUpdated: new Date() // Add this line
+    lastUpdated: new Date()
   },
   {
     id: '3',
@@ -251,42 +176,67 @@ export const mockGoldInvestments: GoldInvestment[] = [
     value: 145000, // current value
     notes: 'Digital gold on investment app',
     familyMemberId: 'parent-default',
-    lastUpdated: new Date() // Add this line
+    lastUpdated: new Date()
+  }
+];
+
+// Mock Provident Fund data (example structure)
+export const mockProvidentFunds: ProvidentFund[] = [
+  {
+    id: 'pf1',
+    accountNumber: 'PFACC001',
+    employeeContribution: 50000,
+    employerContribution: 50000,
+    totalBalance: 100000,
+    interestRate: 8.1,
+    lastUpdated: new Date(),
+    familyMemberId: 'self-default',
   }
 ];
 
 // Mock net worth data
 export const mockNetWorthData: NetWorthData = {
-  total: 2483969,
+  total: 1062500, // Sum of example: FDs(450k) + SIPs(277.5k) + Gold(667k) + PF(100k) = 1,494,500. Mock stocks were 673.5k.
+                  // Let's re-evaluate. Original total 2483969.
+                  // Stocks: 0 (as they come from DB now or are 0 if no DB)
+                  // Fixed Deposits: 100k+200k+150k = 450,000
+                  // SIP: 115k+124.5k+38k = 277,500
+                  // Gold: 290k+232k+145k = 667,000
+                  // Other: (original was 415969)
+                  // Provident Fund: 100,000 (from mockProvidentFunds)
+                  // Total without stocks and other: 450000 + 277500 + 667000 + 100000 = 1,494,500
+                  // Let's set 'other' to make up a reasonable total for mock history consistency.
+                  // Say target mock total around 2M for history points. other = 2000000 - 1494500 = 505,500
   breakdown: {
-    stocks: 673500,
-    fixedDeposits: 450000,
-    sip: 277500,
-    gold: 667000,
-    other: 415969,
-    providentFund: 0  // Add the missing property
+    stocks: 0, // Stocks value will be calculated live by getNetWorth from crudService/stockService
+    fixedDeposits: 450000, // Sum of mockFixedDeposits principals
+    sip: 277500,         // Sum of mockSIPInvestments currentValues
+    gold: 667000,          // Sum of mockGoldInvestments values
+    providentFund: 100000, // Sum of mockProvidentFunds balances
+    other: 505500,        // Adjusted 'other' value
   },
+  // History can remain as is, the live getNetWorth will update the last point
   history: [
-    { date: new Date('2023-06-01'), value: 2100000 },
-    { date: new Date('2023-07-01'), value: 2150000 },
-    { date: new Date('2023-08-01'), value: 2180000 },
-    { date: new Date('2023-09-01'), value: 2220000 },
-    { date: new Date('2023-10-01'), value: 2250000 },
-    { date: new Date('2023-11-01'), value: 2275000 },
-    { date: new Date('2023-12-01'), value: 2320000 },
-    { date: new Date('2024-01-01'), value: 2350000 },
-    { date: new Date('2024-02-01'), value: 2400000 },
-    { date: new Date('2024-03-01'), value: 2430000 },
-    { date: new Date('2024-04-01'), value: 2460000 },
-    { date: new Date('2024-05-01'), value: 2483969 }
+    { date: new Date('2023-06-01'), value: 1800000 },
+    { date: new Date('2023-07-01'), value: 1850000 },
+    { date: new Date('2023-08-01'), value: 1880000 },
+    { date: new Date('2023-09-01'), value: 1920000 },
+    { date: new Date('2023-10-01'), value: 1950000 },
+    { date: new Date('2023-11-01'), value: 1975000 },
+    { date: new Date('2023-12-01'), value: 2020000 },
+    { date: new Date('2024-01-01'), value: 2050000 },
+    { date: new Date('2024-02-01'), value: 2100000 },
+    { date: new Date('2024-03-01'), value: 2130000 },
+    { date: new Date('2024-04-01'), value: 2160000 },
+    { date: new Date('2024-05-01'), value: 1494500 + 505500 } // total sum: 2,000,000 for the last history point
   ]
 };
 
-// Helper functions to get mock data
-export function getStocks(): Promise<StockHolding[]> {
-  return Promise.resolve(mockStocks);
-}
+// Update mockNetWorthData.total based on its breakdown
+mockNetWorthData.total = Object.values(mockNetWorthData.breakdown).reduce((sum, val) => sum + val, 0);
+mockNetWorthData.history[mockNetWorthData.history.length -1].value = mockNetWorthData.total;
 
+// Helper functions to get mock data (for non-stock entities)
 export function getFixedDeposits(): Promise<FixedDeposit[]> {
   return Promise.resolve(mockFixedDeposits);
 }
@@ -303,6 +253,12 @@ export function getGoldInvestments(): Promise<GoldInvestment[]> {
   return Promise.resolve(mockGoldInvestments);
 }
 
+export function getProvidentFunds(): Promise<ProvidentFund[]> {
+  return Promise.resolve(mockProvidentFunds);
+}
+
 export function getNetWorth(): Promise<NetWorthData> {
+  // This mock getNetWorth is generally overridden by the one in crudService or netWorthService
+  // which calculate live values. It serves as a fallback if directly called.
   return Promise.resolve(mockNetWorthData);
 }
