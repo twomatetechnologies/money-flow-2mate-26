@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { StockHolding } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/contexts/SettingsContext';
-import { getStocks, createStock, updateStock, deleteStock } from '@/services/crudService';
+import { getStocks, createStock, updateStock, deleteStock } from '@/services/stockService';
 import { startStockPriceMonitoring, simulateStockPriceUpdates } from '@/services/stockPriceService';
 
 export const useStocks = () => {
@@ -22,7 +21,7 @@ export const useStocks = () => {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching stocks data...');
+      console.log('Fetching stocks data using stockService...');
       const data = await getStocks();
       console.log('Received stocks data:', data);
       
@@ -41,7 +40,8 @@ export const useStocks = () => {
         value: stock.value || 0,
         sector: stock.sector || 'Uncategorized',
         familyMemberId: stock.familyMemberId || '',
-        ...stock
+        ...stock,
+        lastUpdated: stock.lastUpdated ? new Date(stock.lastUpdated) : new Date() 
       }));
       
       setStocks(processedData);
@@ -90,7 +90,7 @@ export const useStocks = () => {
               break;
               
             case 'searchFilter':
-              const searchTerm = value.toLowerCase();
+              const searchTerm = String(value).toLowerCase();
               result = result.filter(stock => 
                 ((stock.symbol || '').toLowerCase()).includes(searchTerm) || 
                 ((stock.name || '').toLowerCase()).includes(searchTerm)
@@ -106,20 +106,24 @@ export const useStocks = () => {
               break;
               
             case 'priceRangeFilter':
-              if (value.min !== null) {
-                result = result.filter(stock => (stock.currentPrice || 0) >= value.min);
-              }
-              if (value.max !== null) {
-                result = result.filter(stock => (stock.currentPrice || 0) <= value.max);
+              if (typeof value === 'object' && value !== null) {
+                if (value.min !== null && typeof value.min === 'number') {
+                  result = result.filter(stock => (stock.currentPrice || 0) >= value.min);
+                }
+                if (value.max !== null && typeof value.max === 'number') {
+                  result = result.filter(stock => (stock.currentPrice || 0) <= value.max);
+                }
               }
               break;
               
             case 'valueRangeFilter':
-              if (value.min !== null) {
-                result = result.filter(stock => (stock.value || 0) >= value.min);
-              }
-              if (value.max !== null) {
-                result = result.filter(stock => (stock.value || 0) <= value.max);
+               if (typeof value === 'object' && value !== null) {
+                if (value.min !== null && typeof value.min === 'number') {
+                  result = result.filter(stock => (stock.value || 0) >= value.min);
+                }
+                if (value.max !== null && typeof value.max === 'number') {
+                  result = result.filter(stock => (stock.value || 0) <= value.max);
+                }
               }
               break;
               
@@ -154,8 +158,20 @@ export const useStocks = () => {
           // Handle undefined or null values
           if (aValue === undefined || aValue === null) aValue = '';
           if (bValue === undefined || bValue === null) bValue = '';
+
+          // If values are numeric strings, convert them for proper sorting
+          if (typeof aValue === 'string' && !isNaN(Number(aValue)) && typeof bValue === 'string' && !isNaN(Number(bValue))) {
+            aValue = Number(aValue);
+            bValue = Number(bValue);
+          }
         }
         
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return currentDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return currentDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        }
+        // Fallback for mixed types or other types
         if (aValue < bValue) return currentDirection === 'asc' ? -1 : 1;
         if (aValue > bValue) return currentDirection === 'asc' ? 1 : -1;
         return 0;
