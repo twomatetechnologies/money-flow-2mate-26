@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, BarChart2, Settings, Users, Shield, FileText, Gem, PiggyBank, TrendingUp, Lock, Calendar, BrainCircuit, Zap } from 'lucide-react';
+import { Home, BarChart2, Settings, Users, Shield, FileText, Gem, PiggyBank, TrendingUp, Lock, Calendar, BrainCircuit, Zap, UserCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -37,10 +37,10 @@ const Sidebar: React.FC<{ collapsed: boolean, onNavItemClick?: () => void }> = (
     { path: '/family-members', label: 'Family Members', icon: <Users className="h-4 w-4" /> },
   ];
 
-  // Add AI Settings to the nav items
   const settingsNavItems: NavItem[] = [
     { path: '/settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
     { path: '/ai-settings', label: 'AI Settings', icon: <Zap className="h-4 w-4" /> },
+    { path: '/profile', label: 'Profile', icon: <UserCircle className="h-4 w-4" /> },
   ];
 
   return (
@@ -86,11 +86,13 @@ const Sidebar: React.FC<{ collapsed: boolean, onNavItemClick?: () => void }> = (
         ))}
       </nav>
 
-      {/* Use isDevelopmentMode from AuthContext instead of user.isAdmin */}
       {isDevelopmentMode && (
         <>
           <Separator className="my-2 dark:bg-gray-800" />
           <nav className="flex-1 px-2 py-4 space-y-1">
+            <h3 className={cn("px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider", collapsed && "text-center")}>
+              {collapsed ? 'Dev' : 'Developer'}
+            </h3>
             {adminNavItems.map((item) => (
               <Button
                 key={item.path}
@@ -117,6 +119,9 @@ const Sidebar: React.FC<{ collapsed: boolean, onNavItemClick?: () => void }> = (
       <Separator className="my-2 dark:bg-gray-800" />
 
       <nav className="px-2 py-4 space-y-1">
+        <h3 className={cn("px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider", collapsed && "text-center")}>
+          {collapsed ? 'Cfg' : 'Configuration'}
+        </h3>
         {settingsNavItems.map((item) => (
           <Button
             key={item.path}

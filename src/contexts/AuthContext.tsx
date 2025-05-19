@@ -1,8 +1,7 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isPostgresEnabled } from '@/services/db/dbConnector';
-import { getUserByEmail } from '@/services/userService';
+import { getUserByEmail, updateUser as updateUserInDb } from '@/services/userService';
 
 interface User {
   id: string;
@@ -17,6 +16,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; requires2FA?: boolean }>;
   logout: () => void;
   isAuthenticated: () => boolean;
+  updateUser: (data: { name?: string; email?: string }) => Promise<void>;
+  isDevelopmentMode: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if user is already logged in on mount
   useEffect(() => {
     const checkAuth = async () => {
+      setIsLoading(true); // Set loading true at the start of the check
       try {
         const storedUser = localStorage.getItem('auth_user');
         if (storedUser) {
@@ -36,7 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error) {
         console.error("Error checking authentication:", error);
-        // Clear any invalid data
         localStorage.removeItem('auth_user');
       } finally {
         setIsLoading(false);
@@ -61,9 +62,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error("User not found in database");
           return { success: false };
         }
+
+        // Simulate password check - in a real app, this would be secure
+        // For now, let's assume if user exists, login is successful for DB users (excluding 2FA test)
+        // unless it's the specific 2FA test user.
         
         // For 2FA testing
         if (email === 'test@example.com' && password === 'password') {
+          // Don't set user yet, 2FA step will handle it
           return { success: true, requires2FA: true };
         }
         
@@ -85,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: 'demo-user',
             name: 'Demo User',
             email: 'user@example.com',
-            role: 'admin'
+            role: 'admin' // Demo user is admin for isDevelopmentMode testing
           };
           
           setUser(demoUser);
@@ -117,8 +123,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user !== null;
   };
 
+  // Implement updateUser function
+  const updateUser = async (data: { name?: string; email?: string }) => {
+    if (!user) {
+      console.error("No user to update.");
+      throw new Error("User not authenticated");
+    }
+
+    const originalUser = { ...user }; // Keep a copy of the original user state for rollback
+    setIsLoading(true);
+    try {
+      const updatedUserData = { ...user, ...data };
+      setUser(updatedUserData);
+      localStorage.setItem('auth_user', JSON.stringify(updatedUserData));
+
+      if (isPostgresEnabled()) {
+        // Assuming updateUserInDb takes userId and a partial user object
+        await updateUserInDb(user.id, data); 
+      }
+      // Successfully updated
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      // Rollback UI changes if DB update fails
+      setUser(originalUser);
+      localStorage.setItem('auth_user', JSON.stringify(originalUser));
+      throw error; // Re-throw error to be handled by the calling component (e.g., to show a toast)
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Derive isDevelopmentMode based on user role
+  const isDevelopmentMode = useMemo(() => {
+    // Example: 'admin' role enables development mode features
+    // Or, could be based on a specific flag on the user object or environment variable
+    return user?.role === 'admin';
+  }, [user]);
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, isAuthenticated, updateUser, isDevelopmentMode }}>
       {children}
     </AuthContext.Provider>
   );

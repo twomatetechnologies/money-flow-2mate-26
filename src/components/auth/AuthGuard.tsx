@@ -8,10 +8,10 @@ interface AuthGuardProps {
 }
 
 export const AuthGuard = ({ children }: AuthGuardProps) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth(); // Changed loading to isLoading
   const location = useLocation();
 
-  if (loading) {
+  if (isLoading) { // Changed loading to isLoading
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -19,8 +19,8 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if (!isAuthenticated()) { // Ensure isAuthenticated is called as a function
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

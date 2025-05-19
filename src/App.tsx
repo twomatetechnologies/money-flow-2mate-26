@@ -22,22 +22,28 @@ import Goals from '@/pages/Goals';
 import Reports from '@/pages/Reports';
 import FamilyMembers from './pages/FamilyMembers';
 import AuditTrail from './pages/AuditTrail';
+import Profile from './pages/Profile';
+
 // Initialize database preferences on app start - before auth provider
 // This ensures the correct storage system is configured before any auth or data operations
 initDatabasePreferences();
 
 // AuthGuard component to protect routes
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
   // Wait for authentication status to be determined
-  if (loading) {
-    return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (!isAuthenticated()) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -49,15 +55,18 @@ const PreventBackNavigation = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   useEffect(() => {
-    const handleBackButton = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
+    const handleBackButton = (event: PopStateEvent) => {
+      // This is a simplified example. Robust back navigation prevention is complex.
+      // For a SPA, you might want to control history state more directly.
+      // This example focuses on page unload, which might not be what's intended for logout.
+      // If goal is to prevent going back to authenticated routes after logout via browser back button,
+      // the AuthGuard already handles redirecting to /login if not authenticated.
     };
 
-    window.addEventListener("beforeunload", handleBackButton);
+    window.addEventListener("popstate", handleBackButton);
 
     return () => {
-      window.removeEventListener("beforeunload", handleBackButton);
+      window.removeEventListener("popstate", handleBackButton);
     };
   }, [location]);
 
@@ -74,7 +83,7 @@ const App: React.FC = () => {
   }, []);
   
   if (!initialized) {
-    return <div>Initializing application...</div>;
+    return <div className="flex items-center justify-center h-screen">Initializing application...</div>;
   }
 
   return (
@@ -107,6 +116,7 @@ const App: React.FC = () => {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/ai-settings" element={<AISettings />} />
                 <Route path="/api-endpoints" element={<ApiEndpoints />} />
+                <Route path="/profile" element={<Profile />} />
               </Route>
             </Routes>
           </PreventBackNavigation>
@@ -116,5 +126,4 @@ const App: React.FC = () => {
     </AuthProvider>
   );
 };
-``
 export default App;
