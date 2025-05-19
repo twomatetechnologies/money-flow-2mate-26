@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import Login from '@/pages/Login';
@@ -87,9 +88,9 @@ const App: React.FC = () => {
   }
 
   return (
-    <AuthProvider>
-      <SettingsProvider>
-        <Router>
+    <Router>
+      <AuthProvider>
+        <SettingsProvider>
           <PreventBackNavigation>
             <Routes>
               <Route path="/login" element={<Login />} />
@@ -120,10 +121,10 @@ const App: React.FC = () => {
               </Route>
             </Routes>
           </PreventBackNavigation>
-        </Router>
-        <Toaster />
-      </SettingsProvider>
-    </AuthProvider>
+          <Toaster />
+        </SettingsProvider>
+      </AuthProvider>
+    </Router>
   );
 };
 export default App;
