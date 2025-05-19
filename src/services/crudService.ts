@@ -307,51 +307,59 @@ export const getGoldInvestments = (): Promise<GoldInvestment[]> => {
 
 // Add the missing getNetWorth function - this one calculates based on current data from various services
 export const getNetWorth = async (): Promise<NetWorthData> => {
-  const stocksData = await getStocks(); // Uses the new getStocks path
-  const fdData = await getFixedDeposits();
-  const sipData = await getSIPInvestments();
-  const goldData = await getGoldInvestments();
-  const insuranceData = await getInsurancePolicies(); // Assuming this is for 'other' or similar calculation
-  
-  // Ensure 'value' is used for stocks, or calculate if not present
-  const stocksTotal = stocksData.reduce((sum, stock) => {
-      const value = typeof stock.value === 'number' ? stock.value : (stock.currentPrice || 0) * (stock.quantity || 0);
-      return sum + value;
-  }, 0);
-  const fdTotal = fdData.reduce((sum, fd) => sum + fd.principal, 0);
-  const sipTotal = sipData.reduce((sum, sip) => sum + sip.currentValue, 0);
-  const goldTotal = goldData.reduce((sum, gold) => sum + gold.value, 0);
-  
-  // Example: 'other' could be sum of annual insurance premiums or some other calculation
-  // For simplicity, let's use a simple sum of premiums if that's the intent.
-  // Or, if 'other' is meant for a different category, it might be 0.
-  // Let's assume 'other' is not directly from insurance premiums for net worth.
-  const otherTotal = 0; // Or a more specific calculation if defined.
-  // Note: The original mockNetWorthData had 'other' with a value. This might need a dedicated service.
-  // For now, we'll keep it simple, if providentFund needs a sum, it needs its own service call too.
-  // const providentFundTotal = providentFundsData.reduce((sum, pf) => sum + pf.totalBalance, 0); // Assuming getProvidentFunds()
-  const providentFundTotal = 0; // Placeholder, needs its own data source if part of this getNetWorth
-  
-  const total = stocksTotal + fdTotal + sipTotal + goldTotal + otherTotal + providentFundTotal;
-  
-  const history = [...mockNetWorthData.history]; // Keep mock history for now
-  if (history.length > 0) {
-    history[history.length - 1] = {
-      date: new Date(),
-      value: total
+  try {
+    const stocksData = await getStocks(); // Uses the new getStocks path
+    const fdData = await getFixedDeposits();
+    const sipData = await getSIPInvestments();
+    const goldData = await getGoldInvestments();
+    const insuranceData = await getInsurancePolicies(); 
+    
+    // Ensure 'value' is used for stocks, or calculate if not present
+    const stocksTotal = Array.isArray(stocksData) ? stocksData.reduce((sum, stock) => {
+        if (!stock) return sum; // Skip null or undefined stocks
+        const value = typeof stock.value === 'number' ? stock.value : 
+                     ((stock.currentPrice || 0) * (stock.quantity || 0));
+        return sum + (isNaN(value) ? 0 : value); // Ensure we don't add NaN
+    }, 0) : 0;
+    
+    const fdTotal = Array.isArray(fdData) ? fdData.reduce((sum, fd) => 
+      sum + (fd?.principal || 0), 0) : 0;
+      
+    const sipTotal = Array.isArray(sipData) ? sipData.reduce((sum, sip) => 
+      sum + (sip?.currentValue || 0), 0) : 0;
+      
+    const goldTotal = Array.isArray(goldData) ? goldData.reduce((sum, gold) => 
+      sum + (gold?.value || 0), 0) : 0;
+    
+    // For simplicity, we'll use 0 for 'other' when calculating from scratch
+    const otherTotal = 0;
+    const providentFundTotal = 0; // Placeholder, needs its own data source
+    
+    const total = stocksTotal + fdTotal + sipTotal + goldTotal + otherTotal + providentFundTotal;
+    
+    const history = [...mockNetWorthData.history]; // Keep mock history for now
+    if (history.length > 0) {
+      history[history.length - 1] = {
+        date: new Date(),
+        value: total
+      };
+    }
+    
+    return {
+      total: total,
+      breakdown: {
+        stocks: stocksTotal,
+        fixedDeposits: fdTotal,
+        sip: sipTotal,
+        gold: goldTotal,
+        other: otherTotal, 
+        providentFund: providentFundTotal 
+      },
+      history: history
     };
+  } catch (error) {
+    console.error("Error calculating net worth:", error);
+    // Return mock data as fallback
+    return mockNetWorthData;
   }
-  
-  return {
-    total: total,
-    breakdown: {
-      stocks: stocksTotal,
-      fixedDeposits: fdTotal,
-      sip: sipTotal,
-      gold: goldTotal,
-      other: otherTotal, 
-      providentFund: providentFundTotal 
-    },
-    history: history
-  };
 };

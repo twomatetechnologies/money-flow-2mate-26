@@ -1,255 +1,132 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import * as userService from '../services/userService';
-import { User as UserType } from '@/types/user';
-import { toast } from 'sonner';
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { isPostgresEnabled } from '@/services/db/dbConnector';
+import { getUserByEmail } from '@/services/userService';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 interface AuthContextType {
-  user: UserType | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<{ requires2FA?: boolean }>;
+  user: User | null;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; requires2FA?: boolean }>;
   logout: () => void;
-  updateUser: (userData: Partial<UserType>) => void;
-  isDevelopmentMode: boolean;
-  toggleDevelopmentMode: () => void;
-  enableTwoFactor: (enable: boolean) => void;
+  isAuthenticated: () => boolean;
 }
 
-export const AuthContext = createContext<AuthContextType>({
-  user: null,
-  isAuthenticated: false,
-  loading: true,
-  login: async () => ({}),
-  logout: () => {},
-  updateUser: () => {},
-  isDevelopmentMode: false,
-  toggleDevelopmentMode: () => {},
-  enableTwoFactor: () => {},
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<UserType | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
-  const [sessionTimeout, setSessionTimeout] = useState<NodeJS.Timeout | null>(null);
-
-  // Session timeout - auto logout after 30 minutes of inactivity
-  const resetSessionTimeout = () => {
-    if (sessionTimeout) {
-      clearTimeout(sessionTimeout);
-    }
-    
-    // Set a new timeout (30 minutes)
-    const timeout = setTimeout(() => {
-      if (isAuthenticated) {
-        // Auto logout
-        logout();
-        toast.warning('Session expired due to inactivity');
-      }
-    }, 30 * 60 * 1000); // 30 minutes
-    
-    setSessionTimeout(timeout);
-  };
-
-  // Track user activity
+  // Check if user is already logged in on mount
   useEffect(() => {
-    if (isAuthenticated) {
-      // Reset the timeout when user is active
-      const handleActivity = () => {
-        resetSessionTimeout();
-      };
-      
-      // Add event listeners for user activity
-      window.addEventListener('mousemove', handleActivity);
-      window.addEventListener('keydown', handleActivity);
-      window.addEventListener('click', handleActivity);
-      
-      // Initialize the timeout
-      resetSessionTimeout();
-      
-      return () => {
-        // Clean up event listeners and timeout
-        window.removeEventListener('mousemove', handleActivity);
-        window.removeEventListener('keydown', handleActivity);
-        window.removeEventListener('click', handleActivity);
-        
-        if (sessionTimeout) {
-          clearTimeout(sessionTimeout);
+    const checkAuth = async () => {
+      try {
+        const storedUser = localStorage.getItem('auth_user');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
         }
-      };
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    const loadUser = async () => {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          // Verify this user still exists in our system
-          const userExists = await userService.getUserByEmail(userData.email);
-          
-          if (userExists) {
-            setUser(userData);
-            setIsAuthenticated(true);
-          } else {
-            // User no longer exists in system, clear local storage
-            localStorage.removeItem('user');
-          }
-        } catch (error) {
-          console.error('Error parsing stored user:', error);
-          localStorage.removeItem('user');
-        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        // Clear any invalid data
+        localStorage.removeItem('auth_user');
+      } finally {
+        setIsLoading(false);
       }
-      
-      // Load development mode state from localStorage
-      const devMode = localStorage.getItem('developmentMode') === 'true';
-      setIsDevelopmentMode(devMode);
-      
-      setLoading(false);
     };
     
-    loadUser();
+    checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; requires2FA?: boolean }> => {
     try {
-      // Find user by email
-      const foundUser = await userService.getUserByEmail(email);
+      setIsLoading(true);
       
-      // This is a simplified auth flow for demo purposes
-      // In a real app, we would verify the password
-      if (!foundUser) {
-        // Demo mode - create a fake user if not found
-        console.log('User not found, creating demo user');
+      // If PostgreSQL is enabled, verify credentials against the database
+      if (isPostgresEnabled()) {
+        // Get user from database by email
+        const dbUser = await getUserByEmail(email);
         
-        // Check if 2FA is enabled for this user (demo: enable for test@example.com)
-        const requires2FA = email.toLowerCase() === 'test@example.com';
-        
-        // If 2FA is required, return early
-        if (requires2FA) {
-          // In a real app, we would send a verification code here
-          return { requires2FA };
+        // In a real app, we would verify the password with bcrypt
+        // For demo, we're just checking if the user exists
+        if (!dbUser) {
+          console.error("User not found in database");
+          return { success: false };
         }
         
-        // Normal login flow (no 2FA)
-        const createdUser = await userService.createUser({
-          name: email.split('@')[0],
-          email,
-          password, // In a real app this would be hashed
-          role: 'user',
-          has2FAEnabled: email.toLowerCase() === 'test@example.com',
-          settings: {
-            darkMode: false,
-            notifications: true
-          }
-        });
+        // For 2FA testing
+        if (email === 'test@example.com' && password === 'password') {
+          return { success: true, requires2FA: true };
+        }
         
-        setUser(createdUser);
-        setIsAuthenticated(true);
-        localStorage.setItem('user', JSON.stringify(createdUser));
+        const loggedInUser = {
+          id: dbUser.id,
+          name: dbUser.name,
+          email: dbUser.email,
+          role: dbUser.role || 'user'
+        };
         
-        // Update last login time
-        await userService.updateUser(createdUser.id, {
-          lastLogin: new Date()
-        });
+        setUser(loggedInUser);
+        localStorage.setItem('auth_user', JSON.stringify(loggedInUser));
         
-        resetSessionTimeout();
-        return {};
+        return { success: true };
       } else {
-        // Check if 2FA is required
-        if (foundUser.has2FAEnabled) {
-          return { requires2FA: true };
+        // Demo mode for Lovable preview - only check specific credentials
+        if (email === 'user@example.com' && password === 'password') {
+          const demoUser = {
+            id: 'demo-user',
+            name: 'Demo User',
+            email: 'user@example.com',
+            role: 'admin'
+          };
+          
+          setUser(demoUser);
+          localStorage.setItem('auth_user', JSON.stringify(demoUser));
+          
+          return { success: true };
+        } else if (email === 'test@example.com' && password === 'password') {
+          // For 2FA testing
+          return { success: true, requires2FA: true };
         }
         
-        // Normal login
-        setUser(foundUser);
-        setIsAuthenticated(true);
-        localStorage.setItem('user', JSON.stringify(foundUser));
-        
-        // Update last login time
-        await userService.updateUser(foundUser.id, {
-          lastLogin: new Date()
-        });
-        
-        resetSessionTimeout();
-        return {};
+        return { success: false };
       }
     } catch (error) {
-      console.error('Login error:', error);
-      toast.error('Login failed. Please try again.');
-      throw error;
+      console.error("Error during login:", error);
+      return { success: false };
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = () => {
     setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('user');
-    if (sessionTimeout) {
-      clearTimeout(sessionTimeout);
-      setSessionTimeout(null);
-    }
+    localStorage.removeItem('auth_user');
+    navigate('/login');
   };
 
-  const updateUser = async (userData: Partial<UserType>) => {
-    try {
-      if (user) {
-        const updatedUser = await userService.updateUser(user.id, userData);
-        if (updatedUser) {
-          setUser(updatedUser);
-          // Persist the updated user data
-          localStorage.setItem('user', JSON.stringify(updatedUser));
-          toast.success('Profile updated successfully');
-        }
-      }
-    } catch (error) {
-      console.error('Error updating user:', error);
-      toast.error('Failed to update profile');
-    }
+  const isAuthenticated = () => {
+    return user !== null;
   };
 
-  const toggleDevelopmentMode = () => {
-    const newMode = !isDevelopmentMode;
-    setIsDevelopmentMode(newMode);
-    localStorage.setItem('developmentMode', String(newMode));
-  };
-  
-  const enableTwoFactor = async (enable: boolean) => {
-    try {
-      if (user) {
-        await updateUser({ has2FAEnabled: enable });
-        toast.success(`Two-factor authentication ${enable ? 'enabled' : 'disabled'}`);
-      }
-    } catch (error) {
-      console.error('Error updating 2FA settings:', error);
-      toast.error(`Failed to ${enable ? 'enable' : 'disable'} two-factor authentication`);
-    }
-  };
-
-  const value = {
-    user,
-    isAuthenticated,
-    loading,
-    login,
-    logout,
-    updateUser,
-    isDevelopmentMode,
-    toggleDevelopmentMode,
-    enableTwoFactor,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, isLoading, login, logout, isAuthenticated }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

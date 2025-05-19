@@ -53,15 +53,52 @@ const FixedDepositForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Fixe
     }
   }, [initialData, mode, form]);
 
+  // Calculate maturity amount when principal, interest rate, or dates change
+  useEffect(() => {
+    const calculateMaturityAmount = () => {
+      const principal = Number(form.getValues('principal')) || 0;
+      const interestRate = Number(form.getValues('interestRate')) || 0;
+      const startDate = new Date(form.getValues('startDate') || new Date());
+      const maturityDate = new Date(form.getValues('maturityDate') || new Date());
+      
+      // Calculate time difference in years
+      const timeDiffMs = maturityDate.getTime() - startDate.getTime();
+      if (timeDiffMs <= 0) return; // Invalid date range
+      
+      const timeDiffYears = timeDiffMs / (1000 * 3600 * 24 * 365);
+      
+      // Simple interest calculation
+      const maturityAmount = principal + (principal * interestRate * timeDiffYears) / 100;
+      
+      // Only update if the value is a valid number
+      if (!isNaN(maturityAmount) && isFinite(maturityAmount)) {
+        form.setValue('maturityAmount', maturityAmount);
+      }
+    };
+    
+    // Watch for changes to relevant fields
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'principal' || name === 'interestRate' || name === 'startDate' || name === 'maturityDate') {
+        calculateMaturityAmount();
+      }
+    });
+    
+    // Initial calculation
+    calculateMaturityAmount();
+    
+    // Cleanup subscription
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   const handleSubmit = (data: Partial<FixedDeposit>) => {
-    // Calculate maturity amount if not provided
-    const principal = Number(data.principal);
-    const interestRate = Number(data.interestRate);
+    // Calculate maturity amount if not provided or invalid
+    const principal = Number(data.principal) || 0;
+    const interestRate = Number(data.interestRate) || 0;
     const startDate = new Date(data.startDate || new Date());
     const maturityDate = new Date(data.maturityDate || new Date());
     
     // Calculate time difference in years
-    const timeDiff = (maturityDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24 * 365);
+    const timeDiff = Math.max(0, (maturityDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24 * 365));
     
     // Simple interest calculation
     const maturityAmount = principal + (principal * interestRate * timeDiff) / 100;
@@ -72,7 +109,7 @@ const FixedDepositForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Fixe
       interestRate,
       startDate,
       maturityDate,
-      maturityAmount
+      maturityAmount: isNaN(maturityAmount) ? 0 : maturityAmount // Ensure we never pass NaN
     };
 
     onSubmit(formattedData);

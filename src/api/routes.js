@@ -1,3 +1,4 @@
+
 /**
  * API Routes configuration
  */
@@ -9,6 +10,7 @@ import * as stocks from './stocks.js';
 import * as providentFunds from './providentFunds.js';
 import * as auditRecords from './auditRecords.js';
 import * as users from './users.js';
+import * as settings from './settings.js';
 
 const router = express.Router();
 
@@ -16,6 +18,10 @@ const router = express.Router();
 router.get('/health-check', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Settings routes
+router.get('/settings', settings.getSettings);
+router.put('/settings', settings.updateSettings);
 
 // Fixed Deposits routes
 router.get('/fixed-deposits', fixedDeposits.getAllFixedDeposits);
