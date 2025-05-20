@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getAppSettings, saveAppSettings } from '@/services/settingsService';
 import { toast } from '@/hooks/use-toast'; // Ensure use-toast is correctly imported
@@ -19,7 +18,7 @@ interface SettingsContextType {
 
 const defaultSettings: Settings = {
   stockPriceAlertThreshold: 5,
-  stockApiKey: undefined,
+  stockApiKey: "LR78N65XUDF2EZDB", // Added the default API key here
   appName: "Money Flow Guardian",
   apiBaseUrl: "",
 };
@@ -36,19 +35,28 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       try {
         const dbSettings = await getAppSettings();
         if (dbSettings) {
-          setSettings(dbSettings);
+          // Ensure stockApiKey from DB is used, even if it's an empty string or null
+          // defaultSettings provides a fallback if dbSettings or specific fields are missing
+          setSettings({ ...defaultSettings, ...dbSettings });
         } else {
           const savedSettings = localStorage.getItem('finance-app-settings');
           if (savedSettings) {
-            setSettings(JSON.parse(savedSettings));
+            const parsed = JSON.parse(savedSettings);
+            // Ensure stockApiKey from localStorage is used, providing default if missing
+            setSettings({ ...defaultSettings, ...parsed });
+          } else {
+            // If neither DB nor localStorage, defaultSettings are already set
+            setSettings(defaultSettings);
           }
-          // If neither DB nor localStorage, defaultSettings are already set
         }
       } catch (error) {
         console.error("Failed to load settings during init, using defaults/localStorage:", error);
         const savedSettings = localStorage.getItem('finance-app-settings');
         if (savedSettings) {
-          setSettings(JSON.parse(savedSettings));
+          const parsed = JSON.parse(savedSettings);
+          setSettings({ ...defaultSettings, ...parsed });
+        } else {
+          setSettings(defaultSettings);
         }
       } finally {
         setIsLoading(false);

@@ -211,16 +211,19 @@ ON CONFLICT (id) DO NOTHING;
 -- Add Sample Users
 INSERT INTO app_users (id, email, password_hash, name, role, is_active)
 VALUES
-  ('user-001', 'user@example.com', '$2a$10$dPzE4X4FHDYgWWhVzrZAO.f8ZimRWOkr31b/fbwYhh52w2kJ1H5TG', 'Demo User', 'user', true),
-  ('user-002', 'admin@example.com', '$2a$10$dPzE4X4FHDYgWWhVzrZAO.f8ZimRWOkr31b/fbwYhh52w2kJ1H5TG', 'Admin User', 'admin', true)
+  ('user-001', 'user@example.com', '\$2a\$10\$dPzE4X4FHDYgWWhVzrZAO.f8ZimRWOkr31b/fbwYhh52w2kJ1H5TG', 'Demo User', 'user', true),
+  ('user-002', 'admin@example.com', '\$2a\$10\$dPzE4X4FHDYgWWhVzrZAO.f8ZimRWOkr31b/fbwYhh52w2kJ1H5TG', 'Admin User', 'admin', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Add Default User Settings
-INSERT INTO user_settings (id, user_id, stock_price_alert_threshold, app_name)
+INSERT INTO user_settings (id, user_id, stock_price_alert_threshold, app_name, stock_api_key)
 VALUES
-  ('settings-001', 'user-001', 5.0, 'Money Flow Guardian'),
-  ('settings-002', 'user-002', 10.0, 'Financial Portfolio Tracker')
-ON CONFLICT (id) DO NOTHING;
+  ('settings-001', 'user-001', 5.0, 'Money Flow Guardian', 'LR78N65XUDF2EZDB'),
+  ('settings-002', 'user-002', 10.0, 'Financial Portfolio Tracker', 'LR78N65XUDF2EZDB')
+ON CONFLICT (id) DO UPDATE SET
+  stock_price_alert_threshold = EXCLUDED.stock_price_alert_threshold,
+  app_name = EXCLUDED.app_name,
+  stock_api_key = EXCLUDED.stock_api_key;
 
 -- Add Sample Stocks
 INSERT INTO stocks (id, symbol, company_name, quantity, purchase_price, purchase_date, current_price, sector, family_member_id, notes, last_updated)
@@ -231,6 +234,7 @@ VALUES
   ('stock-004', 'INFY', 'Infosys Limited', 20, 1580.25, '2023-08-05', 1620.00, 'Technology', 'fam-003', 'Growth potential', NOW())
 ON CONFLICT (id) DO NOTHING;
 
+-- ... keep existing code (Rest of the master data inserts for Fixed Deposits, Gold, Savings, SIP, PF, Insurance)
 -- Add Sample Fixed Deposits
 INSERT INTO fixed_deposits (id, bank_name, amount, interest_rate, start_date, maturity_date, term_months, fd_number, is_auto_renewal, family_member_id, notes, principal, maturity_amount, account_number)
 VALUES
@@ -280,3 +284,4 @@ ON CONFLICT (id) DO NOTHING;
 "
 
 echo "Migration complete. Master data has been loaded."
+
