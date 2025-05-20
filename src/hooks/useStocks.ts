@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { StockHolding } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/contexts/SettingsContext';
-import { getStocks, createStock, updateStock, deleteStock } from '@/services/stockService';
+import { getStocks, createStock, updateStock, deleteStock } from '@/services/stockService'; // This uses stockDbService
 import { startStockPriceMonitoring, simulateStockPriceUpdates } from '@/services/stockPriceService';
 
 export const useStocks = () => {
@@ -22,26 +22,28 @@ export const useStocks = () => {
       setError(null);
       
       console.log('Fetching stocks data using stockService...');
-      const data = await getStocks();
+      const data = await getStocks(); // Data from stockService (which uses stockDbService)
+                                      // should now be correctly mapped StockHolding[]
       console.log('Received stocks data:', data);
       
-      // Ensure data is an array, if null or undefined provide empty array
       const safeData = Array.isArray(data) ? data : [];
       
-      // Ensure all required fields have default values
+      // Data from getStocks() should already conform to StockHolding.
+      // We apply final defaults here for robustness.
       const processedData = safeData.map(stock => ({
+        ...stock, // Spread the already well-formed stock object
         id: stock.id || `temp-${Math.random().toString(36).substr(2, 9)}`,
         symbol: stock.symbol || 'Unknown',
         name: stock.name || 'Unknown Stock',
-        quantity: stock.quantity || 0,
-        averageBuyPrice: stock.averageBuyPrice || 0,
-        currentPrice: stock.currentPrice || 0,
-        changePercent: stock.changePercent || 0,
-        value: stock.value || 0,
+        quantity: Number(stock.quantity) || 0,
+        averageBuyPrice: Number(stock.averageBuyPrice) || 0,
+        currentPrice: Number(stock.currentPrice) || 0,
+        value: Number(stock.value) || 0, // This should be correctly calculated by DB
+        change: Number(stock.change) || 0,
+        changePercent: Number(stock.changePercent) || 0,
         sector: stock.sector || 'Uncategorized',
         familyMemberId: stock.familyMemberId || '',
-        ...stock,
-        lastUpdated: stock.lastUpdated ? new Date(stock.lastUpdated) : new Date() 
+        lastUpdated: stock.lastUpdated ? new Date(stock.lastUpdated) : new Date()
       }));
       
       setStocks(processedData);
@@ -148,18 +150,15 @@ export const useStocks = () => {
           aValue = calculateGainPercent(a);
           bValue = calculateGainPercent(b);
         } else if (currentSort === 'familyMemberId') {
-          // Special case for family member sorting - could be enhanced to use actual names
           aValue = a.familyMemberId || '';
           bValue = b.familyMemberId || '';
         } else {
           aValue = a[currentSort as keyof StockHolding];
           bValue = b[currentSort as keyof StockHolding];
           
-          // Handle undefined or null values
           if (aValue === undefined || aValue === null) aValue = '';
           if (bValue === undefined || bValue === null) bValue = '';
 
-          // If values are numeric strings, convert them for proper sorting
           if (typeof aValue === 'string' && !isNaN(Number(aValue)) && typeof bValue === 'string' && !isNaN(Number(bValue))) {
             aValue = Number(aValue);
             bValue = Number(bValue);
@@ -171,7 +170,6 @@ export const useStocks = () => {
         } else if (typeof aValue === 'string' && typeof bValue === 'string') {
           return currentDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
         }
-        // Fallback for mixed types or other types
         if (aValue < bValue) return currentDirection === 'asc' ? -1 : 1;
         if (aValue > bValue) return currentDirection === 'asc' ? 1 : -1;
         return 0;

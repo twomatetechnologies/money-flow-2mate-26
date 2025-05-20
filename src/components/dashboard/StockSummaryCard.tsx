@@ -18,18 +18,15 @@ interface StockSummaryCardProps {
 }
 
 export function StockSummaryCard({ stocks = [] }: StockSummaryCardProps) {
-  // Handle empty stocks array
-  const safeStocks = Array.isArray(stocks) ? stocks : [];
+  const safeStocks = Array.isArray(stocks) ? stocks.filter(Boolean) : []; // Filter out null/undefined stocks
   
-  // Calculate total values, safely handling null/undefined values
   const totalValue = safeStocks.reduce((sum, stock) => {
-    const currentPrice = stock?.currentPrice || 0;
-    const quantity = stock?.quantity || 0;
-    return sum + (currentPrice * quantity);
+    // Use stock.value directly as it's calculated by DB: quantity * COALESCE(currentPrice, averageBuyPrice)
+    return sum + (stock?.value || 0);
   }, 0);
   
   const totalInvestment = safeStocks.reduce((sum, stock) => {
-    const buyPrice = stock?.averageBuyPrice || 0;
+    const buyPrice = stock?.averageBuyPrice || 0; // This should be correctly populated now
     const quantity = stock?.quantity || 0;
     return sum + (buyPrice * quantity);
   }, 0);
@@ -37,11 +34,11 @@ export function StockSummaryCard({ stocks = [] }: StockSummaryCardProps) {
   const totalGain = totalValue - totalInvestment;
   const percentGain = totalInvestment > 0 ? (totalGain / totalInvestment) * 100 : 0;
   
-  // Sort stocks safely
   const sortedStocks = [...safeStocks].sort((a, b) => {
-    const gainA = ((a?.currentPrice || 0) - (a?.averageBuyPrice || 0)) * (a?.quantity || 0);
-    const gainB = ((b?.currentPrice || 0) - (b?.averageBuyPrice || 0)) * (b?.quantity || 0);
-    return gainB - gainA;
+    // Calculate gain for sorting, ensuring values are numbers
+    const gainA = (Number(a?.value) || 0) - ((Number(a?.averageBuyPrice) || 0) * (Number(a?.quantity) || 0));
+    const gainB = (Number(b?.value) || 0) - ((Number(b?.averageBuyPrice) || 0) * (Number(b?.quantity) || 0));
+    return gainB - gainA; // Sort by highest absolute gain
   });
   
   const topStocks = sortedStocks.slice(0, 3);
@@ -59,8 +56,8 @@ export function StockSummaryCard({ stocks = [] }: StockSummaryCardProps) {
                   <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent side="right" className="max-w-sm">
-                  <p>Current Stock Value = Current Price × Quantity for all stocks</p>
-                  <p className="mt-2">Performance percentage shows overall gain/loss compared to your purchase cost.</p>
+                  <p>Current Stock Value is the sum of (Current Price × Quantity) for all stocks, or (Purchase Price × Quantity) if current price isn't available.</p>
+                  <p className="mt-2">Performance percentage shows overall gain/loss compared to your total purchase cost.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -86,23 +83,24 @@ export function StockSummaryCard({ stocks = [] }: StockSummaryCardProps) {
           <div className="text-sm font-medium text-finance-gray">Top Performers</div>
           {topStocks.length > 0 ? (
             topStocks.map(stock => {
-              if (!stock) return null;
-              
+              // stock object is already validated by safeStocks filter
               const currentPrice = stock.currentPrice || 0;
               const averageBuyPrice = stock.averageBuyPrice || 0;
-              const gainPercent = averageBuyPrice > 0 ? 
-                ((currentPrice - averageBuyPrice) / averageBuyPrice) * 100 : 0;
-              
+              // Calculate gain percent for individual stock
+              const individualGainPercent = averageBuyPrice > 0 ? 
+                ((currentPrice - averageBuyPrice) / averageBuyPrice) * 100 : 
+                (currentPrice > 0 ? Infinity : 0); // Handle case where averageBuyPrice is 0
+
               return (
-                <div key={stock.id || `stock-${Math.random()}`} className="flex items-center justify-between">
+                <div key={stock.id} className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <div className="font-medium">{stock.symbol || 'Unknown'}</div>
-                    <div className="text-xs text-finance-gray">{stock.name || ''}</div>
+                    <div className="font-medium">{stock.symbol}</div>
+                    <div className="text-xs text-finance-gray">{stock.name}</div>
                   </div>
                   <div className="flex flex-col items-end">
                     <div className="font-medium">{formatIndianNumber(currentPrice)}</div>
-                    <div className={`text-xs ${gainPercent >= 0 ? 'trend-up' : 'trend-down'}`}>
-                      {gainPercent >= 0 ? '+' : ''}{gainPercent.toFixed(2)}%
+                    <div className={`text-xs ${individualGainPercent >= 0 ? 'trend-up' : 'trend-down'}`}>
+                      {averageBuyPrice === 0 && currentPrice > 0 ? 'N/A' : `${individualGainPercent >= 0 ? '+' : ''}${individualGainPercent.toFixed(2)}%`}
                     </div>
                   </div>
                 </div>
