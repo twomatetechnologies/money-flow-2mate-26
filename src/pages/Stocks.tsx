@@ -136,7 +136,6 @@ const Stocks = () => {
 
   const handleSubmitStock = async (stockData: Partial<StockHolding>) => {
     try {
-      // Validate required fields more robustly
       const requiredFields: Array<keyof StockHolding> = ['symbol', 'name', 'quantity', 'averageBuyPrice'];
       const missingFields = requiredFields.filter(field => 
         stockData[field] === undefined || stockData[field] === null || String(stockData[field]).trim() === ''
@@ -144,17 +143,16 @@ const Stocks = () => {
       
       if (missingFields.length > 0) {
         const missingFieldsMessage = `Missing required fields: ${missingFields.join(', ')}. Please ensure all mandatory fields are filled.`;
-        handleError(new Error(missingFieldsMessage), "Validation Error", { showToast: true, variant: "destructive" });
+        handleError(new Error(missingFieldsMessage), "Validation Error", { showToast: true, severity: "high", context: { missingFields } });
         return;
       }
       
-      // Further validation for numeric fields
       if (typeof stockData.quantity !== 'number' || isNaN(stockData.quantity) || stockData.quantity <= 0) {
-        handleError(new Error("Quantity must be a positive number."), "Validation Error", { showToast: true, variant: "destructive" });
+        handleError(new Error("Quantity must be a positive number."), "Validation Error", { showToast: true, severity: "high", context: { quantity: stockData.quantity } });
         return;
       }
       if (typeof stockData.averageBuyPrice !== 'number' || isNaN(stockData.averageBuyPrice) || stockData.averageBuyPrice <= 0) {
-        handleError(new Error("Average Buy Price must be a positive number."), "Validation Error", { showToast: true, variant: "destructive" });
+        handleError(new Error("Average Buy Price must be a positive number."), "Validation Error", { showToast: true, severity: "high", context: { averageBuyPrice: stockData.averageBuyPrice } });
         return;
       }
 
@@ -176,7 +174,8 @@ const Stocks = () => {
     } catch (error) {
       console.error('Error saving stock:', error);
       const defaultMessage = formMode === 'create' ? "Failed to add stock" : "Failed to update stock";
-      handleError(error, defaultMessage, { showToast: true, variant: "destructive" });
+      const errorContext = error instanceof Error ? { originalError: error.message, stack: error.stack } : { errorDetails: String(error) };
+      handleError(error, defaultMessage, { showToast: true, severity: "high", context: { ...errorContext, stockData } });
     }
   };
 
@@ -187,18 +186,20 @@ const Stocks = () => {
   const handleImportStocks = async (stocksToImport: Partial<StockHolding>[]) => {
     try {
       if (!Array.isArray(stocksToImport) || stocksToImport.length === 0) {
-        handleError(new Error("No valid stocks found in the imported file."), "Import Error", { showToast: true, variant: "destructive" });
+        handleError(new Error("No valid stocks found in the imported file. The file might be empty or incorrectly formatted."), "Import Error: No Data", { showToast: true, severity: "high" });
         return;
       }
 
       const requiredFields: Array<keyof StockHolding> = ['symbol', 'name', 'quantity', 'averageBuyPrice'];
       
       let validStocks: Partial<StockHolding>[] = [];
-      let invalidStocksInfo: { stock: Partial<StockHolding>, missing: string[] }[] = [];
+      let invalidStocksInfo: { stock: Partial<StockHolding>, missing: string[], reason: string }[] = [];
       
       stocksToImport.forEach(stock => {
         if (stock) {
           const missing: string[] = [];
+          let reason = "Missing fields";
+
           requiredFields.forEach(field => {
             if (stock[field] === undefined || stock[field] === null || String(stock[field]).trim() === '') {
               missing.push(field);
@@ -209,52 +210,63 @@ const Stocks = () => {
             const quantity = Number(stock.quantity);
             const avgBuyPrice = Number(stock.averageBuyPrice);
             
-            if (isNaN(quantity) || quantity <= 0) missing.push('quantity (must be a positive number)');
-            if (isNaN(avgBuyPrice) || avgBuyPrice <= 0) missing.push('averageBuyPrice (must be a positive number)');
+            if (isNaN(quantity) || quantity <= 0) {
+              missing.push('quantity (must be a positive number)');
+              reason = "Invalid numeric value for quantity";
+            }
+            if (isNaN(avgBuyPrice) || avgBuyPrice <= 0) {
+              missing.push('averageBuyPrice (must be a positive number)');
+              reason = reason === "Invalid numeric value for quantity" && missing.length > 1 ? "Invalid numeric values" : "Invalid numeric value for averageBuyPrice";
+            }
 
             if (missing.length === 0) {
               validStocks.push({
                 ...stock,
-                symbol: stock.symbol!,
-                name: stock.name!,
+                symbol: String(stock.symbol!).toUpperCase(), // Standardize symbol
+                name: String(stock.name!),
                 quantity: quantity,
                 averageBuyPrice: avgBuyPrice,
-                currentPrice: Number(stock.currentPrice) || avgBuyPrice,
+                currentPrice: Number(stock.currentPrice) || avgBuyPrice, // Default currentPrice to avgBuyPrice if not provided
                 value: stock.value || (quantity * (Number(stock.currentPrice) || avgBuyPrice)),
                 change: Number(stock.change) || 0,
                 changePercent: Number(stock.changePercent) || 0,
-                sector: stock.sector || 'Unspecified'
+                sector: stock.sector || 'Unspecified' // Default sector
               });
             } else {
-              invalidStocksInfo.push({ stock, missing });
+              invalidStocksInfo.push({ stock, missing, reason });
             }
           } else {
-            invalidStocksInfo.push({ stock, missing });
+            invalidStocksInfo.push({ stock, missing, reason });
           }
+        } else {
+           invalidStocksInfo.push({ stock: {symbol: 'Unknown Stock'}, missing: ['all data'], reason: 'Empty row or invalid stock object in file' });
         }
       });
       
       if (invalidStocksInfo.length > 0) {
         const detailedErrors = invalidStocksInfo.map(info => 
-          `Stock (Symbol: ${info.stock.symbol || 'N/A'}) missing: ${info.missing.join(', ')}`
-        ).join('; ');
+          `Stock (Symbol: ${info.stock.symbol || 'N/A'}, Name: ${info.stock.name || 'N/A'}) issue: ${info.reason} - ${info.missing.join(', ')}`
+        ).join('; \n');
         toast({
-          title: "Import Warning",
-          description: `${invalidStocksInfo.length} stocks have validation issues and will be skipped. Details: ${detailedErrors}`,
-          variant: "default", // Changed from "warning"
-          duration: 10000, // Longer duration for detailed message
+          title: `Import Warning: ${invalidStocksInfo.length} stocks have validation issues`,
+          description: `The following stocks will be skipped due to validation errors: \n${detailedErrors}`,
+          variant: "default", 
+          duration: 15000, 
         });
       }
       
       if (validStocks.length === 0) {
-        handleError(new Error("No stocks passed validation. Please check your file for missing or invalid data (e.g., Symbol, Name, Quantity, Average Buy Price). Quantity and Average Buy Price must be positive numbers."), "Import Error", { showToast: true, variant: "destructive" });
+        const errorMessage = invalidStocksInfo.length > 0 
+          ? `No stocks passed validation due to issues like missing fields (Symbol, Name, Quantity, Average Buy Price) or invalid numeric values (Quantity and Average Buy Price must be positive). See warning toast for details.`
+          : "No processable stocks found in the file. Ensure the file is not empty and contains valid stock data.";
+        handleError(new Error(errorMessage), "Import Error: All Stocks Invalid", { showToast: true, severity: "high", context: { invalidCount: invalidStocksInfo.length, totalAttempted: stocksToImport.length } });
         return;
       }
       
       console.log('Importing valid stocks:', validStocks);
       
       let importedCount = 0;
-      let failedImports: {stock: Partial<StockHolding>, error: any}[] = [];
+      let failedImports: {stock: Partial<StockHolding>, error: any, errorMessage: string}[] = [];
 
       for (const stock of validStocks) {
         try {
@@ -262,30 +274,33 @@ const Stocks = () => {
           importedCount++;
         } catch (error) {
           console.error('Error importing stock:', stock, error);
-          failedImports.push({stock, error});
+          const extractedMsg = extractErrorMessage(error, `Failed to import ${stock.symbol || 'stock'}`);
+          failedImports.push({stock, error, errorMessage: extractedMsg});
         }
       }
       
       fetchStocks();
       setIsImportOpen(false);
       
-      let finalMessage = `Successfully imported ${importedCount} of ${validStocks.length} valid stocks.`;
-      let finalVariant: "default" | "destructive" = "default";
+      let finalMessage = `Successfully imported ${importedCount} of ${validStocks.length} processed stocks.`;
+      let finalToastSeverity: "default" | "high" = "default";
 
       if (failedImports.length > 0) {
-        finalMessage += ` ${failedImports.length} stocks failed to import due to server-side issues. Check console for details.`;
-        finalVariant = "default"; // Changed from "warning"
+        const failedDetails = failedImports.map(f => `${f.stock.symbol || 'Unknown'}: ${f.errorMessage}`).join('; ');
+        finalMessage += ` ${failedImports.length} stocks failed to import due to server-side issues: ${failedDetails}. Check console for details.`;
+        finalToastSeverity = "default"; // Keeping as default for partial success
       }
       
       toast({
         title: "Import Complete",
         description: finalMessage,
-        variant: finalVariant
+        variant: finalToastSeverity === "high" ? "destructive" : "default"
       });
 
     } catch (error) {
       console.error('Error processing import:', error);
-      handleError(error, "A general error occurred during the import process. Please try again or check console for details.", { showToast: true, variant: "destructive" });
+      const errorContext = error instanceof Error ? { originalError: error.message, stack: error.stack } : { errorDetails: String(error) };
+      handleError(error, "A general error occurred during the import process. Please try again or check console for details.", { showToast: true, severity: "high", context: errorContext });
     }
   };
 
@@ -305,7 +320,8 @@ const Stocks = () => {
         fetchStocks();
       } catch (error) {
         console.error('Error deleting stock:', error);
-        handleError(error, "Failed to delete stock", { showToast: true, variant: "destructive" });
+        const errorContext = error instanceof Error ? { originalError: error.message, stack: error.stack } : { errorDetails: String(error) };
+        handleError(error, "Failed to delete stock", { showToast: true, severity: "high", context: { ...errorContext, stockId: stockToDelete.id } });
       }
       setStockToDelete(null);
     }
@@ -320,7 +336,8 @@ const Stocks = () => {
       setIsAuditOpen(true);
     } catch (error) {
       console.error('Error fetching audit records:', error);
-      handleError(error, "Failed to load audit trail", { showToast: true, variant: "destructive" });
+      const errorContext = error instanceof Error ? { originalError: error.message, stack: error.stack } : { errorDetails: String(error) };
+      handleError(error, "Failed to load audit trail", { showToast: true, severity: "high", context: { ...errorContext, stockId } });
     }
   };
 
@@ -333,11 +350,11 @@ const Stocks = () => {
     } else {
       const workbook = XLSX.utils.book_new();
       const data = [
-        ['Symbol', 'Name', 'Quantity', 'Average Buy Price', 'Current Price', 'Notes'],
-        ['AAPL', 'Apple Inc.', 10, 150.25, 175.50, 'Long term investment'],
-        ['MSFT', 'Microsoft Corporation', 5, 280.75, 300.25, 'Tech sector'],
-        ['GOOGL', 'Alphabet Inc.', 2, 2750.00, 2850.75, 'Growth stock'],
-        ['AMZN', 'Amazon.com Inc.', 3, 3300.50, 3450.25, 'E-commerce leader']
+        ['Symbol', 'Name', 'Quantity', 'Average Buy Price', 'Current Price', 'Sector', 'Notes', 'Family Member ID'],
+        ['AAPL', 'Apple Inc.', 10, 150.25, 175.50, 'Technology', 'Long term investment', 'fam-member-optional-id'],
+        ['MSFT', 'Microsoft Corporation', 5, 280.75, 300.25, 'Technology', 'Tech sector', ''],
+        ['GOOGL', 'Alphabet Inc.', 2, 2750.00, 2850.75, 'Technology','Growth stock', ''],
+        ['AMZN', 'Amazon.com Inc.', 3, 3300.50, 3450.25, 'Consumer Discretionary', 'E-commerce leader', '']
       ];
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Sample Stocks');
@@ -486,6 +503,7 @@ const Stocks = () => {
         isOpen={isImportOpen}
         onClose={() => setIsImportOpen(false)}
         onImport={handleImportStocks}
+        downloadSampleFile={downloadSampleFile}
       />
 
       <AlertDialog 
@@ -520,5 +538,17 @@ const Stocks = () => {
     </div>
   );
 };
+
+function extractErrorMessage(error: unknown, fallbackMessage?: string): string {
+  if (typeof error === 'string') return error;
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === 'object') {
+    if ('message' in error && typeof (error as any).message === 'string') {
+      return (error as any).message;
+    }
+  }
+  return fallbackMessage || "An unexpected error occurred";
+}
+
 
 export default Stocks;
