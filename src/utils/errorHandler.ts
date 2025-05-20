@@ -1,10 +1,9 @@
-
 import { toast } from "@/hooks/use-toast";
 
 // Error types
 type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
 
-type ErrorOptions = {
+export type ErrorOptions = {
   title?: string;
   showToast?: boolean;
   logToConsole?: boolean;
