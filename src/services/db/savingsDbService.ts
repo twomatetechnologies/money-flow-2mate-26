@@ -1,4 +1,3 @@
-
 /**
  * Savings Accounts service for database operations
  */
@@ -88,8 +87,22 @@ export const updateSavingsAccount = async (id: string, updates: Partial<SavingsA
 // Delete a savings account
 export const deleteSavingsAccount = async (id: string): Promise<boolean> => {
   try {
-    await executeQuery(`/savings-accounts/${id}`, 'DELETE');
-    createAuditRecord(id, 'savingsAccount', 'delete', { id });
+    // Get the account before deleting for audit record
+    const accountToDelete = await getSavingsAccountById(id);
+    
+    if (!accountToDelete) {
+      throw new Error(`Savings account ${id} not found`);
+    }
+    
+    // Delete the account
+    const response = await executeQuery<{ success: boolean }>(`/savings-accounts/${id}`, 'DELETE');
+    
+    if (!response.success) {
+      throw new Error('Failed to delete savings account');
+    }
+    
+    // Create audit record after successful deletion
+    await createAuditRecord(id, 'savingsAccount', 'delete', accountToDelete);
     return true;
   } catch (error) {
     console.error(`Failed to delete savings account ${id} from database:`, error);

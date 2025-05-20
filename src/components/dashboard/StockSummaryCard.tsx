@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,24 +19,17 @@ interface StockSummaryCardProps {
 export function StockSummaryCard({ stocks = [] }: StockSummaryCardProps) {
   const safeStocks = Array.isArray(stocks) ? stocks.filter(Boolean) : []; // Filter out null/undefined stocks
   
-  const totalValue = safeStocks.reduce((sum, stock) => {
-    // Use stock.value directly as it's calculated by DB: quantity * COALESCE(currentPrice, averageBuyPrice)
-    return sum + (stock?.value || 0);
-  }, 0);
+  const totalValue = safeStocks.reduce((sum, stock) => sum + (stock?.value || 0), 0);
   
-  const totalInvestment = safeStocks.reduce((sum, stock) => {
-    const buyPrice = stock?.averageBuyPrice || 0; // This should be correctly populated now
-    const quantity = stock?.quantity || 0;
-    return sum + (buyPrice * quantity);
-  }, 0);
+  const totalInvestment = safeStocks.reduce((sum, stock) => sum + ((stock?.averageBuyPrice || 0) * (stock?.quantity || 0)), 0);
   
   const totalGain = totalValue - totalInvestment;
   const percentGain = totalInvestment > 0 ? (totalGain / totalInvestment) * 100 : 0;
   
+  // Sort stocks by gain/loss value for top performers
   const sortedStocks = [...safeStocks].sort((a, b) => {
-    // Calculate gain for sorting, ensuring values are numbers
-    const gainA = (Number(a?.value) || 0) - ((Number(a?.averageBuyPrice) || 0) * (Number(a?.quantity) || 0));
-    const gainB = (Number(b?.value) || 0) - ((Number(b?.averageBuyPrice) || 0) * (Number(b?.quantity) || 0));
+    const gainA = (a?.value || 0) - ((a?.averageBuyPrice || 0) * (a?.quantity || 0));
+    const gainB = (b?.value || 0) - ((b?.averageBuyPrice || 0) * (b?.quantity || 0));
     return gainB - gainA; // Sort by highest absolute gain
   });
   

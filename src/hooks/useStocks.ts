@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { StockHolding } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -13,6 +13,7 @@ export const useStocks = () => {
   const [currentSort, setCurrentSort] = useState<string | null>(null);
   const [currentDirection, setCurrentDirection] = useState<'asc' | 'desc' | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
+  const monitoringInitializedRef = useRef(false);
   const { toast } = useToast();
   const { settings } = useSettings();
 
@@ -182,38 +183,44 @@ export const useStocks = () => {
   useEffect(() => {
     fetchStocks();
     
-    let stopMonitoringFn: (() => void) | undefined;
-    
-    (async () => {
-      try {
-        const threshold = settings?.stockPriceAlertThreshold || 5;
-        console.log('Starting stock price monitoring with threshold:', threshold);
-        
-        stopMonitoringFn = await startStockPriceMonitoring(threshold);
-        console.log("Using real market data for stock prices");
-      } catch (error) {
-        console.error('Error starting real stock monitoring, falling back to simulation:', error);
+    // Only initialize price monitoring once
+    if (!monitoringInitializedRef.current) {
+      let stopMonitoringFn: (() => void) | undefined;
+      
+      (async () => {
         try {
           const threshold = settings?.stockPriceAlertThreshold || 5;
-          stopMonitoringFn = await simulateStockPriceUpdates(threshold);
-          console.log("Using simulated market data for stock prices");
+          console.log('Starting stock price monitoring with threshold:', threshold);
           
-          toast({
-            title: "Using Simulated Data",
-            description: "Could not connect to live market data. Using simulated stock prices instead.",
-            variant: "default",
-          });
-        } catch (simError) {
-          console.error('Error setting up stock simulation:', simError);
+          stopMonitoringFn = await startStockPriceMonitoring(threshold);
+          console.log("Using real market data for stock prices");
+          monitoringInitializedRef.current = true;
+        } catch (error) {
+          console.error('Error starting real stock monitoring, falling back to simulation:', error);
+          try {
+            const threshold = settings?.stockPriceAlertThreshold || 5;
+            stopMonitoringFn = await simulateStockPriceUpdates(threshold);
+            console.log("Using simulated market data for stock prices");
+            monitoringInitializedRef.current = true;
+            
+            toast({
+              title: "Using Simulated Data",
+              description: "Could not connect to live market data. Using simulated stock prices instead.",
+              variant: "default",
+            });
+          } catch (simError) {
+            console.error('Error setting up stock simulation:', simError);
+          }
         }
-      }
-    })();
-    
-    return () => {
-      if (typeof stopMonitoringFn === 'function') {
-        stopMonitoringFn();
-      }
-    };
+      })();
+      
+      return () => {
+        if (typeof stopMonitoringFn === 'function') {
+          stopMonitoringFn();
+          monitoringInitializedRef.current = false;
+        }
+      };
+    }
   }, [settings?.stockPriceAlertThreshold]);
 
   useEffect(() => {

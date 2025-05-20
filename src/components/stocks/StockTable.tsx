@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { StockHolding } from '@/types';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -71,7 +70,6 @@ export const StockTable: React.FC<StockTableProps> = ({
   currentSort,
   currentDirection
 }) => {
-  // Ensure stocks is always an array and handle null/undefined stocks
   const safeStocks = Array.isArray(stocks) ? stocks.filter(Boolean) : [];
 
   return (
@@ -159,6 +157,7 @@ export const StockTable: React.FC<StockTableProps> = ({
           
           <SortableTableHeader
             field="familyMemberId"
+            className="text-right"
             onSortChange={onSortChange}
             currentSort={currentSort}
             currentDirection={currentDirection}
@@ -183,11 +182,12 @@ export const StockTable: React.FC<StockTableProps> = ({
             const currentPrice = stock.currentPrice || 0;
             const averageBuyPrice = stock.averageBuyPrice || 0;
             const quantity = stock.quantity || 0;
+            const value = stock.value || 0;
             
-            const gain = (currentPrice - averageBuyPrice) * quantity;
-            const gainPercent = averageBuyPrice > 0 ? (gain / (averageBuyPrice * quantity)) * 100 : 0;
+            const gain = value - (averageBuyPrice * quantity);
+            const gainPercent = averageBuyPrice > 0 ? ((currentPrice - averageBuyPrice) / averageBuyPrice) * 100 : 0;
             const changePercent = stock.changePercent || 0;
-            
+
             return (
               <TableRow key={stock.id || `stock-${Math.random()}`} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors">
                 <TableCell className="font-semibold">{stock.symbol || 'Unknown'}</TableCell>
@@ -207,7 +207,7 @@ export const StockTable: React.FC<StockTableProps> = ({
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-right font-medium">₹{(stock.value || 0).toLocaleString()}</TableCell>
+                <TableCell className="text-right font-medium">₹{value.toLocaleString()}</TableCell>
                 <TableCell className="text-right">
                   <span className={gain >= 0 ? 'text-green-600' : 'text-red-600'}>
                     {gain >= 0 ? '+' : ''}₹{gain.toLocaleString()} ({gainPercent.toFixed(2)}%)

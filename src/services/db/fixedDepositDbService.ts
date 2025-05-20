@@ -94,9 +94,12 @@ export const updateFixedDeposit = async (id: string, updates: Partial<FixedDepos
 // Delete a fixed deposit
 export const deleteFixedDeposit = async (id: string): Promise<boolean> => {
   try {
-    await executeQuery(`/fixed-deposits/${id}`, 'DELETE');
-    createAuditRecord(id, 'fixedDeposit', 'delete', { id });
-    return true;
+    const response = await executeQuery<{success: boolean; message: string}>(`/fixed-deposits/${id}`, 'DELETE');
+    if (response.success) {
+      createAuditRecord(id, 'fixedDeposit', 'delete', { id });
+      return true;
+    }
+    return false;
   } catch (error) {
     console.error(`Failed to delete fixed deposit ${id} from database:`, error);
     throw error;

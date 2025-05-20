@@ -103,9 +103,9 @@ export const startStockPriceMonitoring = async (alertThreshold: number) => {
   // Initial update
   await updateStockPrices();
   
-  // Set up periodic updates (every 60 seconds)
-  // Alpha Vantage free tier has rate limits, so we don't want to call too frequently
-  const intervalId = setInterval(updateStockPrices, 60000);
+  // Set up periodic updates (every 5 minutes)
+  // Alpha Vantage free tier has rate limits (5 calls per minute), so we use a longer interval
+  const intervalId = setInterval(updateStockPrices, 300000);
   
   // Return a function to stop monitoring - this is important for cleanup
   return () => {

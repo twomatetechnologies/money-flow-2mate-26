@@ -1,4 +1,3 @@
-
 /**
  * Provident Fund service for database operations
  */
@@ -91,8 +90,21 @@ export const updateProvidentFund = async (id: string, updates: Partial<Provident
 // Delete a provident fund
 export const deleteProvidentFund = async (id: string): Promise<boolean> => {
   try {
-    await executeQuery(`/provident-funds/${id}`, 'DELETE');
-    createAuditRecord(id, 'providentFund', 'delete', { id });
+    // Get the fund before deleting for audit record
+    const fundToDelete = await getProvidentFundById(id);
+    if (!fundToDelete) {
+      throw new Error(`Provident fund ${id} not found`);
+    }
+    
+    // Delete the fund
+    const response = await executeQuery<{ success: boolean }>(`/provident-funds/${id}`, 'DELETE');
+    
+    if (!response.success) {
+      throw new Error('Failed to delete provident fund');
+    }
+    
+    // Create audit record after successful deletion
+    await createAuditRecord(id, 'providentFund', 'delete', fundToDelete);
     return true;
   } catch (error) {
     console.error(`Failed to delete provident fund ${id} from database:`, error);

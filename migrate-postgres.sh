@@ -78,7 +78,9 @@ CREATE TABLE IF NOT EXISTS stocks (
   family_member_id VARCHAR(36) REFERENCES family_members(id),
   notes TEXT,
   last_updated TIMESTAMP DEFAULT NOW(),
-  value NUMERIC(14, 2) GENERATED ALWAYS AS (quantity * COALESCE(current_price, purchase_price)) STORED
+  value NUMERIC(14, 2) GENERATED ALWAYS AS (quantity * current_price) STORED,
+  investment_value NUMERIC(14, 2) GENERATED ALWAYS AS (quantity * purchase_price) STORED,
+  gain_loss NUMERIC(14, 2) GENERATED ALWAYS AS ((quantity * current_price) - (quantity * purchase_price)) STORED
 );
 
 -- Fixed Deposits

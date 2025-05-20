@@ -1,4 +1,3 @@
-
 /**
  * SIP Investments service for database operations
  */
@@ -82,8 +81,21 @@ export const updateSIPInvestment = async (id: string, updates: Partial<SIPInvest
 // Delete a SIP investment
 export const deleteSIPInvestment = async (id: string): Promise<boolean> => {
   try {
-    await executeQuery(`/sip-investments/${id}`, 'DELETE');
-    createAuditRecord(id, 'sip', 'delete', { id });
+    // Get the investment before deleting for audit record
+    const investmentToDelete = await getSIPInvestmentById(id);
+    if (!investmentToDelete) {
+      throw new Error(`SIP investment ${id} not found`);
+    }
+    
+    // Delete the investment
+    const response = await executeQuery<{ success: boolean }>(`/sip-investments/${id}`, 'DELETE');
+    
+    if (!response.success) {
+      throw new Error('Failed to delete SIP investment');
+    }
+    
+    // Create audit record after successful deletion
+    await createAuditRecord(id, 'sip', 'delete', investmentToDelete);
     return true;
   } catch (error) {
     console.error(`Failed to delete SIP investment ${id} from database:`, error);

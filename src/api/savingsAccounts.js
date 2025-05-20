@@ -107,15 +107,19 @@ const updateSavingsAccount = (req, res) => {
 const deleteSavingsAccount = (req, res) => {
   try {
     const { id } = req.params;
-    const initialLength = savingsAccounts.length;
     
-    savingsAccounts = savingsAccounts.filter(sa => sa.id !== id);
+    // First find the account to delete for audit purposes
+    const accountToDelete = savingsAccounts.find(sa => sa.id === id);
     
-    if (savingsAccounts.length === initialLength) {
+    if (!accountToDelete) {
       return res.status(404).json({ error: `Savings account with ID ${id} not found` });
     }
     
-    res.status(204).send();
+    // Remove the account
+    savingsAccounts = savingsAccounts.filter(sa => sa.id !== id);
+    
+    // Return success with empty body
+    res.status(200).json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -102,6 +102,9 @@ const FixedDepositForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Fixe
     
     // Simple interest calculation
     const maturityAmount = principal + (principal * interestRate * timeDiff) / 100;
+    
+    // Update form with calculated maturity amount before submission
+    form.setValue('maturityAmount', maturityAmount);
 
     const formattedData = {
       ...data,

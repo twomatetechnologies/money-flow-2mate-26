@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { SIPInvestment } from '@/types';
 import { createAuditRecord } from './auditService';
@@ -96,22 +95,23 @@ export const updateSIPInvestment = (id: string, updates: Partial<SIPInvestment>)
   return Promise.resolve(sipInvestments[index]);
 };
 
-export const deleteSIPInvestment = (id: string): Promise<void> => {
+export const deleteSIPInvestment = async (id: string): Promise<void> => {
   if (useDatabase) {
-    return sipDbService.deleteSIPInvestment(id).then(() => {});
+    await sipDbService.deleteSIPInvestment(id);
+    return;
   }
   
   const index = sipInvestments.findIndex(sip => sip.id === id);
   if (index === -1) {
-    return Promise.reject(new Error('SIP investment not found'));
+    throw new Error('SIP investment not found');
   }
   
-  const deletedSIP = sipInvestments[index];
+  const deletedSIP = { ...sipInvestments[index] };
   sipInvestments.splice(index, 1);
-  
   saveSipInvestments(sipInvestments);
-  createAuditRecord(id, 'sip', 'delete', deletedSIP);
-  return Promise.resolve();
+  
+  // Create audit record after successful deletion
+  await createAuditRecord(id, 'sip', 'delete', deletedSIP);
 };
 
 // Export SIP investments

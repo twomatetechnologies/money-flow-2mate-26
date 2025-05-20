@@ -117,7 +117,7 @@ const deleteSIPInvestment = (req, res) => {
       return res.status(404).json({ error: `SIP investment with ID ${id} not found` });
     }
     
-    res.status(204).send();
+    res.status(200).json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

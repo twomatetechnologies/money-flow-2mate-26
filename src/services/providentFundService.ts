@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { ProvidentFund } from '@/types';
 import { createAuditRecord } from './auditService';
@@ -147,8 +146,11 @@ export const deleteProvidentFund = async (id: string): Promise<void> => {
   if (index === -1) {
     throw new Error('Provident Fund not found');
   }
-  const deletedPF = providentFunds[index];
+  
+  const deletedPF = { ...providentFunds[index] };
   providentFunds.splice(index, 1);
   saveProvidentFunds();
-  createAuditRecord(id, 'providentFund', 'delete', deletedPF);
+  
+  // Create audit record after successful deletion
+  await createAuditRecord(id, 'providentFund', 'delete', deletedPF);
 };

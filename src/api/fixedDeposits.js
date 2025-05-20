@@ -76,6 +76,10 @@ const createFixedDeposit = (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
+    // Calculate maturity amount if not provided
+    const timeDiff = Math.max(0, (new Date(maturityDate).getTime() - new Date(startDate).getTime()) / (1000 * 3600 * 24 * 365));
+    const calculatedMaturityAmount = principal + (principal * interestRate * timeDiff) / 100;
+    
     const newDeposit = {
       id: `fd-${uuidv4().slice(0, 8)}`,
       bankName,
@@ -84,6 +88,7 @@ const createFixedDeposit = (req, res) => {
       interestRate,
       startDate,
       maturityDate,
+      maturityAmount: calculatedMaturityAmount,
       isAutoRenew: isAutoRenew || false,
       familyMemberId: familyMemberId || 'self-default', // Default to self if not provided
       notes: notes || '',
@@ -134,7 +139,7 @@ const deleteFixedDeposit = (req, res) => {
       return res.status(404).json({ error: `Fixed deposit with ID ${id} not found` });
     }
     
-    res.status(204).send();
+    res.json({ success: true, message: 'Fixed deposit deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

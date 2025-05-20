@@ -111,7 +111,7 @@ const deleteProvidentFund = (req, res) => {
       return res.status(404).json({ error: `Provident fund with ID ${id} not found` });
     }
     
-    res.status(204).send();
+    res.status(200).json({ success: true, message: 'Provident fund deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

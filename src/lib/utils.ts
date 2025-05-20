@@ -1,4 +1,3 @@
-
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -6,45 +5,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatIndianNumber(num: number): string {
-  const numStr = Math.abs(num).toString();
-  let result = '';
+export function formatIndianNumber(num: number, decimals: number = 2): string {
+  // Handle NaN, infinity and undefined
+  if (!Number.isFinite(num)) return '₹0.00';
   
-  // Handle decimals
+  // Round to specified decimals first to avoid floating point issues
+  const roundedNum = Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
+  
+  // Convert to string with fixed decimals
+  const numStr = Math.abs(roundedNum).toFixed(decimals);
   const [intPart, decPart] = numStr.split('.');
   
-  // Add commas for Indian numbering system
-  let remaining = intPart;
-  // First group of 3 from right
-  if (remaining.length > 3) {
-    result = ',' + remaining.slice(-3) + result;
-    remaining = remaining.slice(0, -3);
-  } else {
-    result = remaining + result;
-    remaining = '';
-  }
+  // Format the integer part with Indian grouping (e.g., 1,00,00,000)
+  const lastThree = intPart.slice(-3);
+  const otherNumbers = intPart.slice(0, -3);
+  let formattedInt = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+  formattedInt = formattedInt ? formattedInt + ',' + lastThree : lastThree;
   
-  // Rest of the groups of 2
-  while (remaining.length > 0) {
-    if (remaining.length >= 2) {
-      result = ',' + remaining.slice(-2) + result;
-      remaining = remaining.slice(0, -2);
-    } else {
-      result = remaining + result;
-      remaining = '';
-    }
-  }
-
-  // Add negative sign if needed
-  if (num < 0) {
-    result = '-' + result;
-  }
+  // Combine all parts
+  let result = (roundedNum < 0 ? '-' : '') + '₹' + formattedInt + '.' + decPart;
   
-  // Add decimals back if they existed
-  if (decPart !== undefined) {
-    result = result + '.' + decPart;
-  }
-
-  // Add the currency symbol only once at the beginning
-  return '₹' + result;
+  return result;
 }

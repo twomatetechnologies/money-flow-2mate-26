@@ -64,15 +64,23 @@ export const createFixedDeposit = async (fd: Partial<FixedDeposit>): Promise<Fix
     return await fixedDepositDbService.addFixedDeposit(fd);
   }
   
+  // Calculate maturity amount if not provided
+  const principal = fd.principal || 0;
+  const interestRate = fd.interestRate || 0;
+  const startDate = fd.startDate || new Date();
+  const maturityDate = fd.maturityDate || new Date();
+  const timeDiff = Math.max(0, (maturityDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24 * 365));
+  const calculatedMaturityAmount = principal + (principal * interestRate * timeDiff) / 100;
+  
   // Set default values for any missing required fields
   const newFD: FixedDeposit = {
     bankName: fd.bankName || 'Unknown Bank',
     accountNumber: fd.accountNumber || 'XXXX' + Math.floor(Math.random() * 10000),
-    principal: fd.principal || 0,
-    interestRate: fd.interestRate || 0,
-    startDate: fd.startDate || new Date(),
-    maturityDate: fd.maturityDate || new Date(),
-    maturityAmount: fd.maturityAmount || 0,
+    principal: principal,
+    interestRate: interestRate,
+    startDate: startDate,
+    maturityDate: maturityDate,
+    maturityAmount: calculatedMaturityAmount,
     isAutoRenew: fd.isAutoRenew || false,
     notes: fd.notes || '',
     familyMemberId: fd.familyMemberId || 'self-default', // Default to "self" if not provided

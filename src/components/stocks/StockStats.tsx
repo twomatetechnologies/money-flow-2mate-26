@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { StockHolding } from '@/types';
@@ -9,9 +8,10 @@ interface StockStatsProps {
 }
 
 export const StockStats: React.FC<StockStatsProps> = ({ displayedStocks }) => {
-  const totalValue = displayedStocks.reduce((sum, stock) => sum + stock.value, 0);
+  // Use database-computed values
+  const totalValue = displayedStocks.reduce((sum, stock) => sum + (stock.value || 0), 0);
   const totalInvestment = displayedStocks.reduce(
-    (sum, stock) => sum + stock.averageBuyPrice * stock.quantity,
+    (sum, stock) => sum + (stock.quantity * stock.averageBuyPrice),
     0
   );
   const totalGain = totalValue - totalInvestment;

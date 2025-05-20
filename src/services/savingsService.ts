@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { SavingsAccount } from '@/types';
 import { createAuditRecord } from './auditService';
@@ -101,7 +100,10 @@ export const updateSavingsAccount = async (id: string, updates: Partial<SavingsA
 // Delete a savings account
 export const deleteSavingsAccount = async (id: string): Promise<void> => {
   if (useDatabase) {
-    await savingsDbService.deleteSavingsAccount(id);
+    const response = await savingsDbService.deleteSavingsAccount(id);
+    if (!response) {
+      throw new Error('Failed to delete savings account');
+    }
     return;
   }
   
@@ -110,10 +112,11 @@ export const deleteSavingsAccount = async (id: string): Promise<void> => {
     return Promise.reject(new Error('Savings account not found'));
   }
   
-  const deletedAccount = savingsAccounts[index];
+  const deletedAccount = { ...savingsAccounts[index] };
   savingsAccounts.splice(index, 1);
-  
   saveSavingsAccounts(savingsAccounts);
-  createAuditRecord(id, 'savingsAccount', 'delete', deletedAccount);
+  
+  // Create audit record after successful deletion
+  await createAuditRecord(id, 'savingsAccount', 'delete', deletedAccount);
   return Promise.resolve();
 };

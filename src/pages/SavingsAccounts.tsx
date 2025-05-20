@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -50,7 +49,10 @@ const SavingsAccounts = () => {
 
   const handleDelete = async (id: string) => {
     try {
+      // Wait for both deletion and audit record creation
       await deleteSavingsAccount(id);
+      
+      // Only update UI after successful deletion and audit record creation
       setAccounts(prevAccounts => prevAccounts.filter(acc => acc.id !== id));
       toast({
         title: 'Success',
