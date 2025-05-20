@@ -28,7 +28,7 @@ import { StockStats } from '@/components/stocks/StockStats';
 import { StockTable } from '@/components/stocks/StockTable';
 import { MarketIndices } from '@/components/stocks/MarketIndices';
 import AuditTrail from '@/components/common/AuditTrail';
-import { getStockById, createStock, updateStock, deleteStock } from '@/services/crudService';
+import { getStockById, createStock, updateStock, deleteStock } from '@/services/stockService';
 import { getAuditRecordsForEntity } from '@/services/auditService';
 import { AuditRecord } from '@/types/audit';
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
@@ -36,13 +36,14 @@ import FilterButton, { FilterOption } from '@/components/common/FilterButton';
 import { useStocks } from '@/hooks/useStocks';
 import * as XLSX from 'xlsx';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { handleError } from '@/utils/errorHandler';
 
 const Stocks = () => {
   const {
     stocks,
     displayedStocks,
     loading,
-    error,
+    error: stocksHookError,
     currentSort,
     currentDirection,
     activeFilters,
@@ -135,16 +136,25 @@ const Stocks = () => {
 
   const handleSubmitStock = async (stockData: Partial<StockHolding>) => {
     try {
-      // Validate required fields
-      const requiredFields = ['symbol', 'name', 'quantity', 'averageBuyPrice'] as const;
-      const missingFields = requiredFields.filter(field => !stockData[field]);
+      // Validate required fields more robustly
+      const requiredFields: Array<keyof StockHolding> = ['symbol', 'name', 'quantity', 'averageBuyPrice'];
+      const missingFields = requiredFields.filter(field => 
+        stockData[field] === undefined || stockData[field] === null || String(stockData[field]).trim() === ''
+      );
       
       if (missingFields.length > 0) {
-        toast({
-          title: "Validation Error",
-          description: `Missing required fields: ${missingFields.join(', ')}`,
-          variant: "destructive"
-        });
+        const missingFieldsMessage = `Missing required fields: ${missingFields.join(', ')}. Please ensure all mandatory fields are filled.`;
+        handleError(new Error(missingFieldsMessage), "Validation Error", { showToast: true, variant: "destructive" });
+        return;
+      }
+      
+      // Further validation for numeric fields
+      if (typeof stockData.quantity !== 'number' || isNaN(stockData.quantity) || stockData.quantity <= 0) {
+        handleError(new Error("Quantity must be a positive number."), "Validation Error", { showToast: true, variant: "destructive" });
+        return;
+      }
+      if (typeof stockData.averageBuyPrice !== 'number' || isNaN(stockData.averageBuyPrice) || stockData.averageBuyPrice <= 0) {
+        handleError(new Error("Average Buy Price must be a positive number."), "Validation Error", { showToast: true, variant: "destructive" });
         return;
       }
 
@@ -152,24 +162,21 @@ const Stocks = () => {
         await createStock(stockData as Omit<StockHolding, 'id' | 'lastUpdated'>);
         toast({
           title: "Success",
-          description: "Stock added successfully",
+          description: `${stockData.name} (${stockData.symbol}) added successfully.`,
         });
       } else if (currentStock?.id) {
         await updateStock(currentStock.id, stockData);
         toast({
           title: "Success",
-          description: "Stock updated successfully",
+          description: `${stockData.name} (${stockData.symbol}) updated successfully.`,
         });
       }
       fetchStocks();
       setIsFormOpen(false);
     } catch (error) {
       console.error('Error saving stock:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save stock",
-        variant: "destructive"
-      });
+      const defaultMessage = formMode === 'create' ? "Failed to add stock" : "Failed to update stock";
+      handleError(error, defaultMessage, { showToast: true, variant: "destructive" });
     }
   };
 
@@ -180,89 +187,105 @@ const Stocks = () => {
   const handleImportStocks = async (stocksToImport: Partial<StockHolding>[]) => {
     try {
       if (!Array.isArray(stocksToImport) || stocksToImport.length === 0) {
-        toast({
-          title: "Error",
-          description: "No valid stocks to import",
-          variant: "destructive"
-        });
+        handleError(new Error("No valid stocks found in the imported file."), "Import Error", { showToast: true, variant: "destructive" });
         return;
       }
 
-      // Validate required fields for each stock
-      const requiredFields = ['symbol', 'name', 'quantity', 'averageBuyPrice'] as const;
+      const requiredFields: Array<keyof StockHolding> = ['symbol', 'name', 'quantity', 'averageBuyPrice'];
       
       let validStocks: Partial<StockHolding>[] = [];
-      let invalidStocks: Partial<StockHolding>[] = [];
+      let invalidStocksInfo: { stock: Partial<StockHolding>, missing: string[] }[] = [];
       
       stocksToImport.forEach(stock => {
-        if (stock && requiredFields.every(field => {
-          const value = stock[field];
-          return value !== undefined && value !== null && value !== '';
-        })) {
-          validStocks.push({
-            ...stock,
-            // Ensure all required properties have values
-            symbol: stock.symbol!,
-            name: stock.name!,
-            quantity: stock.quantity!,
-            averageBuyPrice: stock.averageBuyPrice!,
-            currentPrice: stock.currentPrice || stock.averageBuyPrice,
-            value: stock.value || (stock.quantity! * (stock.currentPrice || stock.averageBuyPrice!)),
-            change: stock.change || 0,
-            changePercent: stock.changePercent || 0,
-            sector: stock.sector || 'Unspecified'
+        if (stock) {
+          const missing: string[] = [];
+          requiredFields.forEach(field => {
+            if (stock[field] === undefined || stock[field] === null || String(stock[field]).trim() === '') {
+              missing.push(field);
+            }
           });
-        } else {
-          invalidStocks.push(stock);
+
+          if (missing.length === 0) {
+            const quantity = Number(stock.quantity);
+            const avgBuyPrice = Number(stock.averageBuyPrice);
+            
+            if (isNaN(quantity) || quantity <= 0) missing.push('quantity (must be a positive number)');
+            if (isNaN(avgBuyPrice) || avgBuyPrice <= 0) missing.push('averageBuyPrice (must be a positive number)');
+
+            if (missing.length === 0) {
+              validStocks.push({
+                ...stock,
+                symbol: stock.symbol!,
+                name: stock.name!,
+                quantity: quantity,
+                averageBuyPrice: avgBuyPrice,
+                currentPrice: Number(stock.currentPrice) || avgBuyPrice,
+                value: stock.value || (quantity * (Number(stock.currentPrice) || avgBuyPrice)),
+                change: Number(stock.change) || 0,
+                changePercent: Number(stock.changePercent) || 0,
+                sector: stock.sector || 'Unspecified'
+              });
+            } else {
+              invalidStocksInfo.push({ stock, missing });
+            }
+          } else {
+            invalidStocksInfo.push({ stock, missing });
+          }
         }
       });
       
-      if (invalidStocks.length > 0) {
-        console.warn('Some stocks are missing required fields:', invalidStocks);
+      if (invalidStocksInfo.length > 0) {
+        const detailedErrors = invalidStocksInfo.map(info => 
+          `Stock (Symbol: ${info.stock.symbol || 'N/A'}) missing: ${info.missing.join(', ')}`
+        ).join('; ');
         toast({
-          title: "Warning",
-          description: `${invalidStocks.length} stocks are missing required fields and will be skipped`,
-          variant: "warning"
+          title: "Import Warning",
+          description: `${invalidStocksInfo.length} stocks have validation issues and will be skipped. Details: ${detailedErrors}`,
+          variant: "default", // Changed from "warning"
+          duration: 10000, // Longer duration for detailed message
         });
       }
       
       if (validStocks.length === 0) {
-        toast({
-          title: "Error",
-          description: "No valid stocks to import after validation",
-          variant: "destructive"
-        });
+        handleError(new Error("No stocks passed validation. Please check your file for missing or invalid data (e.g., Symbol, Name, Quantity, Average Buy Price). Quantity and Average Buy Price must be positive numbers."), "Import Error", { showToast: true, variant: "destructive" });
         return;
       }
       
       console.log('Importing valid stocks:', validStocks);
       
-      // Import stocks one by one
       let importedCount = 0;
+      let failedImports: {stock: Partial<StockHolding>, error: any}[] = [];
+
       for (const stock of validStocks) {
         try {
           await createStock(stock as Omit<StockHolding, 'id' | 'lastUpdated'>);
           importedCount++;
         } catch (error) {
           console.error('Error importing stock:', stock, error);
+          failedImports.push({stock, error});
         }
       }
       
       fetchStocks();
       setIsImportOpen(false);
       
+      let finalMessage = `Successfully imported ${importedCount} of ${validStocks.length} valid stocks.`;
+      let finalVariant: "default" | "destructive" = "default";
+
+      if (failedImports.length > 0) {
+        finalMessage += ` ${failedImports.length} stocks failed to import due to server-side issues. Check console for details.`;
+        finalVariant = "default"; // Changed from "warning"
+      }
+      
       toast({
-        title: "Success",
-        description: `Successfully imported ${importedCount} stocks`,
-        variant: importedCount < validStocks.length ? "warning" : "default"
+        title: "Import Complete",
+        description: finalMessage,
+        variant: finalVariant
       });
+
     } catch (error) {
-      console.error('Error importing stocks:', error);
-      toast({
-        title: "Error",
-        description: "Failed to import stocks. See console for details.",
-        variant: "destructive"
-      });
+      console.error('Error processing import:', error);
+      handleError(error, "A general error occurred during the import process. Please try again or check console for details.", { showToast: true, variant: "destructive" });
     }
   };
 
@@ -282,11 +305,7 @@ const Stocks = () => {
         fetchStocks();
       } catch (error) {
         console.error('Error deleting stock:', error);
-        toast({
-          title: "Error",
-          description: "Failed to delete stock",
-          variant: "destructive"
-        });
+        handleError(error, "Failed to delete stock", { showToast: true, variant: "destructive" });
       }
       setStockToDelete(null);
     }
@@ -301,11 +320,7 @@ const Stocks = () => {
       setIsAuditOpen(true);
     } catch (error) {
       console.error('Error fetching audit records:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load audit trail",
-        variant: "destructive"
-      });
+      handleError(error, "Failed to load audit trail", { showToast: true, variant: "destructive" });
     }
   };
 
@@ -368,13 +383,13 @@ const Stocks = () => {
     );
   }
 
-  if (error) {
+  if (stocksHookError) {
     return (
       <div className="py-6">
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4 mr-2" />
           <AlertDescription>
-            {error}. Please try again later or contact support.
+            {stocksHookError}. Please try again later or contact support.
           </AlertDescription>
         </Alert>
         
