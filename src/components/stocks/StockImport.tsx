@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -115,7 +114,7 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
           return {
             symbol: symbol,
             name: String(row['Name'] || row['name'] || row['Symbol'] || row['symbol'] || ''),
-            currentPrice: parseFloat(String(row['Current Price'] || row['currentPrice'] || 0)),
+            currentPrice: parseFloat(String(row['Current Price'] || row['currentPrice'] || averageBuyPrice || 0)),
             change: parseFloat(String(row['Change'] || row['change'] || 0)),
             prevClose: parseFloat(String(row['Prev Close'] || row['prevClose'] || 0)),
             volume: parseFloat(String(row['Volume'] || row['volume'] || 0)),
@@ -162,16 +161,15 @@ const StockImport: React.FC<StockImportProps> = ({ isOpen, onClose, onImport }) 
 
     const stocksToImport = previewData.map(stock => ({
       symbol: stock.symbol,
-      name: stock.name,
+      name: stock.name || stock.symbol, // Ensure name is not empty
       quantity: stock.quantity,
       averageBuyPrice: stock.averageBuyPrice,
       currentPrice: stock.currentPrice || stock.averageBuyPrice, // Default to averageBuyPrice if currentPrice is not provided
-      change: stock.change,
-      changePercent: stock.todaysGainPercent,
+      change: stock.change || 0,
+      changePercent: stock.todaysGainPercent || 0,
       value: stock.value || (stock.quantity * (stock.currentPrice || stock.averageBuyPrice)),
-      sector: '',
-      lastUpdated: new Date(),
-      notes: stock.notes
+      sector: "Unspecified", // Ensure sector is not empty
+      notes: stock.notes || ""
     }));
 
     onImport(stocksToImport);

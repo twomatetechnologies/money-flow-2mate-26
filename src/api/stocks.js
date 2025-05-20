@@ -4,20 +4,8 @@
  */
 import { v4 as uuidv4 } from 'uuid';
 
-// In-memory data store as fallback for development
-let stocks = [
-  {
-    id: 'stock-001',
-    symbol: 'AAPL',
-    companyName: 'Apple Inc.',
-    quantity: 10,
-    purchasePrice: 150.25,
-    currentPrice: 175.50,
-    purchaseDate: '2023-12-15',
-    sector: 'Technology',
-    familyMemberId: 'fam-001'
-  }
-];
+// Remove in-memory test data
+let stocks = [];
 
 // Get all stocks with optional filters
 const getAllStocks = async (req, res) => {
@@ -130,15 +118,33 @@ const getStockById = async (req, res) => {
 // Create a new stock
 const createStock = async (req, res) => {
   try {
-    const { symbol, companyName, quantity, purchasePrice, purchaseDate, sector, familyMemberId, notes } = req.body;
+    const { 
+      symbol, 
+      name, 
+      quantity, 
+      averageBuyPrice, 
+      currentPrice,
+      sector, 
+      familyMemberId, 
+      notes 
+    } = req.body;
     
-    // Basic validation
-    if (!symbol || !companyName || !quantity || !purchasePrice || !purchaseDate || !familyMemberId) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    // Basic validation with detailed error messages
+    const missingFields = [];
+    
+    if (!symbol) missingFields.push('symbol');
+    if (!name) missingFields.push('name');
+    if (quantity === undefined || quantity === null) missingFields.push('quantity');
+    if (averageBuyPrice === undefined || averageBuyPrice === null) missingFields.push('averageBuyPrice');
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        error: `Missing required fields: ${missingFields.join(', ')}` 
+      });
     }
     
     const newStockId = `stock-${uuidv4().slice(0, 8)}`;
-    const currentPrice = purchasePrice; // Initialize with purchase price
+    const actualCurrentPrice = currentPrice || averageBuyPrice; // Default to averageBuyPrice if currentPrice not provided
     const now = new Date().toISOString();
     
     // Check if we have a database connection
@@ -154,9 +160,17 @@ const createStock = async (req, res) => {
       `;
       
       const values = [
-        newStockId, symbol, companyName, quantity, 
-        purchasePrice, currentPrice, purchaseDate, 
-        sector, familyMemberId, notes, now
+        newStockId, 
+        symbol, 
+        name, 
+        quantity, 
+        averageBuyPrice, 
+        actualCurrentPrice, 
+        new Date().toISOString().split('T')[0], // Use current date for purchase date
+        sector || 'Unspecified', 
+        familyMemberId || null, 
+        notes || '', 
+        now
       ];
       
       const result = await req.app.locals.db.query(query, values);
@@ -193,15 +207,16 @@ const createStock = async (req, res) => {
       const newStock = {
         id: newStockId,
         symbol,
-        companyName,
+        companyName: name,
         quantity,
-        purchasePrice,
-        currentPrice,
-        purchaseDate,
-        sector,
-        familyMemberId,
-        notes,
-        createdAt: now
+        purchasePrice: averageBuyPrice,
+        currentPrice: actualCurrentPrice,
+        purchaseDate: new Date().toISOString().split('T')[0],
+        sector: sector || 'Unspecified',
+        familyMemberId: familyMemberId || null,
+        notes: notes || '',
+        lastUpdated: now,
+        value: quantity * actualCurrentPrice
       };
       
       stocks.push(newStock);

@@ -190,25 +190,62 @@ const Stocks = () => {
 
       // Validate required fields for each stock
       const requiredFields = ['symbol', 'name', 'quantity', 'averageBuyPrice'] as const;
-      const invalidStocks = stocksToImport.filter(stock => 
-        !stock || requiredFields.some(field => !stock[field])
-      );
-
+      
+      let validStocks: Partial<StockHolding>[] = [];
+      let invalidStocks: Partial<StockHolding>[] = [];
+      
+      stocksToImport.forEach(stock => {
+        if (stock && requiredFields.every(field => {
+          const value = stock[field];
+          return value !== undefined && value !== null && value !== '';
+        })) {
+          validStocks.push({
+            ...stock,
+            // Ensure all required properties have values
+            symbol: stock.symbol!,
+            name: stock.name!,
+            quantity: stock.quantity!,
+            averageBuyPrice: stock.averageBuyPrice!,
+            currentPrice: stock.currentPrice || stock.averageBuyPrice,
+            value: stock.value || (stock.quantity! * (stock.currentPrice || stock.averageBuyPrice!)),
+            change: stock.change || 0,
+            changePercent: stock.changePercent || 0,
+            sector: stock.sector || 'Unspecified'
+          });
+        } else {
+          invalidStocks.push(stock);
+        }
+      });
+      
       if (invalidStocks.length > 0) {
+        console.warn('Some stocks are missing required fields:', invalidStocks);
         toast({
-          title: "Validation Error",
-          description: `${invalidStocks.length} stocks are missing required fields`,
+          title: "Warning",
+          description: `${invalidStocks.length} stocks are missing required fields and will be skipped`,
+          variant: "warning"
+        });
+      }
+      
+      if (validStocks.length === 0) {
+        toast({
+          title: "Error",
+          description: "No valid stocks to import after validation",
           variant: "destructive"
         });
         return;
       }
       
-      const validStocks = stocksToImport.filter(stock => stock && 
-        requiredFields.every(field => stock[field] !== undefined && stock[field] !== null)
-      );
+      console.log('Importing valid stocks:', validStocks);
       
+      // Import stocks one by one
+      let importedCount = 0;
       for (const stock of validStocks) {
-        await createStock(stock as Omit<StockHolding, 'id' | 'lastUpdated'>);
+        try {
+          await createStock(stock as Omit<StockHolding, 'id' | 'lastUpdated'>);
+          importedCount++;
+        } catch (error) {
+          console.error('Error importing stock:', stock, error);
+        }
       }
       
       fetchStocks();
@@ -216,13 +253,14 @@ const Stocks = () => {
       
       toast({
         title: "Success",
-        description: `Successfully imported ${validStocks.length} stocks`,
+        description: `Successfully imported ${importedCount} stocks`,
+        variant: importedCount < validStocks.length ? "warning" : "default"
       });
     } catch (error) {
       console.error('Error importing stocks:', error);
       toast({
         title: "Error",
-        description: "Failed to import stocks",
+        description: "Failed to import stocks. See console for details.",
         variant: "destructive"
       });
     }

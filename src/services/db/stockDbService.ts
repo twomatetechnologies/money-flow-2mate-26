@@ -26,17 +26,22 @@ export const getStocks = async (): Promise<StockHolding[]> => {
 // Add a new stock
 export const addStock = async (stock: Partial<StockHolding>): Promise<StockHolding> => {
   try {
+    // Validate required fields
+    if (!stock.symbol || !stock.name || !stock.quantity || !stock.averageBuyPrice) {
+      throw new Error('Missing required fields: symbol, name, quantity, averageBuyPrice');
+    }
+    
     const newStock = {
       id: stock.id || uuidv4(),
-      symbol: stock.symbol || '',
-      name: stock.name || '',
-      quantity: stock.quantity || 0,
-      averageBuyPrice: stock.averageBuyPrice || 0,
-      currentPrice: stock.currentPrice || 0,
+      symbol: stock.symbol,
+      name: stock.name,
+      quantity: stock.quantity,
+      averageBuyPrice: stock.averageBuyPrice,
+      currentPrice: stock.currentPrice || stock.averageBuyPrice,
       change: stock.change || 0,
       changePercent: stock.changePercent || 0,
-      value: stock.value || 0,
-      sector: stock.sector || '',
+      value: stock.value || (stock.quantity * (stock.currentPrice || stock.averageBuyPrice)),
+      sector: stock.sector || 'Unspecified',
       familyMemberId: stock.familyMemberId || '',
       lastUpdated: new Date(),
     };
