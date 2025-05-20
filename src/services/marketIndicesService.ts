@@ -21,10 +21,10 @@ const MARKET_INDICES = [
 ];
 
 // The Alpha Vantage API key
-const ALPHA_VANTAGE_API_KEY = 'demo'; // Using demo key for now
+const ALPHA_VANTAGE_API_KEY = 'LR78N65XUDF2EZDB'; // Using demo key for now
 
 // Financial Modeling Prep API key (free tier)
-const FMP_API_KEY = 'demo';
+const FMP_API_KEY = 'LR78N65XUDF2EZDB';
 
 // Fetch the latest data for a market index
 export const fetchMarketIndexData = async (symbol: string, name: string): Promise<MarketIndex | null> => {

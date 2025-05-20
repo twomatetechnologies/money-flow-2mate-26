@@ -4,7 +4,7 @@ import { toast } from '@/hooks/use-toast';
 import { getStocks, updateStock } from './crudService';
 
 // The Alpha Vantage API key (free tier)
-const ALPHA_VANTAGE_API_KEY = 'demo'; // Replace with your API key for production use
+const ALPHA_VANTAGE_API_KEY = 'LR78N65XUDF2EZDB'; // Replace with your API key for production use
 
 // Fetch real stock data from Alpha Vantage API
 const fetchStockPrice = async (symbol: string): Promise<number | null> => {
