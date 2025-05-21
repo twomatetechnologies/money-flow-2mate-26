@@ -13,7 +13,9 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; requires2FA?: boolean }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; requires2FA?: boolean; errorMessage?: string }>;
+  verify2FA: (code: string) => Promise<{ success: boolean; errorMessage?: string }>;
+  resend2FACode: (email: string) => Promise<{ success: boolean; errorMessage?: string }>;
   logout: () => void;
   isAuthenticated: () => boolean;
   updateUser: (data: { name?: string; email?: string }) => Promise<void>;
@@ -47,9 +49,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; requires2FA?: boolean }> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; requires2FA?: boolean; errorMessage?: string }> => {
     try {
       setIsLoading(true);
+      
+      // Basic validation before API call
+      if (!email || !password) {
+        return { 
+          success: false, 
+          errorMessage: "Please provide both email and password" 
+        };
+      }
       
       // Call the login API endpoint
       const response = await fetch('/api/auth/login', {
@@ -60,10 +70,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email, password })
       });
 
-      // If the request failed, return false
+      // If the request failed, extract error message and return failure
       if (!response.ok) {
-        console.error("Login failed:", await response.text());
-        return { success: false };
+        let errorMessage = "Login failed";
+        
+        try {
+          // Try to parse error response as JSON
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (e) {
+          // If parsing fails, use text content
+          errorMessage = await response.text();
+        }
+        
+        // Map HTTP status codes to more user-friendly messages
+        if (response.status === 401) {
+          errorMessage = "Invalid email or password. Please check your credentials and try again.";
+        } else if (response.status === 429) {
+          errorMessage = "Too many login attempts. Please try again later.";
+        } else if (response.status >= 500) {
+          errorMessage = "Server error. Please try again later or contact support.";
+        }
+        
+        console.error("Login failed:", errorMessage);
+        return { success: false, errorMessage };
       }
 
       // Parse the response
@@ -73,6 +105,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.requiresTwoFactor) {
         // Store the token for 2FA verification
         localStorage.setItem('auth_temp_token', data.token);
+        
+        // If user information is available, store it too
+        if (data.user) {
+          localStorage.setItem('auth_temp_user', JSON.stringify(data.user));
+        }
+        
         return { success: true, requires2FA: true };
       }
       
@@ -84,7 +122,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     } catch (error) {
       console.error("Error during login:", error);
-      return { success: false };
+      return { 
+        success: false, 
+        errorMessage: error instanceof Error ? error.message : "An unexpected error occurred"
+      };
     } finally {
       setIsLoading(false);
     }
@@ -156,8 +197,138 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user?.role === 'admin';
   }, [user]);
 
+  // Add new method to verify 2FA codes
+  const verify2FA = async (code: string): Promise<{ success: boolean; errorMessage?: string }> => {
+    try {
+      setIsLoading(true);
+      const tempToken = localStorage.getItem('auth_temp_token');
+      
+      if (!tempToken) {
+        return { 
+          success: false, 
+          errorMessage: "Authentication session expired. Please login again." 
+        };
+      }
+      
+      // Call the verify 2FA API endpoint
+      const response = await fetch('/api/auth/verify-2fa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code, token: tempToken })
+      });
+      
+      if (!response.ok) {
+        let errorMessage = "Verification failed";
+        
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (e) {
+          errorMessage = await response.text();
+        }
+        
+        console.error("2FA verification failed:", errorMessage);
+        return { success: false, errorMessage };
+      }
+      
+      // Parse the response
+      const data = await response.json();
+      
+      if (data.success) {
+        // Store the new token and user data
+        localStorage.setItem('auth_token', data.token);
+        localStorage.removeItem('auth_temp_token');
+        
+        // If user data comes back with the verification response, update it
+        if (data.user) {
+          setUser(data.user);
+          localStorage.setItem('auth_user', JSON.stringify(data.user));
+        }
+        
+        return { success: true };
+      } else {
+        return { 
+          success: false, 
+          errorMessage: data.errorMessage || "Verification failed. Please try again." 
+        };
+      }
+    } catch (error) {
+      console.error("Error during 2FA verification:", error);
+      return { 
+        success: false, 
+        errorMessage: error instanceof Error ? error.message : "An unexpected error occurred" 
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Add method to resend 2FA code
+  const resend2FACode = async (email: string): Promise<{ success: boolean; errorMessage?: string }> => {
+    try {
+      setIsLoading(true);
+      
+      // Call the resend 2FA code API endpoint
+      const response = await fetch('/api/auth/resend-2fa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+      
+      if (!response.ok) {
+        let errorMessage = "Failed to resend verification code";
+        
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (e) {
+          errorMessage = await response.text();
+        }
+        
+        console.error("Resend 2FA code failed:", errorMessage);
+        return { success: false, errorMessage };
+      }
+      
+      // Parse the response
+      const data = await response.json();
+      
+      // Get the new token and save it
+      if (data.token) {
+        localStorage.setItem('auth_temp_token', data.token);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Error during 2FA code resend:", error);
+      return { 
+        success: false, 
+        errorMessage: error instanceof Error ? error.message : "An unexpected error occurred" 
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, isAuthenticated, updateUser, isDevelopmentMode }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isLoading, 
+      login, 
+      logout, 
+      isAuthenticated, 
+      updateUser, 
+      isDevelopmentMode,
+      verify2FA,
+      resend2FACode
+    }}>
       {children}
     </AuthContext.Provider>
   );

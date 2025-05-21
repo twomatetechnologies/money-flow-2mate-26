@@ -4,9 +4,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
-import { EyeIcon, EyeOffIcon, BugIcon } from 'lucide-react';
+import { EyeIcon, EyeOffIcon, BugIcon, AlertCircle } from 'lucide-react';
 import { DatabaseConnectionDialog } from '@/components/auth/DatabaseConnectionDialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState<{email?: string; password?: string}>({});
   const [showDevMode, setShowDevMode] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,15 +28,45 @@ const Login: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+    setFormErrors({});
+
+    // Client-side validation
+    let hasErrors = false;
+    const newFormErrors: {email?: string; password?: string} = {};
+    
+    if (!email.trim()) {
+      newFormErrors.email = "Email is required";
+      hasErrors = true;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newFormErrors.email = "Please enter a valid email";
+      hasErrors = true;
+    }
+    
+    if (!password) {
+      newFormErrors.password = "Password is required";
+      hasErrors = true;
+    }
+    
+    if (hasErrors) {
+      setFormErrors(newFormErrors);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Attempt login
       const result = await login(email, password);
 
+      if (!result.success) {
+        // Display specific error message from the API
+        setError(result.errorMessage || "Invalid email or password. Please try again.");
+        return;
+      }
+
       if (result.requires2FA) {
-        // If 2FA is required, navigate to the 2FA page
+        // If 2FA is required, navigate to the 2FA page with the right state
         navigate('/two-factor-auth', {
-          state: { email, from }
+          state: { requires2FA: true, email, from }
         });
       } else {
         // Otherwise navigate to the intended destination
@@ -42,7 +74,7 @@ const Login: React.FC = () => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError("Invalid email or password. Please try again.");
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -85,9 +117,11 @@ const Login: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md text-sm">
-                  {error}
-                </div>
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
 
               <div className="space-y-2">
@@ -98,11 +132,20 @@ const Login: React.FC = () => {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    // Clear error when user starts typing
+                    if (formErrors.email) {
+                      setFormErrors(prev => ({ ...prev, email: undefined }));
+                    }
+                  }}
                   placeholder="example@email.com"
-                  required
+                  className={formErrors.email ? "border-red-500" : ""}
                   autoFocus
                 />
+                {formErrors.email && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -114,9 +157,15 @@ const Login: React.FC = () => {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      // Clear error when user starts typing
+                      if (formErrors.password) {
+                        setFormErrors(prev => ({ ...prev, password: undefined }));
+                      }
+                    }}
                     placeholder="••••••••"
-                    required
+                    className={formErrors.password ? "border-red-500" : ""}
                   />
                   <button
                     type="button"
@@ -126,6 +175,9 @@ const Login: React.FC = () => {
                     {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
                   </button>
                 </div>
+                {formErrors.password && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
+                )}
               </div>
 
               <div className="flex items-center">
