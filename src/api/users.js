@@ -8,44 +8,24 @@ import bcrypt from 'bcrypt';
 let users = [
   {
     id: 'user-001',
-    name: 'John Doe',
-    email: 'john@example.com',
+    name: 'Kaushik Thanki',
+    email: 'thanki.kaushik@gmail.com',
+    passwordHash: '$2a$10$dPzE4X4FHDYgWWhVzrZAO.f8ZimRWOkr31b/fbwYhh52w2kJ1H5TG', // hashed password for 'password123'
     role: 'admin',
-    createdAt: '2024-01-01T00:00:00Z',
-    lastLogin: '2024-05-11T00:00:00Z',
+    createdAt: new Date().toISOString(),
+    lastLogin: null,
     has2FAEnabled: false,
     settings: {
       darkMode: false,
-      notifications: true
-    }
-  },
-  {
-    id: 'user-002',
-    name: 'User Example',
-    email: 'user@example.com',
-    role: 'admin',
-    createdAt: '2024-01-01T00:00:00Z',
-    lastLogin: '2024-05-11T00:00:00Z',
-    has2FAEnabled: false,
-    settings: {
-      darkMode: false,
-      notifications: true
-    }
-  },
-  {
-    id: 'user-003',
-    name: 'Test User',
-    email: 'test@example.com',
-    role: 'user',
-    createdAt: '2024-01-01T00:00:00Z',
-    lastLogin: '2024-05-11T00:00:00Z',
-    has2FAEnabled: true,
-    settings: {
-      darkMode: false,
-      notifications: true
+      notifications: true,
+      stockPriceAlertThreshold: 5.0,
+      appName: 'Money Flow Guardian',
+      stockApiKey: 'LR78N65XUDF2EZDB'
     }
   }
 ];
+
+console.log('USERS INITIALIZED:', users);
 
 // Get all users with optional filters
 const getAllUsers = (req, res) => {

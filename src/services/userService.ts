@@ -11,7 +11,30 @@ const USER_STORAGE_KEY = 'users';
 const loadUsers = (): User[] => {
   try {
     const stored = localStorage.getItem(USER_STORAGE_KEY);
-    const users = stored ? JSON.parse(stored) : [];
+    let users = stored ? JSON.parse(stored) : [];
+    
+    // If no users exist, add the admin user
+    if (users.length === 0) {
+      users = [{
+        id: 'user-001',
+        name: 'Kaushik Thanki',
+        email: 'thanki.kaushik@gmail.com',
+        // This is the same hashed password as in the backend
+        passwordHash: '$2a$10$dPzE4X4FHDYgWWhVzrZAO.f8ZimRWOkr31b/fbwYhh52w2kJ1H5TG',
+        role: 'admin',
+        createdAt: new Date().toISOString(),
+        lastLogin: null,
+        has2FAEnabled: false,
+        settings: {
+          darkMode: false,
+          notifications: true,
+          stockPriceAlertThreshold: 5.0,
+          appName: 'Money Flow Guardian',
+          stockApiKey: 'LR78N65XUDF2EZDB'
+        }
+      }];
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(users));
+    }
     
     // Convert date strings back to Date objects
     return users.map((user: any) => ({
@@ -36,26 +59,6 @@ const saveUsers = (users: User[]): void => {
 
 // In-memory datastore with persistence
 let users = loadUsers();
-
-// Create a sample user if none exist (only for localStorage mode)
-if (users.length === 0 && !isPostgresEnabled()) {
-  const sampleUser: User = {
-    id: uuidv4(),
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'admin',
-    createdAt: new Date(),
-    lastLogin: new Date(),
-    has2FAEnabled: false,
-    settings: {
-      darkMode: false,
-      notifications: true
-    }
-  };
-  
-  users.push(sampleUser);
-  saveUsers(users);
-}
 
 // Check if we should use database operations
 const useDatabase = isPostgresEnabled();

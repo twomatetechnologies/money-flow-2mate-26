@@ -7,5 +7,5 @@ echo.
 echo Database is running on localhost:5432
 echo pgAdmin is available at http://localhost:5050
 echo Login to pgAdmin with:
-echo   Email: admin@example.com
+echo   Email: pg.admin@example.com
 echo   Password: admin123

@@ -128,11 +128,9 @@ On container start, the app runs `migrate-postgres.sh` to ensure required tables
 
 ## Usage
 
-### Default Login
+### Authentication
 
-For the demo version, use these credentials:
-- Email: `user@example.com`
-- Password: `password`
+The application requires user registration and authentication to access the dashboard. Users must create an account before logging in.
 
 ### Two-Factor Authentication
 

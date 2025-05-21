@@ -32,8 +32,8 @@ POST /api/auth/login
 Content-Type: application/json
 
 {
-  "email": "user@example.com",
-  "password": "securepassword"
+  "email": "your.email@example.com",
+  "password": "your_password"
 }
 ```
 
@@ -44,7 +44,7 @@ Response:
   "user": {
     "id": "user-id",
     "name": "User Name",
-    "email": "user@example.com",
+    "email": "your.email@example.com",
     "role": "user"
   },
   "requiresTwoFactor": false
@@ -114,7 +114,7 @@ Content-Type: application/json
 
 {
   "name": "New User",
-  "email": "newuser@example.com",
+  "email": "new.user@example.com",
   "password": "securepassword",
   "role": "user"
 }
@@ -165,11 +165,11 @@ The password management functionality can be tested using the provided API endpo
 ```bash
 # Create a user
 curl -X POST http://localhost:8081/api/users -H "Content-Type: application/json" \
-  -d '{"name":"Test User", "email":"test@example.com", "password":"Password123!", "role":"user"}'
+  -d '{"name":"Test User", "email":"test.user@example.com", "password":"Your_Password123!", "role":"user"}'
 
 # Login
 curl -X POST http://localhost:8081/api/auth/login -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com", "password":"Password123!"}'
+  -d '{"email":"your.email@example.com", "password":"your_password"}'
 
 # Logout
 curl -X POST http://localhost:8081/api/auth/logout -H "Content-Type: application/json" \

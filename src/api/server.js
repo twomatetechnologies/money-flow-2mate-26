@@ -59,6 +59,7 @@ const initializeDatabase = async () => {
 
 // Make the users array available to all routes
 app.locals.users = users;
+console.log('INITIALIZING SERVER WITH USERS:', { count: users.length, userEmails: users.map(u => u.email) });
 
 // Health check endpoint
 app.get('/api/health-check', async (req, res) => {

@@ -103,11 +103,9 @@ You can modify the `docker-compose.yml` file to:
 - Add additional services
 - Configure volume mounts
 
-## Default Login Credentials
+## User Registration
 
-For the demo version, use these credentials:
-- Email: `user@example.com`
-- Password: `password`
+To use the application, you'll need to register a new account. The application doesn't come with any pre-configured users.
 
 ## Data Persistence
 

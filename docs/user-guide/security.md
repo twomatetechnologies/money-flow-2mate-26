@@ -21,7 +21,7 @@ For more detailed information about the password management implementation, plea
 
 The current implementation in the Money Flow Guardian application is a **demonstration/simulation** of 2FA functionality:
 
-1. When a user logs in with the email "test@example.com", the system flags that account as requiring 2FA verification.
+1. When a user logs in with the email "2fa-test@example.com", the system flags that account as requiring 2FA verification.
 2. The user is redirected to the `/two-factor-auth` page.
 3. For demonstration purposes, the system accepts **any 6-digit code** entered by the user.
 4. There is a simulated "resend code" functionality with a 30-second cooldown timer.

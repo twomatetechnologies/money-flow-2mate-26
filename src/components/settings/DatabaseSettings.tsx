@@ -133,7 +133,7 @@ export function DatabaseSettings() {
               <h4 className="text-sm font-medium mb-2">pgAdmin Login Information</h4>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <span className="text-muted-foreground">Email:</span>
-                <span className="font-mono">admin@example.com</span>
+                <span className="font-mono">pg.admin@example.com</span>
                 <span className="text-muted-foreground">Password:</span>
                 <span className="font-mono">admin123</span>
               </div>

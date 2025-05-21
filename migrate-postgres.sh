@@ -210,18 +210,24 @@ VALUES
   ('goal-003', 'Emma''s Education', 5000000, 1000000, '2032-06-01', 'Education', 'College education fund', 'High', 'fam-003')
 ON CONFLICT (id) DO NOTHING;
 
--- Add Sample Users
+-- Clear the existing data first to ensure proper initialization
+DELETE FROM user_settings WHERE id = 'settings-001';
+DELETE FROM app_users WHERE id = 'user-001';
+
+-- Add Admin User
 INSERT INTO app_users (id, email, password_hash, name, role, is_active)
 VALUES
-  ('user-001', 'user@example.com', '\$2a\$10\$dPzE4X4FHDYgWWhVzrZAO.f8ZimRWOkr31b/fbwYhh52w2kJ1H5TG', 'Demo User', 'user', true),
-  ('user-002', 'admin@example.com', '\$2a\$10\$dPzE4X4FHDYgWWhVzrZAO.f8ZimRWOkr31b/fbwYhh52w2kJ1H5TG', 'Admin User', 'admin', true)
-ON CONFLICT (id) DO NOTHING;
+  ('user-001', 'thanki.kaushik@gmail.com', '$2a$10$dPzE4X4FHDYgWWhVzrZAO.f8ZimRWOkr31b/fbwYhh52w2kJ1H5TG', 'Kaushik Thanki', 'admin', true)
+ON CONFLICT (id) DO UPDATE SET
+  email = EXCLUDED.email,
+  password_hash = EXCLUDED.password_hash,
+  name = EXCLUDED.name,
+  role = EXCLUDED.role;
 
 -- Add Default User Settings
 INSERT INTO user_settings (id, user_id, stock_price_alert_threshold, app_name, stock_api_key)
 VALUES
-  ('settings-001', 'user-001', 5.0, 'Money Flow Guardian', 'LR78N65XUDF2EZDB'),
-  ('settings-002', 'user-002', 10.0, 'Financial Portfolio Tracker', 'LR78N65XUDF2EZDB')
+  ('settings-001', 'user-001', 5.0, 'Money Flow Guardian', 'LR78N65XUDF2EZDB')
 ON CONFLICT (id) DO UPDATE SET
   stock_price_alert_threshold = EXCLUDED.stock_price_alert_threshold,
   app_name = EXCLUDED.app_name,

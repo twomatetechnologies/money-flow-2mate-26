@@ -37,7 +37,7 @@ The application will be available at http://localhost:8080
 pgAdmin will be available at http://localhost:5050
 
 - pgAdmin default login:
-  - Email: `admin@example.com`
+  - Email: `pg.admin@example.com`
   - Password: `admin123`
 
 ### Local Development
@@ -94,11 +94,9 @@ For detailed information, please see:
 - [Development Guide](../docs/development-guide.md)
 - [Version Management](../docs/version-management.md)
 
-## Default Login
+## User Registration
 
-For the demo version, use these credentials:
-- Email: `user@example.com`
-- Password: `password`
+To use the application, you'll need to register a new account. The application doesn't come with any pre-configured users.
 
 ## Contributing
 

@@ -24,7 +24,7 @@ run-db.bat
 
 - PostgreSQL will be available on `localhost:5432`
 - pgAdmin will be available at `http://localhost:5050`
-  - Email: `admin@example.com`
+  - Email: `pg.admin@example.com` 
   - Password: `admin123`
 
 ### API Server Only

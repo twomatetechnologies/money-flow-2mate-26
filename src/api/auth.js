@@ -48,46 +48,29 @@ const login = async (req, res) => {
     
     // Find user by email - use the global users array from the app context
     const users = req.app.locals.users || [];
+    console.log('LOGIN ATTEMPT:', { 
+      email, 
+      providedUsers: users.length, 
+      userEmails: users.map(u => u.email),
+      dbConnected: req.app.locals.dbConnected || false
+    });
+    
     const user = users.find(u => u.email === email);
     
     if (!user) {
+      console.log('USER NOT FOUND:', { email, availableUsers: users.map(u => ({ id: u.id, email: u.email, role: u.role })) });
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     
     // Check if the user has a passwordHash
     if (!user.passwordHash) {
-      // For demo users without a hashed password, check if it's one of our test users
-      if (email === 'user@example.com' && password === 'password') {
-        const token = generateToken(user.id);
-        return res.json({
-          token,
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role
-          },
-          requiresTwoFactor: false
-        });
-      } else if (email === 'test@example.com' && password === 'password') {
-        const token = generateToken(user.id);
-        return res.json({
-          token,
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role
-          },
-          requiresTwoFactor: true
-        });
-      }
-      
+      console.log('PASSWORD HASH MISSING:', { userId: user.id, userDetails: JSON.stringify(user) });
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     
     // Verify password with bcrypt
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    console.log('PASSWORD CHECK:', { userId: user.id, isPasswordValid });
     
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid email or password' });

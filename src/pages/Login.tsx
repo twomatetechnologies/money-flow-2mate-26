@@ -4,22 +4,21 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
-import { EyeIcon, EyeOffIcon, BugIcon, AlertCircle } from 'lucide-react';
+import { EyeIcon, EyeOffIcon, AlertCircle } from 'lucide-react';
 import { DatabaseConnectionDialog } from '@/components/auth/DatabaseConnectionDialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useToast } from '@/hooks/use-toast';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [formErrors, setFormErrors] = useState<{email?: string; password?: string}>({});
-  const [showDevMode, setShowDevMode] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { toast } = useToast();
 
   // Get intended destination from location state or default to dashboard
   const from = location.state?.from?.pathname || '/';
@@ -27,7 +26,6 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
     setFormErrors({});
 
     // Client-side validation
@@ -58,8 +56,12 @@ const Login: React.FC = () => {
       const result = await login(email, password);
 
       if (!result.success) {
-        // Display specific error message from the API
-        setError(result.errorMessage || "Invalid email or password. Please try again.");
+        // Display specific error message from the API as a toast notification
+        toast({
+          title: "Login Failed",
+          description: result.errorMessage || "Invalid email or password. Please try again.",
+          variant: "destructive"
+        });
         return;
       }
 
@@ -74,19 +76,14 @@ const Login: React.FC = () => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError("An unexpected error occurred. Please try again.");
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const fillDemoCredentials = () => {
-    setEmail("user@example.com");
-    setPassword("password");
-  };
-
-  const toggleDevMode = () => {
-    setShowDevMode(!showDevMode);
   };
 
   return (
@@ -101,29 +98,11 @@ const Login: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between w-full">
-              <CardTitle className="text-center">Sign In</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:bg-transparent"
-                onClick={toggleDevMode}
-              >
-                <BugIcon className="h-5 w-5" />
-              </Button>
-            </div>
+            <CardTitle className="text-center">Sign In</CardTitle>
           </CardHeader>
 
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
-              {error && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Email
@@ -204,33 +183,7 @@ const Login: React.FC = () => {
 
               <div className="flex justify-between w-full">
                 <DatabaseConnectionDialog />
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-2 hover:bg-blue-50"
-                        onClick={fillDemoCredentials}
-                      >
-                        <BugIcon className="h-4 w-4" />
-                        <span>Test Credentials</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Fill form with demo credentials</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
               </div>
-              {showDevMode && (
-                <div className="border border-yellow-300 bg-yellow-50 rounded-md p-4 text-center text-sm text-yellow-800">
-                  <h4 className="font-medium mb-1">Development Mode</h4>
-                  <p>Login with: <span className="font-mono">user@example.com</span> / <span className="font-mono">password</span></p>
-                  <p>For 2FA testing: <span className="font-mono">test@example.com</span> / <span className="font-mono">password</span></p>
-                </div>
-              )}
             </CardFooter>
           </form>
         </Card>
