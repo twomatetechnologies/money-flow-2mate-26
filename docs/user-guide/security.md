@@ -7,10 +7,13 @@ Money Flow Guardian implements several security features to protect your financi
 
 The application uses a secure authentication system with the following features:
 
-- Email and password-based login
+- Email and password-based login with secure bcrypt hashing
 - Two-factor authentication (2FA)
-- Session management
+- Session management with token-based authentication
 - Access control based on user permissions
+- Secure password reset and update mechanisms
+
+For more detailed information about the password management implementation, please refer to the [Password Management Documentation](/docs/password-management.md).
 
 ## Two-Factor Authentication (2FA) Implementation
 

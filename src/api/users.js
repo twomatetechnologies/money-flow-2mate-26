@@ -1,8 +1,8 @@
-
 /**
  * Users API Implementation
  */
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcrypt';
 
 // In-memory data store for development
 let users = [
@@ -14,6 +14,32 @@ let users = [
     createdAt: '2024-01-01T00:00:00Z',
     lastLogin: '2024-05-11T00:00:00Z',
     has2FAEnabled: false,
+    settings: {
+      darkMode: false,
+      notifications: true
+    }
+  },
+  {
+    id: 'user-002',
+    name: 'User Example',
+    email: 'user@example.com',
+    role: 'admin',
+    createdAt: '2024-01-01T00:00:00Z',
+    lastLogin: '2024-05-11T00:00:00Z',
+    has2FAEnabled: false,
+    settings: {
+      darkMode: false,
+      notifications: true
+    }
+  },
+  {
+    id: 'user-003',
+    name: 'Test User',
+    email: 'test@example.com',
+    role: 'user',
+    createdAt: '2024-01-01T00:00:00Z',
+    lastLogin: '2024-05-11T00:00:00Z',
+    has2FAEnabled: true,
     settings: {
       darkMode: false,
       notifications: true
@@ -63,20 +89,20 @@ const getUserById = (req, res) => {
 };
 
 // Create a new user
-const createUser = (req, res) => {
+const createUser = async (req, res) => {
   try {
     const { 
       name, 
       email, 
-      password, // We will not store raw password
+      password, // We will hash this
       role,
       has2FAEnabled,
       settings
     } = req.body;
     
     // Basic validation
-    if (!name || !email) {
-      return res.status(400).json({ error: 'Missing required fields (name and email)' });
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Missing required fields (name, email, and password)' });
     }
     
     // Check if email already exists
@@ -84,10 +110,14 @@ const createUser = (req, res) => {
       return res.status(400).json({ error: 'Email already in use' });
     }
     
+    // Hash the password with bcrypt (10 rounds of salting)
+    const passwordHash = await bcrypt.hash(password, 10);
+    
     const newUser = {
       id: `user-${uuidv4().slice(0, 8)}`,
       name,
       email,
+      passwordHash, // Store the hashed password
       role: role || 'user', // Default role
       createdAt: new Date().toISOString(),
       lastLogin: null,
@@ -95,15 +125,13 @@ const createUser = (req, res) => {
       settings: settings || {
         darkMode: false,
         notifications: true
-      },
-      // In a real app, we would hash the password
-      // passwordHash: await bcrypt.hash(password, 10)
+      }
     };
     
     users.push(newUser);
     
     // Don't send sensitive information
-    const { passwordHash, ...userWithoutPassword } = newUser;
+    const { passwordHash: _, ...userWithoutPassword } = newUser;
     
     res.status(201).json(userWithoutPassword);
   } catch (error) {
@@ -161,10 +189,15 @@ const deleteUser = (req, res) => {
 };
 
 // Update user password - separate endpoint for security
-const updateUserPassword = (req, res) => {
+const updateUserPassword = async (req, res) => {
   try {
     const { id } = req.params;
     const { currentPassword, newPassword } = req.body;
+    
+    // Validate input
+    if (!newPassword) {
+      return res.status(400).json({ error: 'New password is required' });
+    }
     
     const userIndex = users.findIndex(user => user.id === id);
     
@@ -172,14 +205,46 @@ const updateUserPassword = (req, res) => {
       return res.status(404).json({ error: `User with ID ${id} not found` });
     }
     
-    // In a real app, we would verify the current password and hash the new one
-    // const isPasswordValid = await bcrypt.compare(currentPassword, users[userIndex].passwordHash);
-    // if (!isPasswordValid) {
-    //   return res.status(401).json({ error: 'Current password is incorrect' });
-    // }
-    // users[userIndex].passwordHash = await bcrypt.hash(newPassword, 10);
+    // If the user has a password hash, verify the current password
+    if (users[userIndex].passwordHash && currentPassword) {
+      const isPasswordValid = await bcrypt.compare(currentPassword, users[userIndex].passwordHash);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
+    }
+    
+    // Hash the new password
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    users[userIndex].passwordHash = passwordHash;
     
     res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Reset user password (for admins or password recovery)
+const resetUserPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    
+    // Validate input
+    if (!newPassword) {
+      return res.status(400).json({ error: 'New password is required' });
+    }
+    
+    const userIndex = users.findIndex(user => user.id === id);
+    
+    if (userIndex === -1) {
+      return res.status(404).json({ error: `User with ID ${id} not found` });
+    }
+    
+    // Hash the new password
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    users[userIndex].passwordHash = passwordHash;
+    
+    res.json({ message: 'Password reset successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -191,5 +256,7 @@ export {
   createUser,
   updateUser,
   deleteUser,
-  updateUserPassword
+  updateUserPassword,
+  resetUserPassword,
+  users
 };

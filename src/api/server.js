@@ -16,6 +16,9 @@ const app = express();
 let dbClient = null;
 let dbConnected = false;
 
+// Import the users array
+import { users } from './users.js';
+
 // Initialize PostgreSQL connection if enabled
 const initializeDatabase = async () => {
   if (process.env.POSTGRES_ENABLED === 'true') {
@@ -53,6 +56,9 @@ const initializeDatabase = async () => {
     return null;
   }
 };
+
+// Make the users array available to all routes
+app.locals.users = users;
 
 // Health check endpoint
 app.get('/api/health-check', async (req, res) => {

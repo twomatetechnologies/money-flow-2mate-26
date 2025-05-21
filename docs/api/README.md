@@ -44,11 +44,26 @@ Promise.reject(new Error("Error message"))
 
 ## Authentication
 
-Current implementation uses a simulated authentication process. In a REST API:
+The application implements a secure authentication system with bcrypt for password hashing and a token-based authentication flow:
 
-- Endpoints would require valid JWT token
-- Authorization header format: `Authorization: Bearer <token>`
-- Token expiry and refresh mechanisms would be implemented
+### Auth Endpoints
+
+```
+POST /api/auth/login
+POST /api/auth/two-factor
+POST /api/auth/logout
+POST /api/auth/refresh-token
+```
+
+### Protected Endpoints
+
+Protected endpoints require a valid authentication token:
+
+- Header format: `Authorization: Bearer <token>`
+- Token expiry: 24 hours
+- Invalid tokens return 401 Unauthorized responses
+
+For detailed documentation on password management and authentication, refer to [Password Management Documentation](/docs/password-management.md).
 
 ## Rate Limiting
 

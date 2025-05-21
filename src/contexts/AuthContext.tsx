@@ -51,60 +51,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       
-      // If PostgreSQL is enabled, verify credentials against the database
-      if (isPostgresEnabled()) {
-        // Get user from database by email
-        const dbUser = await getUserByEmail(email);
-        
-        // In a real app, we would verify the password with bcrypt
-        // For demo, we're just checking if the user exists
-        if (!dbUser) {
-          console.error("User not found in database");
-          return { success: false };
-        }
+      // Call the login API endpoint
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
 
-        // Simulate password check - in a real app, this would be secure
-        // For now, let's assume if user exists, login is successful for DB users (excluding 2FA test)
-        // unless it's the specific 2FA test user.
-        
-        // For 2FA testing
-        if (email === 'test@example.com' && password === 'password') {
-          // Don't set user yet, 2FA step will handle it
-          return { success: true, requires2FA: true };
-        }
-        
-        const loggedInUser = {
-          id: dbUser.id,
-          name: dbUser.name,
-          email: dbUser.email,
-          role: dbUser.role || 'user'
-        };
-        
-        setUser(loggedInUser);
-        localStorage.setItem('auth_user', JSON.stringify(loggedInUser));
-        
-        return { success: true };
-      } else {
-        // Demo mode for Lovable preview - only check specific credentials
-        if (email === 'user@example.com' && password === 'password') {
-          const demoUser = {
-            id: 'demo-user',
-            name: 'Demo User',
-            email: 'user@example.com',
-            role: 'admin' // Demo user is admin for isDevelopmentMode testing
-          };
-          
-          setUser(demoUser);
-          localStorage.setItem('auth_user', JSON.stringify(demoUser));
-          
-          return { success: true };
-        } else if (email === 'test@example.com' && password === 'password') {
-          // For 2FA testing
-          return { success: true, requires2FA: true };
-        }
-        
+      // If the request failed, return false
+      if (!response.ok) {
+        console.error("Login failed:", await response.text());
         return { success: false };
       }
+
+      // Parse the response
+      const data = await response.json();
+      
+      // Check if 2FA is required
+      if (data.requiresTwoFactor) {
+        // Store the token for 2FA verification
+        localStorage.setItem('auth_temp_token', data.token);
+        return { success: true, requires2FA: true };
+      }
+      
+      // Store user and token data
+      setUser(data.user);
+      localStorage.setItem('auth_user', JSON.stringify(data.user));
+      localStorage.setItem('auth_token', data.token);
+      
+      return { success: true };
     } catch (error) {
       console.error("Error during login:", error);
       return { success: false };
@@ -113,10 +90,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('auth_user');
-    navigate('/login');
+  const logout = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        // Call the logout API endpoint
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+    } finally {
+      // Clear user data regardless of API call success
+      setUser(null);
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_temp_token');
+      navigate('/login');
+    }
   };
 
   const isAuthenticated = () => {

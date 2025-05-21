@@ -11,6 +11,7 @@ import * as providentFunds from './providentFunds.js';
 import * as auditRecords from './auditRecords.js';
 import * as users from './users.js';
 import * as settings from './settings.js';
+import * as auth from './auth.js';
 
 const router = express.Router();
 
@@ -18,6 +19,12 @@ const router = express.Router();
 router.get('/health-check', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Authentication routes
+router.post('/auth/login', auth.login);
+router.post('/auth/two-factor', auth.verifyTwoFactor);
+router.post('/auth/logout', auth.logout);
+router.post('/auth/refresh-token', auth.refreshToken);
 
 // Settings routes
 router.get('/settings', settings.getSettings);
@@ -71,5 +78,6 @@ router.post('/users', users.createUser);
 router.put('/users/:id', users.updateUser);
 router.delete('/users/:id', users.deleteUser);
 router.put('/users/:id/password', users.updateUserPassword);
+router.post('/users/:id/reset-password', users.resetUserPassword);
 
 export default router;
