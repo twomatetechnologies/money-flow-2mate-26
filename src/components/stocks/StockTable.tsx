@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { StockHolding } from '@/types';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Pencil, Trash, History, ArrowUpDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Pencil, Trash, History, Inbox } from 'lucide-react'; // Added Inbox
 import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import SortButton, { SortDirection } from '@/components/common/SortButton';
 import { 
@@ -11,6 +12,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils'; // Import cn
 
 interface StockTableProps {
   stocks: StockHolding[];
@@ -46,7 +48,10 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({
   const isActive = currentSort === field;
   
   return (
-    <TableHead className={`${className} cursor-pointer`}>
+    <TableHead className={cn(
+      className, 
+      { "cursor-pointer hover:bg-slate-200/50 dark:hover:bg-slate-700/50": !!onSortChange }
+    )}>
       <div className="flex items-center justify-between">
         <span>{children}</span>
         <SortButton
@@ -75,7 +80,7 @@ export const StockTable: React.FC<StockTableProps> = ({
   return (
     <Table>
       <TableCaption>Your stock portfolio as of today</TableCaption>
-      <TableHeader className="bg-gray-50 dark:bg-gray-900">
+      <TableHeader className="bg-slate-100 dark:bg-slate-800">
         <TableRow>
           <SortableTableHeader
             field="symbol"
@@ -157,7 +162,7 @@ export const StockTable: React.FC<StockTableProps> = ({
           
           <SortableTableHeader
             field="familyMemberId"
-            className="text-right"
+            className="text-right" // Keep text-right for header consistency, display component will handle its own alignment
             onSortChange={onSortChange}
             currentSort={currentSort}
             currentDirection={currentDirection}
@@ -171,12 +176,17 @@ export const StockTable: React.FC<StockTableProps> = ({
       <TableBody>
         {safeStocks.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={10} className="text-center py-6 text-muted-foreground">
-              No stocks found with the current filters
+            <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
+              <div className="flex flex-col items-center justify-center">
+                <Inbox className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+                <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">No Stocks Available</p>
+                <p className="text-sm">There are no stocks matching your current filters or search.</p>
+                <p className="text-sm mt-1">Try adjusting your filters or adding new stocks.</p>
+              </div>
             </TableCell>
           </TableRow>
         ) : (
-          safeStocks.map((stock) => {
+          safeStocks.map((stock, index) => { // Added index
             if (!stock) return null;
             
             const currentPrice = stock.currentPrice || 0;
@@ -189,31 +199,43 @@ export const StockTable: React.FC<StockTableProps> = ({
             const changePercent = stock.changePercent || 0;
 
             return (
-              <TableRow key={stock.id || `stock-${Math.random()}`} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors">
-                <TableCell className="font-semibold">{stock.symbol || 'Unknown'}</TableCell>
+              <TableRow 
+                key={stock.id || `stock-${index}`} // Use index in key for robustness
+                className={cn(
+                  index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50 dark:bg-slate-800"
+                  // Base hover from ui/table.tsx will apply
+                )}
+              >
+                <TableCell className="font-semibold text-primary">{stock.symbol || 'Unknown'}</TableCell>
                 <TableCell>{stock.name || 'Unknown'}</TableCell>
-                <TableCell className="text-right">{quantity}</TableCell>
+                <TableCell className="text-right">{quantity.toLocaleString()}</TableCell>
                 <TableCell className="text-right">₹{averageBuyPrice.toLocaleString()}</TableCell>
                 <TableCell className="text-right">₹{currentPrice.toLocaleString()}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end">
                     {changePercent >= 0 ? (
-                      <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
+                      <TrendingUp className="h-4 w-4 mr-1 text-green-600 dark:text-green-500" />
                     ) : (
-                      <TrendingDown className="h-4 w-4 mr-1 text-red-600" />
+                      <TrendingDown className="h-4 w-4 mr-1 text-red-600 dark:text-red-500" />
                     )}
-                    <span className={changePercent >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    <span className={cn(
+                      "font-medium",
+                      changePercent >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'
+                    )}>
                       {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-right font-medium">₹{value.toLocaleString()}</TableCell>
+                <TableCell className="text-right font-semibold text-slate-700 dark:text-slate-200">₹{value.toLocaleString()}</TableCell>
                 <TableCell className="text-right">
-                  <span className={gain >= 0 ? 'text-green-600' : 'text-red-600'}>
-                    {gain >= 0 ? '+' : ''}₹{gain.toLocaleString()} ({gainPercent.toFixed(2)}%)
+                  <span className={cn(
+                    "font-medium",
+                    gain >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'
+                  )}>
+                    {gain >= 0 ? '+' : ''}₹{gain.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ({gainPercent.toFixed(2)}%)
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-left"> {/* Align family member display to left for consistency in mixed content cells */}
                   <FamilyMemberDisplay memberId={stock.familyMemberId || ''} />
                 </TableCell>
                 <TableCell>
@@ -221,7 +243,7 @@ export const StockTable: React.FC<StockTableProps> = ({
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => onEdit(stock)} className="hover:bg-blue-50 hover:text-blue-600">
+                          <Button variant="ghost" size="icon" onClick={() => onEdit(stock)} className="hover:bg-blue-100/50 dark:hover:bg-blue-800/30 hover:text-blue-600 dark:hover:text-blue-400">
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
@@ -230,7 +252,7 @@ export const StockTable: React.FC<StockTableProps> = ({
                       
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => onDelete(stock)} className="hover:bg-red-50 hover:text-red-600">
+                          <Button variant="ghost" size="icon" onClick={() => onDelete(stock)} className="hover:bg-red-100/50 dark:hover:bg-red-800/30 hover:text-red-600 dark:hover:text-red-400">
                             <Trash className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
@@ -239,7 +261,7 @@ export const StockTable: React.FC<StockTableProps> = ({
                       
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => onViewAudit(stock.id || '')} className="hover:bg-purple-50 hover:text-purple-600">
+                          <Button variant="ghost" size="icon" onClick={() => onViewAudit(stock.id || '')} className="hover:bg-purple-100/50 dark:hover:bg-purple-800/30 hover:text-purple-600 dark:hover:text-purple-400">
                             <History className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
