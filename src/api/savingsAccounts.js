@@ -45,23 +45,39 @@ const getSavingsAccountById = (req, res) => {
 // Create a new savings account
 const createSavingsAccount = (req, res) => {
   try {
-    const { bankName, accountNumber, balance, interestRate, familyMemberId } = req.body;
-    
+    const {
+      bankName,
+      accountNumber,
+      accountType,
+      balance,
+      interestRate,
+      branchName,
+      ifscCode,
+      familyMemberId,
+      nominees,
+      notes
+    } = req.body;
+
     // Basic validation
     if (!bankName || !accountNumber || balance === undefined || !interestRate || !familyMemberId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    
+
     const newAccount = {
       id: `sa-${uuidv4().slice(0, 8)}`,
       bankName,
       accountNumber,
+      accountType: accountType || 'Savings',
       balance,
       interestRate,
+      branchName: branchName || '',
+      ifscCode: ifscCode || '',
       familyMemberId,
-      createdAt: new Date().toISOString()
+      nominees: Array.isArray(nominees) ? nominees : [],
+      notes: notes || '',
+      lastUpdated: new Date().toISOString()
     };
-    
+
     savingsAccounts.push(newAccount);
     res.status(201).json(newAccount);
   } catch (error) {
@@ -74,20 +90,20 @@ const updateSavingsAccount = (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
+
     const accountIndex = savingsAccounts.findIndex(sa => sa.id === id);
-    
+
     if (accountIndex === -1) {
       return res.status(404).json({ error: `Savings account with ID ${id} not found` });
     }
-    
-    // Update only the fields provided in the request body
+
+    // Update all fields, but preserve id
     savingsAccounts[accountIndex] = {
       ...savingsAccounts[accountIndex],
       ...updateData,
-      updatedAt: new Date().toISOString()
+      lastUpdated: new Date().toISOString()
     };
-    
+
     res.json(savingsAccounts[accountIndex]);
   } catch (error) {
     res.status(500).json({ error: error.message });
