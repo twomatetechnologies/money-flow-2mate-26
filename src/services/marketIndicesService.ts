@@ -1,4 +1,3 @@
-
 import { toast } from '@/hooks/use-toast';
 
 // Market index interface
@@ -9,6 +8,7 @@ export interface MarketIndex {
   change: number;
   changePercent: number;
   lastUpdated: Date;
+  isSimulated?: boolean; // Added to track if data is simulated
 }
 
 // List of major market indices to track
@@ -27,17 +27,18 @@ const ALPHA_VANTAGE_API_KEY = 'LR78N65XUDF2EZDB'; // Using demo key for now
 const FMP_API_KEY = 'LR78N65XUDF2EZDB';
 
 // Fetch the latest data for a market index
-export const fetchMarketIndexData = async (symbol: string, name: string): Promise<MarketIndex | null> => {
+export const fetchMarketIndexData = async (symbol: string, name: string): Promise<MarketIndex> => {
   try {
     // First, try Alpha Vantage API
     const avData = await fetchFromAlphaVantage(symbol);
-    if (avData) return avData;
+    if (avData) return { ...avData, isSimulated: false };
     
     // If Alpha Vantage fails, try Financial Modeling Prep API
     const fmpData = await fetchFromFMP(symbol, name);
-    if (fmpData) return fmpData;
+    if (fmpData) return { ...fmpData, isSimulated: false };
     
     // If both APIs fail, fallback to simulated data
+    console.warn(`Falling back to simulated data for ${symbol} after API failures.`);
     return simulateMarketIndexData(symbol, name);
   } catch (error) {
     console.error(`Failed to fetch index data for ${symbol}:`, error);
@@ -45,7 +46,7 @@ export const fetchMarketIndexData = async (symbol: string, name: string): Promis
   }
 };
 
-const fetchFromAlphaVantage = async (symbol: string): Promise<MarketIndex | null> => {
+const fetchFromAlphaVantage = async (symbol: string): Promise<Omit<MarketIndex, 'isSimulated' | 'lastUpdated'> | null> => {
   try {
     const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`;
     const response = await fetch(url);
@@ -62,14 +63,22 @@ const fetchFromAlphaVantage = async (symbol: string): Promise<MarketIndex | null
       const change = parseFloat(data['Global Quote']['09. change'] || '0');
       const changePercent = parseFloat(data['Global Quote']['10. change percent']?.replace('%', '') || '0');
       
+      if (isNaN(price) || isNaN(change) || isNaN(changePercent)) {
+        console.error(`Invalid data received from Alpha Vantage for ${symbol}:`, data['Global Quote']);
+        return null;
+      }
+
       return {
         symbol,
-        name: symbol.replace('^', '').replace('.NS', ''),
+        name: data['Global Quote']['01. symbol'] || symbol.replace('^', '').replace('.NS', ''), // Prefer name from API if available
         value: price,
         change,
         changePercent,
-        lastUpdated: new Date()
+        // lastUpdated will be set in fetchMarketIndexData or by the caller if needed from here
       };
+    }
+    if (data.Note) { // Alpha Vantage demo key often returns a note about call frequency
+        console.warn(`Alpha Vantage API note for ${symbol}: ${data.Note}`);
     }
     
     return null;
@@ -79,10 +88,12 @@ const fetchFromAlphaVantage = async (symbol: string): Promise<MarketIndex | null
   }
 };
 
-const fetchFromFMP = async (symbol: string, name: string): Promise<MarketIndex | null> => {
+const fetchFromFMP = async (symbol: string, name: string): Promise<Omit<MarketIndex, 'isSimulated' | 'lastUpdated'> | null> => {
   try {
-    // Convert Alpha Vantage symbol format to FMP format
-    const fmpSymbol = symbol.replace('^', '%5E');
+    // Convert Alpha Vantage symbol format to FMP format if necessary
+    // For Indian indices, FMP might use different symbols (e.g., NIFTY.IND for Nifty 50)
+    // This example keeps the provided symbol, adjust if FMP uses different tickers
+    const fmpSymbol = symbol.replace('^', '%5E'); // Basic conversion
     
     const url = `https://financialmodelingprep.com/api/v3/quote/${fmpSymbol}?apikey=${FMP_API_KEY}`;
     const response = await fetch(url);
@@ -96,13 +107,19 @@ const fetchFromFMP = async (symbol: string, name: string): Promise<MarketIndex |
     
     if (data && data.length > 0) {
       const indexData = data[0];
+      if (indexData.price === undefined || indexData.price === null ||
+          indexData.change === undefined || indexData.change === null ||
+          indexData.changesPercentage === undefined || indexData.changesPercentage === null) {
+        console.error(`Invalid data received from FMP for ${symbol}:`, indexData);
+        return null;
+      }
       return {
         symbol,
-        name,
+        name: indexData.name || name, // Prefer name from API
         value: indexData.price,
         change: indexData.change,
         changePercent: indexData.changesPercentage,
-        lastUpdated: new Date()
+        // lastUpdated will be set in fetchMarketIndexData
       };
     }
     
@@ -131,24 +148,27 @@ const simulateMarketIndexData = (symbol: string, name: string): MarketIndex => {
   const change = (baseValue * changePercent) / 100;
   const value = baseValue + change;
   
+  console.log(`Simulating data for ${name} (${symbol})`);
   return {
     symbol,
     name,
     value,
     change,
     changePercent,
-    lastUpdated: new Date()
+    lastUpdated: new Date(),
+    isSimulated: true, // Mark as simulated
   };
 };
 
 // Fetch all configured market indices
 export const fetchAllMarketIndices = async (): Promise<MarketIndex[]> => {
   const indicesPromises = MARKET_INDICES.map(index => 
-    fetchMarketIndexData(index.symbol, index.name)
+    fetchMarketIndexData(index.symbol, index.name).then(data => ({...data, lastUpdated: new Date()}))
   );
   
   const results = await Promise.all(indicesPromises);
-  return results.filter((index): index is MarketIndex => index !== null);
+  // No longer need to filter for null, as fetchMarketIndexData always returns a MarketIndex
+  return results;
 };
 
 // Start monitoring market indices in real-time
@@ -156,12 +176,21 @@ export const startMarketIndicesMonitoring = (
   onUpdate: (indices: MarketIndex[]) => void,
   refreshInterval = 60000 // Default 1 minute
 ) => {
+  let isMounted = true; // To prevent updates after component unmounts
+
   const updateIndices = async () => {
+    if (!isMounted) return;
     try {
       const indices = await fetchAllMarketIndices();
-      onUpdate(indices);
+      if (isMounted) {
+        onUpdate(indices);
+      }
     } catch (error) {
       console.error("Error updating market indices:", error);
+      // Optionally, could call onUpdate with an empty array or error state
+      if (isMounted) {
+        onUpdate([]); // Or pass error state if onUpdate handles it
+      }
     }
   };
   
@@ -173,6 +202,7 @@ export const startMarketIndicesMonitoring = (
   
   // Return a function to stop monitoring
   return () => {
+    isMounted = false;
     if (intervalId) {
       clearInterval(intervalId);
       console.log("Market indices monitoring stopped");

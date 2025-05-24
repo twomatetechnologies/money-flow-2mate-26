@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'; // Added ChevronDown, ChevronUp
+import { TrendingUp, TrendingDown, RefreshCw, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMarketIndices } from '@/hooks/useMarketIndices';
@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 
 export function MarketIndices() {
-  const { indices, loading, refreshing, lastUpdated, refreshIndices } = useMarketIndices(60000);
+  const { indices, loading, error, refreshing, lastUpdated, refreshIndices } = useMarketIndices(60000);
   const [isExpanded, setIsExpanded] = useState(true); // State for expand/collapse
 
   const formatTime = (date: Date | null) => {
@@ -17,7 +17,13 @@ export function MarketIndices() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
-  if (loading && !indices.length) { // Show detailed skeleton only on initial load without data
+  // Determine if all fetched indices are simulated
+  const allSimulated = !loading && indices.length > 0 && indices.every(index => index.isSimulated);
+  // Determine if there's a significant error and no data to show
+  const showErrorState = !loading && !!error && indices.length === 0;
+
+
+  if (loading && !indices.length && !error) { // Show detailed skeleton only on initial load without data and no immediate error
     return (
       <Card className="shadow-md border-slate-200 dark:border-slate-700">
         <CardHeader className="py-3 px-4 border-b border-slate-200 dark:border-slate-700">
@@ -47,7 +53,7 @@ export function MarketIndices() {
         <div className="flex justify-between items-center">
           <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-200">Market Indices</CardTitle>
           <div className="flex items-center space-x-1">
-            {lastUpdated && (
+            {lastUpdated && !allSimulated && !showErrorState && ( // Only show time if data is not fully simulated or errored
               <span className="text-xs text-muted-foreground mr-1">
                 {formatTime(lastUpdated)}
               </span>
@@ -96,17 +102,29 @@ export function MarketIndices() {
       {isExpanded && (
         <CardContent className={cn(
           "p-4 transition-all duration-500 ease-in-out overflow-hidden",
-          // These classes are for tailwindcss-animate, if installed and configured for accordion-like behavior
-          // "animate-accordion-down" 
         )}>
-          {loading && indices.length > 0 && ( // Show subtle loading bar if refreshing existing data
+          {loading && indices.length > 0 && !error && ( // Show subtle loading bar if refreshing existing data and no major error
             <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 mb-2 rounded-full overflow-hidden">
               <div className="bg-primary h-1 animate-pulse w-1/2"></div>
             </div>
           )}
-          {indices.length === 0 && !loading ? (
+
+          {showErrorState ? (
+            <div className="text-center py-4 text-sm text-red-600 dark:text-red-400 flex flex-col items-center">
+              <AlertTriangle className="h-6 w-6 mb-2" />
+              <p className="font-semibold">Error Loading Market Data</p>
+              <p>Could not retrieve live market indices. Please try refreshing, or check back later.</p>
+              {error?.message && <p className="text-xs mt-1 text-muted-foreground">Details: {error.message}</p>}
+            </div>
+          ) : allSimulated ? (
+            <div className="text-center py-4 text-sm text-orange-600 dark:text-orange-400 flex flex-col items-center">
+              <AlertTriangle className="h-6 w-6 mb-2" />
+              <p className="font-semibold">Live Data Unavailable</p>
+              <p>Currently unable to fetch live market data. Displaying indices is paused to avoid showing potentially inaccurate simulated data.</p>
+            </div>
+          ) : indices.length === 0 && !loading ? (
              <div className="text-center py-4 text-sm text-muted-foreground">
-                No market index data available.
+                No market index data available at the moment.
              </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-3">
@@ -115,6 +133,18 @@ export function MarketIndices() {
                   <div className="flex justify-between items-baseline">
                     <span className="font-medium text-slate-700 dark:text-slate-300 truncate pr-2" title={index.name}>
                       {index.name}
+                      {index.isSimulated && (
+                        <TooltipProvider>
+                          <Tooltip delayDuration={100}>
+                            <TooltipTrigger asChild>
+                              <span className="ml-1 text-orange-500">*</span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p className="text-xs">Simulated data</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </span>
                     <span className={`font-semibold whitespace-nowrap ${index.changePercent >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                        {index.changePercent >= 0 ? '+' : ''}{index.changePercent.toFixed(2)}%
@@ -138,3 +168,4 @@ export function MarketIndices() {
     </Card>
   );
 }
+
