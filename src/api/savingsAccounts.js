@@ -4,16 +4,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 // In-memory data store for development
-let savingsAccounts = [
-  {
-    id: 'sa-001',
-    bankName: 'ICICI Bank',
-    accountNumber: 'SA987654',
-    balance: 25000,
-    interestRate: 3.5,
-    familyMemberId: 'fam-001'
-  }
-];
+let savingsAccounts = [];
 
 // Get all savings accounts with optional filters
 const getAllSavingsAccounts = (req, res) => {

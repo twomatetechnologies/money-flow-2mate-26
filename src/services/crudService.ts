@@ -37,11 +37,11 @@ const saveToStorage = <T>(key: string, data: T[]): void => {
   }
 };
 
-// In-memory datastores with persistence for non-stock entities
-let fixedDeposits = loadFromStorage<FixedDeposit>('fixedDeposits', mockFixedDeposits);
-let sipInvestments = loadFromStorage<SIPInvestment>('sipInvestments', mockSIPInvestments);
-let insurancePolicies = loadFromStorage<InsurancePolicy>('insurancePolicies', mockInsurancePolicies);
-let goldInvestments = loadFromStorage<GoldInvestment>('goldInvestments', mockGoldInvestments);
+// In-memory datastores with persistence for non-stock entities (start empty)
+let fixedDeposits = loadFromStorage<FixedDeposit>('fixedDeposits', []);
+let sipInvestments = loadFromStorage<SIPInvestment>('sipInvestments', []);
+let insurancePolicies = loadFromStorage<InsurancePolicy>('insurancePolicies', []);
+let goldInvestments = loadFromStorage<GoldInvestment>('goldInvestments', []);
 
 // CRUD operations for Stocks - Delegated to stockService
 export const createStock = async (stock: Omit<StockHolding, 'id' | 'lastUpdated'>): Promise<StockHolding> => {
@@ -139,7 +139,7 @@ export const createSIP = (sip: Partial<SIPInvestment>): SIPInvestment => {
     currentValue: sip.currentValue || 0,
     returns: sip.returns || 0,
     returnsPercent: sip.returnsPercent || 0,
-    familyMemberId: sip.familyMemberId || 'self-default',
+    familyMemberId: sip.familyMemberId || '',
     id: uuidv4()
   };
   

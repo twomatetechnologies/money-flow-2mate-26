@@ -235,33 +235,15 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Fixed Deposits data will be added by users
 
--- Add Sample Gold Investments
-INSERT INTO gold_investments (id, type, quantity, purchase_date, purchase_price, current_price, value, location, notes, family_member_id)
-VALUES
-  ('gold-001', 'Physical', 20.00, '2023-10-12', 5600.00, 6200.00, 124000.00, 'Bank Locker', '22K Gold Coins', 'fam-001'),
-  ('gold-002', 'Digital', 15.00, '2023-12-05', 5750.00, 6200.00, 93000.00, 'Gold ETF', 'Sovereign Gold Bond', 'fam-002'),
-  ('gold-003', 'Physical', 10.00, '2024-01-18', 5900.00, 6200.00, 62000.00, 'Home Safe', 'Gold Bars', 'fam-003')
-ON CONFLICT (id) DO NOTHING;
+-- Gold Investments data will be added by users
 
 -- Savings Accounts data will be added by users
 
--- Add Sample SIP Investments
-INSERT INTO sip_investments (id, name, amount, frequency, start_date, fund_type, units, current_nav, family_member_id, notes, current_value, returns, returns_percent, type)
-VALUES
-  ('sip-001', 'Axis Bluechip Fund', 5000.00, 'Monthly', '2023-01-15', 'Equity', 150.25, 42.50, 'fam-001', 'Large Cap Fund', 6385.63, 1385.63, 8.50, 'Mutual Fund'),
-  ('sip-002', 'HDFC Mid-Cap Opportunities', 3000.00, 'Monthly', '2023-03-10', 'Equity', 85.75, 38.20, 'fam-002', 'Mid Cap Fund', 3275.65, 275.65, 5.25, 'Mutual Fund'),
-  ('sip-003', 'SBI Debt Fund', 2500.00, 'Quarterly', '2023-04-20', 'Debt', 95.50, 28.75, 'fam-001', 'Conservative Investment', 2746.63, 246.63, 4.75, 'Debt Fund')
-ON CONFLICT (id) DO NOTHING;
+-- SIP Investments data will be added by users
 
 -- Provident Fund data will be added by users
 
--- Add Sample Insurance Policies
-INSERT INTO insurance_policies (id, type, policy_number, provider, cover_amount, premium, frequency, start_date, end_date, family_member_id, notes)
-VALUES
-  ('ins-001', 'Life', 'LP123456789', 'LIC of India', 5000000.00, 25000.00, 'Annual', '2022-05-10', '2042-05-09', 'fam-001', 'Term Insurance'),
-  ('ins-002', 'Health', 'HP234567890', 'Star Health', 500000.00, 15000.00, 'Annual', '2023-08-15', '2024-08-14', 'fam-001', 'Family Floater'),
-  ('ins-003', 'Vehicle', 'VP345678901', 'ICICI Lombard', 800000.00, 12000.00, 'Annual', '2024-01-10', '2025-01-09', 'fam-002', 'Car Insurance')
-ON CONFLICT (id) DO NOTHING;
+-- Insurance Policies data will be added by users
 "
 
 echo "Migration complete. Master data has been loaded."

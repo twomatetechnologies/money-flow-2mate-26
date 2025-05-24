@@ -3,17 +3,8 @@
  */
 import { v4 as uuidv4 } from 'uuid';
 
-// In-memory data store for development
-let providentFunds = [
-  {
-    id: 'pf-001',
-    accountNumber: 'PF12345678',
-    employeeContribution: 2500,
-    employerContribution: 2500,
-    totalBalance: 150000,
-    familyMemberId: 'fam-001'
-  }
-];
+// In-memory data store for development (starts empty)
+let providentFunds = [];
 
 // Get all provident funds with optional filters
 const getAllProvidentFunds = (req, res) => {

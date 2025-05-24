@@ -4,21 +4,8 @@
  */
 import { v4 as uuidv4 } from 'uuid';
 
-// In-memory data store for development
-let fixedDeposits = [
-  {
-    id: 'fd-001',
-    bankName: 'HDFC Bank',
-    accountNumber: 'FD123456',
-    principal: 100000,
-    interestRate: 7.5,
-    startDate: '2024-01-01',
-    maturityDate: '2025-01-01',
-    isAutoRenew: false,
-    familyMemberId: 'self-default',
-    notes: ''
-  }
-];
+// In-memory data store for development (starts empty)
+let fixedDeposits = [];
 
 // Get all fixed deposits with optional filters
 const getAllFixedDeposits = (req, res) => {

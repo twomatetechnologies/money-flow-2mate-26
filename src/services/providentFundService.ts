@@ -21,46 +21,11 @@ const initializeProvidentFunds = () => {
       }));
     } catch (error) {
       console.error('Error parsing provident funds from localStorage:', error);
-      createSampleData();
+      providentFunds = []; // Start with empty array instead of sample data
     }
   } else {
-    createSampleData();
+    providentFunds = []; // Start with empty array instead of sample data
   }
-};
-
-// Create sample data for visualization
-const createSampleData = () => {
-  providentFunds = [
-    {
-      id: uuidv4(),
-      employerName: 'ABC Company',
-      accountNumber: 'PF1234567890',
-      employeeContribution: 150000,
-      employerContribution: 120000,
-      totalBalance: 270000,
-      interestRate: 8.15,
-      startDate: new Date(2020, 0, 15),
-      lastUpdated: new Date(),
-      monthlyContribution: 7500,
-      notes: 'Company provident fund',
-      familyMemberId: 'self-default',
-    },
-    {
-      id: uuidv4(),
-      employerName: 'XYZ Corp',
-      accountNumber: 'PF9876543210',
-      employeeContribution: 95000,
-      employerContribution: 85000,
-      totalBalance: 180000,
-      interestRate: 8.05,
-      startDate: new Date(2021, 3, 10),
-      lastUpdated: new Date(),
-      monthlyContribution: 5000,
-      notes: 'Previous employer PF',
-      familyMemberId: 'spouse-default',
-    }
-  ];
-  saveProvidentFunds();
 };
 
 // Save provident funds to localStorage

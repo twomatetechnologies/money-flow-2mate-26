@@ -30,31 +30,6 @@ const saveFixedDeposits = (deposits: FixedDeposit[]): void => {
 // In-memory datastore with persistence
 let fixedDeposits = loadFixedDeposits();
 
-// Create a sample deposit if none exist (only for localStorage mode)
-if (fixedDeposits.length === 0 && !isPostgresEnabled()) {
-  const startDate = new Date();
-  const maturityDate = new Date();
-  maturityDate.setDate(maturityDate.getDate() + 365); // 1 year maturity
-  
-  const sampleFD: FixedDeposit = {
-    id: uuidv4(),
-    bankName: 'HDFC',
-    accountNumber: 'FD123456789',
-    principal: 100000,
-    interestRate: 6.5,
-    startDate: startDate,
-    maturityDate: maturityDate,
-    maturityAmount: 106500, // Simple interest calculation
-    isAutoRenew: false,
-    notes: 'Sample fixed deposit',
-    familyMemberId: 'self-default',
-    lastUpdated: new Date()
-  };
-  
-  fixedDeposits.push(sampleFD);
-  saveFixedDeposits(fixedDeposits);
-}
-
 // Check if we should use database operations
 const useDatabase = isPostgresEnabled();
 
