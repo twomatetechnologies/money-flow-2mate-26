@@ -195,7 +195,7 @@ const createStock = async (req, res) => {
       try {
         await req.app.locals.db.query(
           'INSERT INTO audit_records (id, entity_id, entity_type, action, user_id, details) VALUES ($1, $2, $3, $4, $5, $6)',
-          [`audit-${uuidv4()}`, newStockId, 'stock', 'create', 'system', JSON.stringify(newStock)]
+          [`aud-${uuidv4().slice(0, 8)}`, newStockId, 'stock', 'create', 'system', JSON.stringify(newStock)]
         );
       } catch (auditError) {
         console.error('Failed to create audit record:', auditError);
@@ -318,7 +318,7 @@ const updateStock = async (req, res) => {
       try {
         await req.app.locals.db.query(
           'INSERT INTO audit_records (id, entity_id, entity_type, action, user_id, details) VALUES ($1, $2, $3, $4, $5, $6)',
-          [`audit-${uuidv4()}`, id, 'stock', 'update', 'system', JSON.stringify({
+          [`aud-${uuidv4().slice(0, 8)}`, id, 'stock', 'update', 'system', JSON.stringify({
             previous: checkResult.rows[0],
             current: updatedStock,
             changes: updateData
@@ -373,7 +373,7 @@ const deleteStock = async (req, res) => {
       try {
         await req.app.locals.db.query(
           'INSERT INTO audit_records (id, entity_id, entity_type, action, user_id, details) VALUES ($1, $2, $3, $4, $5, $6)',
-          [`audit-${uuidv4()}`, id, 'stock', 'delete', 'system', JSON.stringify(checkResult.rows[0])]
+          [`aud-${uuidv4().slice(0, 8)}`, id, 'stock', 'delete', 'system', JSON.stringify(checkResult.rows[0])]
         );
       } catch (auditError) {
         console.error('Failed to create audit record:', auditError);

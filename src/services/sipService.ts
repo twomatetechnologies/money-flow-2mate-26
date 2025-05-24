@@ -4,33 +4,8 @@ import { createAuditRecord } from './auditService';
 import { isPostgresEnabled } from './db/dbConnector';
 import * as sipDbService from './db/sipDbService';
 
-// In-memory datastore (in a real app, this would use a database)
+// Initialize local storage data if needed
 let sipInvestments: SIPInvestment[] = [];
-
-const SIP_STORAGE_KEY = 'sipInvestments';
-
-// Load SIP investments from localStorage
-const loadSipInvestments = (): SIPInvestment[] => {
-  try {
-    const stored = localStorage.getItem(SIP_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    console.error('Error loading SIP investments:', error);
-    return [];
-  }
-};
-
-// Save SIP investments to localStorage
-const saveSipInvestments = (investments: SIPInvestment[]): void => {
-  try {
-    localStorage.setItem(SIP_STORAGE_KEY, JSON.stringify(investments));
-  } catch (error) {
-    console.error('Error saving SIP investments:', error);
-  }
-};
-
-// Initialize local storage data
-sipInvestments = loadSipInvestments();
 
 // Check if we should use database operations
 const useDatabase = isPostgresEnabled();
@@ -40,8 +15,8 @@ export const getSIPInvestments = (): Promise<SIPInvestment[]> => {
     return sipDbService.getSIPInvestments();
   }
   
-  // Return a deep copy of the SIPs to prevent accidental mutations
-  return Promise.resolve(JSON.parse(JSON.stringify(sipInvestments)));
+  // If PostgreSQL is not enabled, this will always be empty for SIP module
+  return Promise.resolve([]);
 };
 
 export const addSIPInvestment = (sip: Partial<SIPInvestment>): Promise<SIPInvestment> => {
@@ -49,23 +24,8 @@ export const addSIPInvestment = (sip: Partial<SIPInvestment>): Promise<SIPInvest
     return sipDbService.addSIPInvestment(sip);
   }
   
-  const newSIP: SIPInvestment = {
-    id: uuidv4(),
-    name: sip.name || '',
-    type: (sip.type as SIPInvestment['type']) || 'Other',
-    amount: sip.amount || 0,
-    frequency: sip.frequency || 'Monthly',
-    currentValue: sip.currentValue || 0,
-    returns: sip.returns || 0,
-    returnsPercent: sip.returnsPercent || 0,
-    familyMemberId: sip.familyMemberId || '',
-    startDate: sip.startDate || new Date(),
-  };
-  
-  sipInvestments.push(newSIP);
-  saveSipInvestments(sipInvestments);
-  createAuditRecord(newSIP.id, 'sip', 'create', newSIP);
-  return Promise.resolve(newSIP);
+  // If PostgreSQL is not enabled, return error
+  return Promise.reject(new Error('PostgreSQL is required for SIP investments'));
 };
 
 export const updateSIPInvestment = (id: string, updates: Partial<SIPInvestment>): Promise<SIPInvestment> => {
@@ -73,26 +33,8 @@ export const updateSIPInvestment = (id: string, updates: Partial<SIPInvestment>)
     return sipDbService.updateSIPInvestment(id, updates);
   }
   
-  const index = sipInvestments.findIndex(sip => sip.id === id);
-  if (index === -1) {
-    return Promise.reject(new Error('SIP investment not found'));
-  }
-  
-  const originalSIP = { ...sipInvestments[index] };
-  
-  sipInvestments[index] = {
-    ...sipInvestments[index],
-    ...updates,
-  };
-  
-  saveSipInvestments(sipInvestments);
-  createAuditRecord(id, 'sip', 'update', {
-    previous: originalSIP,
-    current: sipInvestments[index],
-    changes: updates
-  });
-  
-  return Promise.resolve(sipInvestments[index]);
+  // If PostgreSQL is not enabled, return error
+  return Promise.reject(new Error('PostgreSQL is required for SIP investments'));
 };
 
 export const deleteSIPInvestment = async (id: string): Promise<void> => {
@@ -101,22 +43,16 @@ export const deleteSIPInvestment = async (id: string): Promise<void> => {
     return;
   }
   
-  const index = sipInvestments.findIndex(sip => sip.id === id);
-  if (index === -1) {
-    throw new Error('SIP investment not found');
-  }
-  
-  const deletedSIP = { ...sipInvestments[index] };
-  sipInvestments.splice(index, 1);
-  saveSipInvestments(sipInvestments);
-  
-  // Create audit record after successful deletion
-  await createAuditRecord(id, 'sip', 'delete', deletedSIP);
+  // If PostgreSQL is not enabled, return error
+  throw new Error('PostgreSQL is required for SIP investments');
 };
 
 // Export SIP investments
-export const exportSIPInvestments = (format: 'csv' | 'excel' = 'csv') => {
-  const exportData = sipInvestments.map(sip => ({
+export const exportSIPInvestments = async (format: 'csv' | 'excel' = 'csv') => {
+  // Get data from database
+  const investments = await getSIPInvestments();
+  
+  return investments.map(sip => ({
     'Name': sip.name,
     'Type': sip.type,
     'Amount': sip.amount,
@@ -128,8 +64,6 @@ export const exportSIPInvestments = (format: 'csv' | 'excel' = 'csv') => {
     'Returns %': sip.returnsPercent,
     'Family Member ID': sip.familyMemberId || ''
   }));
-  
-  return exportData;
 };
 
 // Get sample data for import template
@@ -197,7 +131,8 @@ export const importSIPInvestments = async (data: any[]): Promise<{ success: numb
         familyMemberId: item['Family Member ID'] || ''
       };
       
-      await addSIPInvestment(sipData);
+      // Always use the database service to add investments
+      await sipDbService.addSIPInvestment(sipData);
       success++;
     } catch (error) {
       console.error('Error importing SIP record:', error);

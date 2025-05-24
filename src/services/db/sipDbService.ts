@@ -36,7 +36,7 @@ export const addSIPInvestment = async (investment: Partial<SIPInvestment>): Prom
       currentValue: investment.currentValue || 0,
       returns: investment.returns || 0,
       returnsPercent: investment.returnsPercent || 0,
-      familyMemberId: investment.familyMemberId || '',
+      familyMemberId: investment.familyMemberId || 'self-default', // The API will map this to a valid DB ID
     };
     
     const savedInvestment = await executeQuery<SIPInvestment>('/sip-investments', 'POST', newInvestment);
