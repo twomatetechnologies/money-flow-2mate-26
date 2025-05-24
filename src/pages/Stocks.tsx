@@ -1,25 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StockHolding } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Import, AlertCircle, FileText, Download } from 'lucide-react';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { AlertCircle, FileText, Download } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,14 +10,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
-import { useSettings } from '@/contexts/SettingsContext';
-import StockForm from '@/components/stocks/StockForm';
-import StockImport from '@/components/stocks/StockImport';
+import StocksPageHeader from '@/components/stocks/StocksPageHeader';
+import StocksEmptyState from '@/components/stocks/StocksEmptyState';
+import StockFormDialog from '@/components/stocks/StockFormDialog';
+import StockImportDialog from '@/components/stocks/StockImportDialog';
+import DeleteStockAlertDialog from '@/components/stocks/DeleteStockAlertDialog';
+import AuditTrailDialog from '@/components/stocks/AuditTrailDialog';
+
 import { StockStats } from '@/components/stocks/StockStats';
 import { StockTable } from '@/components/stocks/StockTable';
 import { MarketIndices } from '@/components/stocks/MarketIndices';
-import AuditTrail from '@/components/common/AuditTrail';
-import { getStockById, createStock, updateStock, deleteStock } from '@/services/stockService';
+import { createStock, updateStock, deleteStock } from '@/services/stockService';
 import { getAuditRecordsForEntity } from '@/services/auditService';
 import { AuditRecord } from '@/types/audit';
 import SortButton, { SortDirection, SortOption } from '@/components/common/SortButton';
@@ -42,7 +28,7 @@ import FilterButton, { FilterOption } from '@/components/common/FilterButton';
 import { useStocks } from '@/hooks/useStocks';
 import * as XLSX from 'xlsx';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { handleError, ErrorOptions } from '@/utils/errorHandler';
+import { handleError } from '@/utils/errorHandler';
 import { exportToCSV, exportToExcel } from '@/utils/exportUtils';
 
 const Stocks = () => {
@@ -296,10 +282,8 @@ const Stocks = () => {
       if (failedImports.length > 0) {
         const failedDetails = failedImports.map(f => `${f.stock.symbol || 'Unknown'}: ${f.errorMessage}`).join('; ');
         finalMessage += ` ${failedImports.length} stocks failed to import due to server-side issues or data conflicts: ${failedDetails}. Check console for detailed logs.`;
-        finalToastSeverity = "high"; // Set to high if any server-side failures occurred
+        finalToastSeverity = "high"; 
       } else if (importedCount === 0 && validStocks.length > 0) {
-        // This case implies all valid stocks failed server-side, which should be caught by failedImports.length > 0
-        // However, as a safeguard:
         finalMessage = `All ${validStocks.length} processed stocks failed to import due to server-side issues. Please check console for details.`;
         finalToastSeverity = "high";
       }
@@ -421,26 +405,6 @@ const Stocks = () => {
     toast({ title: "Export Successful", description: "Stock portfolio exported as Excel." });
   };
 
-  const EmptyState = () => (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="rounded-full bg-gray-100 p-3 mb-4 dark:bg-gray-700">
-        <AlertCircle className="h-6 w-6 text-gray-400 dark:text-gray-500" />
-      </div>
-      <h3 className="text-lg font-medium mb-2 text-gray-800 dark:text-gray-200">No Stocks Found</h3>
-      <p className="text-muted-foreground max-w-md mb-6">
-        Your stock portfolio is empty. Add your first stock or import your portfolio to get started.
-      </p>
-      <div className="flex gap-2">
-        <Button onClick={handleAddStock} className="h-8 text-xs">
-          <Plus className="mr-1 h-3 w-3" /> Add Stock
-        </Button>
-        <Button variant="outline" onClick={handleImportClick} className="h-8 text-xs">
-          <Import className="mr-1 h-3 w-3" /> Import Portfolio
-        </Button>
-      </div>
-    </div>
-  );
-
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center py-12">
@@ -467,45 +431,27 @@ const Stocks = () => {
           Try Again
         </Button>
         
-        <EmptyState />
+        <StocksEmptyState onAddStock={handleAddStock} onImportClick={handleImportClick} />
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800 mb-2">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">Stock Portfolio</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage and track your stock investments
-          </p>
-        </div>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={handleImportClick} className="h-8 text-xs">
-            <Import className="mr-1 h-3 w-3" /> Import
-          </Button>
-          <Button size="sm" onClick={handleAddStock} className="h-8 text-xs bg-primary hover:bg-primary/90">
-            <Plus className="mr-1 h-3 w-3" /> Add Stock
-          </Button>
-        </div>
-      </div>
+      <StocksPageHeader onAddStock={handleAddStock} onImportClick={handleImportClick} />
 
       {safeStocks.length === 0 ? (
-        <EmptyState />
+        <StocksEmptyState onAddStock={handleAddStock} onImportClick={handleImportClick} />
       ) : (
         <>
-          {/* First row: Stats cards */}
           <div className="grid grid-cols-1 gap-3">
             <StockStats displayedStocks={safeDisplayedStocks} />
           </div>
 
-          {/* Second row: Market Indices */}
           <div className="grid grid-cols-1 gap-3">
             <MarketIndices />
           </div>
 
-          {/* Third row: Stock table */}
           <Card className="border border-gray-100 dark:border-gray-800 shadow-sm rounded-lg overflow-hidden">
             <CardHeader className="py-2 px-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
               <div className="flex items-center justify-between">
@@ -561,7 +507,7 @@ const Stocks = () => {
         </>
       )}
 
-      <StockForm 
+      <StockFormDialog
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         onSubmit={handleSubmitStock}
@@ -569,41 +515,23 @@ const Stocks = () => {
         mode={formMode}
       />
 
-      <StockImport
+      <StockImportDialog
         isOpen={isImportOpen}
         onClose={() => setIsImportOpen(false)}
         onImport={handleImportStocks}
       />
 
-      <AlertDialog 
-        open={!!stockToDelete} 
+      <DeleteStockAlertDialog
+        stockToDelete={stockToDelete}
         onOpenChange={(open) => !open && setStockToDelete(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will delete {stockToDelete?.name} ({stockToDelete?.symbol}) from your portfolio. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <Dialog open={isAuditOpen} onOpenChange={setIsAuditOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Audit Trail</DialogTitle>
-            <DialogDescription>
-              View the history of changes for this stock
-            </DialogDescription>
-          </DialogHeader>
-          <AuditTrail records={auditRecords} entityType="stock" />
-        </DialogContent>
-      </Dialog>
+        onConfirmDelete={handleConfirmDelete}
+      />
+      
+      <AuditTrailDialog
+        isOpen={isAuditOpen}
+        onOpenChange={setIsAuditOpen}
+        records={auditRecords}
+      />
     </div>
   );
 };
