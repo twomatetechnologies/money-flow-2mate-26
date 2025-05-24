@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StockHolding } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Import, AlertCircle } from 'lucide-react';
+import { Plus, Import, AlertCircle, FileText, Download } from 'lucide-react';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +20,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/contexts/SettingsContext';
 import StockForm from '@/components/stocks/StockForm';
@@ -37,6 +43,7 @@ import { useStocks } from '@/hooks/useStocks';
 import * as XLSX from 'xlsx';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { handleError, ErrorOptions } from '@/utils/errorHandler';
+import { exportToCSV, exportToExcel } from '@/utils/exportUtils';
 
 const Stocks = () => {
   const {
@@ -63,11 +70,9 @@ const Stocks = () => {
   const [auditRecords, setAuditRecords] = useState<AuditRecord[]>([]);
   const { toast } = useToast();
 
-  // Ensure we have an array of stocks
   const safeStocks = Array.isArray(stocks) ? stocks : [];
   const safeDisplayedStocks = Array.isArray(displayedStocks) ? displayedStocks : [];
 
-  // Enhanced filter options
   const filterOptions: FilterOption[] = [
     {
       id: 'performanceFilter',
@@ -95,7 +100,6 @@ const Stocks = () => {
     }
   ];
 
-  // Get all unique sectors from stocks
   const uniqueSectors = Array.from(new Set(safeStocks.filter(s => s && s.sector).map(s => s.sector)));
   if (uniqueSectors.length > 0) {
     filterOptions.push({
@@ -376,13 +380,53 @@ const Stocks = () => {
     setCurrentDirection(direction);
   };
 
-  // Empty state UI for when there are no stocks
+  const getExportableStockData = () => {
+    return safeDisplayedStocks.map(stock => {
+      const gain = (stock.value || 0) - ((stock.averageBuyPrice || 0) * (stock.quantity || 0));
+      const gainPercent = calculateGainPercent(stock);
+      return {
+        'Symbol': stock.symbol,
+        'Name': stock.name,
+        'Quantity': stock.quantity,
+        'Avg. Buy Price (₹)': stock.averageBuyPrice,
+        'Current Price (₹)': stock.currentPrice,
+        'Daily Change (%)': stock.changePercent,
+        'Total Value (₹)': stock.value,
+        'Total Gain/Loss (₹)': gain,
+        'Total Gain/Loss (%)': gainPercent,
+        'Sector': stock.sector,
+        'Owner ID': stock.familyMemberId,
+        'Last Updated': stock.lastUpdated ? new Date(stock.lastUpdated).toLocaleDateString() : '',
+      };
+    });
+  };
+
+  const handleExportCSV = () => {
+    const dataToExport = getExportableStockData();
+    if (dataToExport.length === 0) {
+      toast({ title: "No Data", description: "There is no data to export.", variant: "default" });
+      return;
+    }
+    exportToCSV(dataToExport, 'stock_portfolio');
+    toast({ title: "Export Successful", description: "Stock portfolio exported as CSV." });
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = getExportableStockData();
+    if (dataToExport.length === 0) {
+      toast({ title: "No Data", description: "There is no data to export.", variant: "default" });
+      return;
+    }
+    exportToExcel(dataToExport, 'stock_portfolio');
+    toast({ title: "Export Successful", description: "Stock portfolio exported as Excel." });
+  };
+
   const EmptyState = () => (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="rounded-full bg-gray-100 p-3 mb-4">
-        <AlertCircle className="h-6 w-6 text-gray-400" />
+      <div className="rounded-full bg-gray-100 p-3 mb-4 dark:bg-gray-700">
+        <AlertCircle className="h-6 w-6 text-gray-400 dark:text-gray-500" />
       </div>
-      <h3 className="text-lg font-medium mb-2">No Stocks Found</h3>
+      <h3 className="text-lg font-medium mb-2 text-gray-800 dark:text-gray-200">No Stocks Found</h3>
       <p className="text-muted-foreground max-w-md mb-6">
         Your stock portfolio is empty. Add your first stock or import your portfolio to get started.
       </p>
@@ -401,8 +445,8 @@ const Stocks = () => {
     return (
       <div className="flex h-full items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-pulse rounded-full bg-gray-200 h-12 w-12 mx-auto mb-4"></div>
-          <p className="text-lg font-medium">Loading stocks data...</p>
+          <div className="animate-pulse rounded-full bg-gray-200 dark:bg-gray-700 h-12 w-12 mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-gray-800 dark:text-gray-200">Loading stocks data...</p>
           <p className="text-sm text-muted-foreground mt-2">This may take a moment</p>
         </div>
       </div>
@@ -482,6 +526,23 @@ const Stocks = () => {
                       setCurrentDirection(direction);
                     }}
                   />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 text-xs">
+                        <FileText className="mr-1 h-3 w-3" /> Export
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleExportCSV}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Export as CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportExcel}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Export as Excel
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </CardHeader>

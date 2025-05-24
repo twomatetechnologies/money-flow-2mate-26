@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { StockHolding } from '@/types';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Pencil, Trash, History, Inbox } from 'lucide-react'; // Added Inbox
+import { TrendingUp, TrendingDown, Pencil, Trash, History, Inbox } from 'lucide-react';
 import FamilyMemberDisplay from '@/components/common/FamilyMemberDisplay';
 import SortButton, { SortDirection } from '@/components/common/SortButton';
 import { 
@@ -12,7 +11,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils'; // Import cn
+import { cn } from '@/lib/utils';
 
 interface StockTableProps {
   stocks: StockHolding[];
@@ -76,6 +75,15 @@ export const StockTable: React.FC<StockTableProps> = ({
   currentDirection
 }) => {
   const safeStocks = Array.isArray(stocks) ? stocks.filter(Boolean) : [];
+
+  const totalQuantity = safeStocks.reduce((sum, stock) => sum + (stock.quantity || 0), 0);
+  const totalCurrentValue = safeStocks.reduce((sum, stock) => sum + (stock.value || 0), 0);
+  const totalInvestment = safeStocks.reduce(
+    (sum, stock) => sum + ((stock.averageBuyPrice || 0) * (stock.quantity || 0)),
+    0
+  );
+  const overallGain = totalCurrentValue - totalInvestment;
+  const overallGainPercent = totalInvestment > 0 ? (overallGain / totalInvestment) * 100 : 0;
 
   return (
     <Table>
@@ -186,7 +194,7 @@ export const StockTable: React.FC<StockTableProps> = ({
             </TableCell>
           </TableRow>
         ) : (
-          safeStocks.map((stock, index) => { // Added index
+          safeStocks.map((stock, index) => {
             if (!stock) return null;
             
             const currentPrice = stock.currentPrice || 0;
@@ -200,17 +208,16 @@ export const StockTable: React.FC<StockTableProps> = ({
 
             return (
               <TableRow 
-                key={stock.id || `stock-${index}`} // Use index in key for robustness
+                key={stock.id || `stock-${index}`}
                 className={cn(
-                  index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50 dark:bg-slate-800"
-                  // Base hover from ui/table.tsx will apply
+                  index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50 dark:bg-slate-800/70"
                 )}
               >
                 <TableCell className="font-semibold text-primary">{stock.symbol || 'Unknown'}</TableCell>
                 <TableCell>{stock.name || 'Unknown'}</TableCell>
                 <TableCell className="text-right">{quantity.toLocaleString()}</TableCell>
-                <TableCell className="text-right">₹{averageBuyPrice.toLocaleString()}</TableCell>
-                <TableCell className="text-right">₹{currentPrice.toLocaleString()}</TableCell>
+                <TableCell className="text-right">₹{averageBuyPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                <TableCell className="text-right">₹{currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end">
                     {changePercent >= 0 ? (
@@ -226,7 +233,7 @@ export const StockTable: React.FC<StockTableProps> = ({
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-right font-semibold text-slate-700 dark:text-slate-200">₹{value.toLocaleString()}</TableCell>
+                <TableCell className="text-right font-semibold text-slate-700 dark:text-slate-200">₹{value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
                 <TableCell className="text-right">
                   <span className={cn(
                     "font-medium",
@@ -235,7 +242,7 @@ export const StockTable: React.FC<StockTableProps> = ({
                     {gain >= 0 ? '+' : ''}₹{gain.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ({gainPercent.toFixed(2)}%)
                   </span>
                 </TableCell>
-                <TableCell className="text-left"> {/* Align family member display to left for consistency in mixed content cells */}
+                <TableCell className="text-left">
                   <FamilyMemberDisplay memberId={stock.familyMemberId || ''} />
                 </TableCell>
                 <TableCell>
@@ -275,6 +282,26 @@ export const StockTable: React.FC<StockTableProps> = ({
           })
         )}
       </TableBody>
+      {safeStocks.length > 0 && (
+        <TableFooter className="bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700">
+          <TableRow>
+            <TableCell className="font-semibold">Totals</TableCell>
+            <TableCell className="text-right font-semibold">{safeStocks.length.toLocaleString()} stock(s)</TableCell>
+            <TableCell className="text-right font-semibold">{totalQuantity.toLocaleString()}</TableCell>
+            <TableCell className="text-center text-muted-foreground" colSpan={2}>-</TableCell> 
+            <TableCell className="text-center text-muted-foreground">-</TableCell>
+            <TableCell className="text-right font-semibold">
+              ₹{totalCurrentValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+            </TableCell>
+            <TableCell className="text-right font-semibold">
+              <span className={cn(overallGain >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500')}>
+                {overallGain >= 0 ? '+' : ''}₹{overallGain.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ({overallGainPercent.toFixed(2)}%)
+              </span>
+            </TableCell>
+            <TableCell className="text-center text-muted-foreground" colSpan={2}>-</TableCell>
+          </TableRow>
+        </TableFooter>
+      )}
     </Table>
   );
 };
