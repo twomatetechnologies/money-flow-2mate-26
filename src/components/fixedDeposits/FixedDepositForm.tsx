@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { FixedDeposit } from '@/types';
@@ -8,7 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Switch } from '@/components/ui/switch';
 import FamilyMemberSelect from '@/components/common/FamilyMemberSelect';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * RZod from 'zod';
+import * as RZod from 'zod';
+import { Textarea } from '@/components/ui/textarea'; // Added missing import
 
 interface FixedDepositFormProps {
   isOpen: boolean;
@@ -244,7 +246,7 @@ const FixedDepositForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Fixe
                   </div>
                   <FormControl>
                     <Switch
-                      checked={field.value}
+                      checked={field.value as boolean | undefined}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -272,7 +274,7 @@ const FixedDepositForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Fixe
                 <FormItem>
                   <FormLabel>Notes (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Any additional notes..." {...field} />
+                    <Textarea placeholder="Any additional notes..." {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -290,3 +292,4 @@ const FixedDepositForm = ({ isOpen, onClose, onSubmit, initialData, mode }: Fixe
 };
 
 export default FixedDepositForm;
+
