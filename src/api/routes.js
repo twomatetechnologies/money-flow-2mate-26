@@ -31,11 +31,11 @@ router.get('/settings', settings.getSettings);
 router.put('/settings', settings.updateSettings);
 
 // Family Members routes
-router.get('/family', familyMembers.getAllFamilyMembers);
-router.post('/family', familyMembers.createFamilyMember);
-router.get('/family/:id', familyMembers.getFamilyMemberById);
-router.put('/family/:id', familyMembers.updateFamilyMember);
-router.delete('/family/:id', familyMembers.deleteFamilyMember);
+router.get('/family-members', familyMembers.getAllFamilyMembers);
+router.post('/family-members', familyMembers.createFamilyMember);
+router.get('/family-members/:id', familyMembers.getFamilyMemberById);
+router.put('/family-members/:id', familyMembers.updateFamilyMember);
+router.delete('/family-members/:id', familyMembers.deleteFamilyMember);
 
 // Fixed Deposits routes
 router.get('/fixed-deposits', fixedDeposits.getAllFixedDeposits);
