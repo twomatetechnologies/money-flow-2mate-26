@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, ArrowUpDown } from 'lucide-react';
+import { Plus, Edit, Trash2, ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { getSIPInvestments, addSIPInvestment, updateSIPInvestment, deleteSIPInvestment } from '@/services/sipService';
 import { SIPInvestment } from '@/types';
 import SIPForm from '@/components/sip/SIPForm';

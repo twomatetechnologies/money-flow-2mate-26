@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { NetWorthCard } from '@/components/dashboard/NetWorthCard';
 import { AssetAllocationCard } from '@/components/dashboard/AssetAllocationCard';
-import { StockSummaryCard } from '@/components/dashboard/StockSummaryCard';
-import { UpcomingFDMaturityCard } from '@/components/dashboard/UpcomingFDMaturityCard';
-import { ProvidentFundSummaryCard } from '@/components/dashboard/ProvidentFundSummaryCard';
+import StockSummaryCard from '@/components/dashboard/StockSummaryCard';
+import UpcomingFDMaturityCard from '@/components/dashboard/UpcomingFDMaturityCard';
+import  ProvidentFundSummaryCard from '@/components/dashboard/ProvidentFundSummaryCard';
 import FinancialHealthScore from '@/components/dashboard/FinancialHealthScore';
 import { GoalProgressTracking } from '@/components/dashboard/GoalProgressTracking';
 import { PersonalizedRecommendations } from '@/components/dashboard/PersonalizedRecommendations';
