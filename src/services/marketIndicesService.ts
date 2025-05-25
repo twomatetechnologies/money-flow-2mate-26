@@ -1,3 +1,4 @@
+
 import { MarketIndex } from '@/types';
 
 // Simulates fetching market indices if API key is not available or API fails
@@ -23,6 +24,47 @@ export const getMarketIndices = async (apiKey?: string): Promise<MarketIndex[]> 
   ];
 };
 
+export const fetchAllMarketIndices = async (apiKey?: string): Promise<MarketIndex[]> => {
+  // In a real scenario, this might involve multiple API calls or more complex logic.
+  // For now, it directly calls getMarketIndices.
+  return getMarketIndices(apiKey);
+};
+
+export const startMarketIndicesMonitoring = (
+  callback: (indices: MarketIndex[]) => void,
+  interval: number,
+  apiKey?: string
+): (() => void) => {
+  let isMounted = true;
+
+  const fetchData = async () => {
+    if (!isMounted) return;
+    try {
+      console.log('Monitoring: Fetching market indices...');
+      const data = await fetchAllMarketIndices(apiKey);
+      if (isMounted) {
+        callback(data);
+      }
+    } catch (error) {
+      console.error('Error fetching market indices during monitoring:', error);
+      if (isMounted) {
+        // Optionally, provide feedback about the error to the callback
+        // callback([]); // Or an error state
+      }
+    }
+  };
+
+  fetchData(); // Initial fetch
+  const intervalId = setInterval(fetchData, interval);
+
+  return () => {
+    isMounted = false;
+    clearInterval(intervalId);
+    console.log('Monitoring: Stopped market indices monitoring.');
+  };
+};
+
+
 export const getAssetClasses = async (): Promise<string[]> => {
   // In a real application, these would likely come from a database or configuration.
   return Promise.resolve(['Stocks', 'Fixed Income', 'Real Estate', 'Commodities', 'Cash']);
@@ -43,3 +85,4 @@ export const getSectors = async (): Promise<string[]> => {
     'Telecommunications'
   ]);
 };
+

@@ -1,91 +1,133 @@
-// Finance data types
-export interface StockHolding {
+export interface AuditRecord {
+  id: string;
+  entityId: string;
+  entityType: string;
+  action: string;
+  timestamp: Date;
+  userId: string;
+  details: any;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  role: string;
+  is_active: boolean;
+  created_at?: Date;
+  updated_at?: Date;
+  last_login?: Date;
+}
+
+export interface Settings {
+  id: string;
+  userId: string;
+  stock_price_alert_threshold: number;
+  stock_api_key?: string;
+  app_name: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface Stock {
   id: string;
   symbol: string;
-  name: string;
+  company_name: string;
   quantity: number;
-  averageBuyPrice: number;
-  currentPrice: number;
-  change: number;
-  changePercent: number;
-  value: number;
+  purchase_price: number;
+  purchase_date: Date | string;
+  current_price?: number;
   sector?: string;
-  lastUpdated: Date;
-  familyMemberId?: string; // Associate with family member
+  family_member_id?: string;
+  notes?: string;
+  last_updated?: Date;
+  value?: number;
+  investment_value?: number;
+  gain_loss?: number;
 }
 
 export interface FixedDeposit {
   id: string;
-  bankName: string;
-  accountNumber: string;
-  principal: number;
-  interestRate: number;
-  startDate: Date;
-  maturityDate: Date;
-  maturityAmount: number;
-  isAutoRenew: boolean;
+  bank_name: string;
+  amount: number;
+  interest_rate: number;
+  start_date: Date | string;
+  maturity_date: Date | string;
+  term_months: number;
+  fd_number?: string;
+  is_auto_renewal?: boolean;
+  family_member_id?: string;
   notes?: string;
-  familyMemberId?: string; // Associate with family member
-  lastUpdated: Date; // Added to match usage in fixedDepositService.ts
+  last_updated?: Date;
+  principal?: number;
+  maturity_amount?: number;
+  account_number?: string;
 }
 
 export interface SIPInvestment {
   id: string;
   name: string;
-  type: 'Mutual Fund' | 'ELSS' | 'Index Fund' | 'Other';
   amount: number;
-  frequency: 'Monthly' | 'Quarterly' | 'Yearly';
-  startDate: Date;
-  duration?: number; // in months
-  currentValue: number;
-  returns: number;
-  returnsPercent: number;
-  familyMemberId?: string; // Associate with family member
+  frequency: string;
+  start_date: Date | string;
+  end_date?: Date | string;
+  fund_type: string;
+  units?: number;
+  current_nav?: number;
+  family_member_id?: string;
+  notes?: string;
+  last_updated?: Date;
+  current_value?: number;
+  returns?: number;
+  returns_percent?: number;
+  type?: string;
+  duration?: number;
 }
 
 export interface InsurancePolicy {
   id: string;
-  type: 'Life' | 'Health' | 'Vehicle' | 'Home' | 'Term' | 'Other';
-  policyNumber: string;
+  type: string;
+  policy_number: string;
   provider: string;
-  coverAmount: number;
+  cover_amount: number;
   premium: number;
-  frequency: 'Monthly' | 'Quarterly' | 'Half-Yearly' | 'Yearly';
-  startDate: Date;
-  endDate: Date;
-  nominees?: string[];
-  documents?: string[]; // Document URLs or identifiers
+  frequency: string;
+  start_date: Date | string;
+  end_date: Date | string;
+  family_member_id?: string;
+  documents?: string[];
   notes?: string;
-  familyMemberId?: string; // Associate with family member
+  last_updated?: Date;
 }
 
 export interface GoldInvestment {
   id: string;
-  type: 'Physical' | 'Digital' | 'ETF' | 'SGB';
-  quantity: number; // in grams for physical/digital, units for ETF/SGB
-  purchaseDate: Date;
-  purchasePrice: number;
-  currentPrice: number;
+  type: string;
+  quantity: number;
+  purchase_date: Date | string;
+  purchase_price: number;
+  current_price?: number;
   value: number;
-  location?: string; // for physical gold
+  location?: string;
   notes?: string;
-  familyMemberId?: string; // Associate with family member
-  lastUpdated: Date; // Added to match usage in goldService.ts
+  family_member_id?: string;
+  last_updated?: Date;
 }
 
-export interface ProvidentFund {
+export interface FinancialGoal {
   id: string;
-  employerName: string;
-  accountNumber: string;
-  employeeContribution: number;
-  employerContribution: number;
-  totalBalance: number;
-  interestRate: number;
-  startDate: Date;
-  lastUpdated: Date;
-  monthlyContribution: number;
+  name: string;
+  target_amount: number;
+  current_amount: number;
+  deadline: Date | string;
+  category: string;
   notes?: string;
-  familyMemberId?: string; // Associate with family member
+  type?: string;
+  start_date?: Date | string;
+  priority?: string;
+  family_member_id?: string;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 export interface NetWorthData {
@@ -95,8 +137,8 @@ export interface NetWorthData {
     fixedDeposits: number;
     sip: number;
     gold: number;
+    providentFund: number;
     other: number;
-    providentFund: number; // Added provident fund to breakdown
   };
   history: {
     date: Date;
@@ -104,39 +146,39 @@ export interface NetWorthData {
   }[];
 }
 
-// Family member type
+export interface ProvidentFund {
+    id: string;
+    account_number: string;
+    employee_contribution?: number;
+    employer_contribution?: number;
+    total_balance?: number;
+    interest_rate?: number;
+    start_date?: Date | string;
+    family_member_id?: string;
+    notes?: string;
+    last_updated?: Date;
+    employer_name?: string;
+    monthly_contribution?: number;
+}
+
+export interface MarketIndex {
+  isSimulated: boolean;
+  symbol: string;
+  name: string;
+  value: number;
+  change: number;
+  changePercent: number;
+  lastUpdated: Date | string; // Allow string for API response, parse to Date if needed
+}
+
 export interface FamilyMember {
   id: string;
   name: string;
-  relationship: 'Self' | 'Spouse' | 'Parent' | 'Child' | 'Sibling' | 'Other';
-  color: string; // For visual representation in charts and UI
-  notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  isActive: boolean;
-}
-
-// Savings Account types
-export interface SavingsAccount {
-  id: string;
-  bankName: string;
-  accountNumber: string;
-  accountType: 'Savings' | 'Salary' | 'Zero Balance' | 'Other';
-  balance: number;
-  interestRate: number;
-  branchName: string;
-  ifscCode: string;
-  familyMemberId?: string; // Primary account holder
-  nominees?: Nominee[];
-  notes?: string;
-  lastUpdated: Date;
-}
-
-export interface Nominee {
-  name: string;
   relationship: string;
-  sharePercentage: number;
+  dateOfBirth?: string | Date | null; // Allow string for API, Date for client
+  color: string;
+  isActive?: boolean;
+  notes?: string | null;
+  createdAt: string | Date; // Allow string for API, Date for client
+  updatedAt: string | Date; // Allow string for API, Date for client
 }
-
-// Re-export User types from user.ts
-export * from './user';
