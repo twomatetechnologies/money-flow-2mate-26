@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 import { NetWorthData } from '@/types';
 import { FinancialGoal } from '@/types/goals';
-import { StockHolding, FixedDeposit } from '@/types';
+import { StockHolding, FixedDeposit, Stock, SIPInvestment } from '@/types';
 import { Link } from 'react-router-dom';
 
 interface PersonalizedRecommendationsProps {
@@ -19,6 +18,7 @@ interface PersonalizedRecommendationsProps {
   goals?: FinancialGoal[];
   stocks?: StockHolding[];
   fixedDeposits?: FixedDeposit[];
+  sips?: SIPInvestment[];
 }
 
 interface Recommendation {
@@ -28,13 +28,15 @@ interface Recommendation {
   priority: 'high' | 'medium' | 'low';
   actionLink?: string;
   actionText?: string;
+  action?: { type: 'navigate', path: string };
 }
 
 export function PersonalizedRecommendations({
   netWorthData,
   goals = [],
   stocks = [],
-  fixedDeposits = []
+  fixedDeposits = [],
+  sips = []
 }: PersonalizedRecommendationsProps) {
   // Generate personalized recommendations based on user data
   const generateRecommendations = (): Recommendation[] => {

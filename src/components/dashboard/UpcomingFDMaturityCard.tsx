@@ -1,124 +1,96 @@
-
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { CalendarClock, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { FixedDeposit } from '@/types';
-import { format, differenceInDays } from 'date-fns';
-import { Link } from 'react-router-dom';
-import { formatIndianNumber } from '@/lib/utils';
-import { getFixedDeposits } from '@/services/fixedDepositService';
-import { handleError } from '@/utils/errorHandler';
-import { Calendar, HelpCircle } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Badge } from '@/components/ui/badge';
 
 interface UpcomingFDMaturityCardProps {
-  fixedDeposits?: FixedDeposit[];
+  fixedDeposits: FixedDeposit[];
 }
 
-export function UpcomingFDMaturityCard({ fixedDeposits: propFixedDeposits }: UpcomingFDMaturityCardProps) {
-  const [fixedDeposits, setFixedDeposits] = useState<FixedDeposit[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+const UpcomingFDMaturityCard = ({ fixedDeposits }: UpcomingFDMaturityCardProps) => {
+  const navigate = useNavigate();
+  const [upcomingFDs, setUpcomingFDs] = useState<FixedDeposit[]>([]);
 
   useEffect(() => {
-    if (propFixedDeposits) {
-      setFixedDeposits(propFixedDeposits);
-    } else {
-      loadFixedDeposits();
-    }
-  }, [propFixedDeposits]);
+    const now = new Date();
+    const next30Days = new Date();
+    next30Days.setDate(now.getDate() + 30);
 
-  const loadFixedDeposits = async () => {
-    setIsLoading(true);
-    try {
-      const data = await getFixedDeposits();
-      setFixedDeposits(data);
-    } catch (error) {
-      handleError(error, 'Failed to load fixed deposit data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const sortedFDs = [...fixedDeposits].sort((a, b) => 
-    new Date(a.maturityDate).getTime() - new Date(b.maturityDate).getTime()
-  );
-  
-  const upcomingFDs = sortedFDs.filter(fd => 
-    differenceInDays(new Date(fd.maturityDate), new Date()) <= 90 &&
-    differenceInDays(new Date(fd.maturityDate), new Date()) >= 0
-  );
+    const filteredFDs = fixedDeposits
+      .filter(fd => {
+        if (!fd.maturity_date) return false;
+        const maturityDate = new Date(fd.maturity_date);
+        return maturityDate >= now && maturityDate <= next30Days;
+      })
+      .sort((a, b) => new Date(a.maturity_date).getTime() - new Date(b.maturity_date).getTime());
+    
+    setUpcomingFDs(filteredFDs.slice(0, 3)); // Show top 3 upcoming
+  }, [fixedDeposits]);
 
-  const totalFDValue = fixedDeposits.reduce((sum, fd) => sum + fd.principal, 0);
+  if (upcomingFDs.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <CalendarClock className="h-5 w-5 mr-2 text-primary" />
+            Upcoming FD Maturities
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No Fixed Deposits maturing in the next 30 days.</p>
+           <Button size="sm" className="mt-4" onClick={() => navigate('/fixed-deposits')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Fixed Deposit
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="finance-card h-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          <span>Upcoming FD Maturities</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent side="right" className="max-w-sm">
-                <p>Shows fixed deposits maturing in the next 90 days.</p>
-                <p className="mt-2">Total Fixed Deposits = Sum of all FD principal amounts.</p>
-                <p className="mt-2">Maturity Value = Principal + Interest earned over the deposit period.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <CalendarClock className="h-5 w-5 mr-2 text-primary" />
+          Upcoming FD Maturities (Next 30 Days)
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="py-6 text-center">
-            Loading fixed deposits...
-          </div>
-        ) : (
-          <>
-            <div className="mb-4">
-              <div className="stat-value">{formatIndianNumber(totalFDValue)}</div>
-              <div className="stat-label">Total Fixed Deposits</div>
-            </div>
-            
-            {upcomingFDs.length > 0 ? (
-              <div className="space-y-3">
-                {upcomingFDs.map(fd => (
-                  <div key={fd.id} className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <div className="font-medium">{fd.bankName}</div>
-                      <div className="text-xs text-finance-gray">
-                        {format(new Date(fd.maturityDate), 'dd MMM yyyy')}
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <div className="font-medium">{formatIndianNumber(fd.maturityAmount)}</div>
-                      <div className="text-xs text-finance-gray">
-                        {differenceInDays(new Date(fd.maturityDate), new Date())} days left
-                      </div>
-                    </div>
-                  </div>
-                ))}
+        <ul className="space-y-3">
+          {upcomingFDs.map(fd => (
+            <li key={fd.id} className="p-3 bg-muted/20 rounded-md border">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-sm">{fd.bank_name} (Acc: ...{String(fd.account_number).slice(-4)})</span>
+                <Badge variant="outline" className="text-xs">
+                  Matures: {new Date(fd.maturity_date).toLocaleDateString()}
+                </Badge>
               </div>
-            ) : (
-              <div className="py-6 text-center text-finance-gray">
-                No FDs maturing in the next 90 days
+              <div className="text-xs text-muted-foreground mt-1">
+                Amount: ₹{(Number(fd.maturity_amount) || Number(fd.amount) || 0).toLocaleString('en-IN')}
               </div>
-            )}
-          </>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Days to maturity: {Math.ceil((new Date(fd.maturity_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
+              </p>
+            </li>
+          ))}
+        </ul>
+        {fixedDeposits.length > upcomingFDs.length && (
+            <Button variant="link" size="sm" className="mt-3 px-0" onClick={() => navigate('/fixed-deposits')}>
+            View all FDs
+            </Button>
         )}
+         {fixedDeposits.length === 0 && upcomingFDs.length === 0 && (
+             <Button size="sm" className="mt-4" onClick={() => navigate('/fixed-deposits')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Fixed Deposit
+            </Button>
+         )}
       </CardContent>
-      <CardFooter>
-        <Button className="w-full" variant="outline" asChild>
-          <Link to="/fixed-deposits">Manage Fixed Deposits</Link>
-        </Button>
-      </CardFooter>
     </Card>
   );
-}
+};
+
+export default UpcomingFDMaturityCard;

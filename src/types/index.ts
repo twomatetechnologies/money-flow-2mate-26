@@ -1,3 +1,4 @@
+
 export interface AuditRecord {
   id: string;
   entityId: string;
@@ -41,9 +42,9 @@ export interface Stock {
   family_member_id?: string;
   notes?: string;
   last_updated?: Date;
-  value?: number;
-  investment_value?: number;
-  gain_loss?: number;
+  value?: number; // Calculated: quantity * current_price
+  investment_value?: number; // Calculated: quantity * purchase_price
+  gain_loss?: number; // Calculated: value - investment_value
 }
 
 export interface FixedDeposit {
@@ -59,7 +60,7 @@ export interface FixedDeposit {
   family_member_id?: string;
   notes?: string;
   last_updated?: Date;
-  principal?: number;
+  principal?: number; // Often same as amount initially
   maturity_amount?: number;
   account_number?: string;
 }
@@ -68,20 +69,20 @@ export interface SIPInvestment {
   id: string;
   name: string;
   amount: number;
-  frequency: string;
-  start_date: Date | string;
-  end_date?: Date | string;
-  fund_type: string;
+  frequency: string; // e.g., 'Monthly', 'Quarterly'
+  startDate: Date | string;
+  endDate?: Date | string; // Optional
+  fundType: string; // e.g., 'Equity', 'Debt', 'Hybrid', ELSS, Index Fund
   units?: number;
-  current_nav?: number;
-  family_member_id?: string;
+  currentNav?: number;
+  familyMemberId?: string;
   notes?: string;
-  last_updated?: Date;
-  current_value?: number;
-  returns?: number;
-  returns_percent?: number;
-  type?: string;
-  duration?: number;
+  lastUpdated?: Date;
+  currentValue?: number; // Calculated: units * currentNav or estimated
+  returns?: number; // Calculated: currentValue - totalInvestedAmount
+  returnsPercent?: number; // Calculated: (returns / totalInvestedAmount) * 100
+  type?: string; // This seems redundant with fundType, consider consolidating or clarifying. For now, keeping as per original.
+  duration?: number; // in months or years, needs context
 }
 
 export interface InsurancePolicy {
@@ -102,13 +103,13 @@ export interface InsurancePolicy {
 
 export interface GoldInvestment {
   id: string;
-  type: string;
-  quantity: number;
+  type: string; // e.g., 'Physical', 'SGB', 'Gold ETF'
+  quantity: number; // in grams or units
   purchase_date: Date | string;
-  purchase_price: number;
-  current_price?: number;
-  value: number;
-  location?: string;
+  purchase_price: number; // per gram or per unit
+  current_price?: number; // per gram or per unit
+  value: number; // Calculated: quantity * current_price
+  location?: string; // For physical gold
   notes?: string;
   family_member_id?: string;
   last_updated?: Date;
@@ -168,17 +169,17 @@ export interface MarketIndex {
   value: number;
   change: number;
   changePercent: number;
-  lastUpdated: Date | string; // Allow string for API response, parse to Date if needed
+  lastUpdated: Date | string;
 }
 
 export interface FamilyMember {
   id: string;
   name: string;
   relationship: string;
-  dateOfBirth?: string | Date | null; // Allow string for API, Date for client
+  dateOfBirth?: string | Date | null;
   color: string;
   isActive?: boolean;
   notes?: string | null;
-  createdAt: string | Date; // Allow string for API, Date for client
-  updatedAt: string | Date; // Allow string for API, Date for client
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
