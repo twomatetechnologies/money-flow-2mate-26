@@ -1,4 +1,3 @@
-
 #!/bin/sh
 # Migration script for PostgreSQL with master data
 
@@ -14,7 +13,9 @@ CREATE TABLE IF NOT EXISTS family_members (
   date_of_birth DATE,
   color VARCHAR(20) NOT NULL,
   is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP DEFAULT NOW()
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Financial Goals
@@ -194,13 +195,20 @@ CREATE TABLE IF NOT EXISTS app_users (
 -- Insert some initial master data
 
 -- Family Members
-INSERT INTO family_members (id, name, relationship, date_of_birth, color, is_active)
+INSERT INTO family_members (id, name, relationship, date_of_birth, color, is_active, notes, updated_at)
 VALUES
-  ('fam-001', 'John Smith', 'Self', '1985-04-15', '#4f46e5', true),
-  ('fam-002', 'Jane Smith', 'Spouse', '1987-09-22', '#ec4899', true),
-  ('fam-003', 'Emma Smith', 'Daughter', '2015-06-10', '#14b8a6', true),
-  ('fam-004', 'Michael Smith', 'Son', '2018-01-05', '#f97316', true)
-ON CONFLICT (id) DO NOTHING;
+  ('fam-001', 'John Smith', 'Self', '1985-04-15', '#4f46e5', true, 'Primary account holder', NOW()),
+  ('fam-002', 'Jane Smith', 'Spouse', '1987-09-22', '#ec4899', true, 'Spouse account holder', NOW()),
+  ('fam-003', 'Emma Smith', 'Daughter', '2015-06-10', '#14b8a6', true, NULL, NOW()),
+  ('fam-004', 'Michael Smith', 'Son', '2018-01-05', '#f97316', true, NULL, NOW())
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  relationship = EXCLUDED.relationship,
+  date_of_birth = EXCLUDED.date_of_birth,
+  color = EXCLUDED.color,
+  is_active = EXCLUDED.is_active,
+  notes = EXCLUDED.notes,
+  updated_at = NOW();
 
 -- Financial Goal Categories
 INSERT INTO financial_goals (id, name, target_amount, current_amount, deadline, category, notes, priority, family_member_id)
@@ -247,4 +255,3 @@ ON CONFLICT (id) DO UPDATE SET
 "
 
 echo "Migration complete. Master data has been loaded."
-

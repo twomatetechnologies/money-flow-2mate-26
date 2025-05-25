@@ -1,4 +1,3 @@
-
 /**
  * API Routes configuration
  */
@@ -12,6 +11,7 @@ import * as auditRecords from './auditRecords.js';
 import * as users from './users.js';
 import * as settings from './settings.js';
 import * as auth from './auth.js';
+import * as familyMembers from './familyMembers.js';
 
 const router = express.Router();
 
@@ -29,6 +29,13 @@ router.post('/auth/refresh-token', auth.refreshToken);
 // Settings routes
 router.get('/settings', settings.getSettings);
 router.put('/settings', settings.updateSettings);
+
+// Family Members routes
+router.get('/family', familyMembers.getAllFamilyMembers);
+router.post('/family', familyMembers.createFamilyMember);
+router.get('/family/:id', familyMembers.getFamilyMemberById);
+router.put('/family/:id', familyMembers.updateFamilyMember);
+router.delete('/family/:id', familyMembers.deleteFamilyMember);
 
 // Fixed Deposits routes
 router.get('/fixed-deposits', fixedDeposits.getAllFixedDeposits);
