@@ -30,7 +30,8 @@ const mapRequestToDbColumns = (body) => {
 // Get all SIP investments with optional filters
 const getAllSIPInvestments = async (req, res) => {
   try {
-    if (!req.app.locals.db) {
+    // Check if we have a database connection (matching pattern from stocks.js)
+    if (!req.app.locals.db || process.env.POSTGRES_ENABLED !== 'true') {
       return res.status(500).json({ error: 'PostgreSQL is required for SIP investments' });
     }
     const pool = req.app.locals.db;
@@ -74,7 +75,7 @@ const getAllSIPInvestments = async (req, res) => {
 // Get a specific SIP investment by ID
 const getSIPInvestmentById = async (req, res) => {
   try {
-    if (!req.app.locals.db) {
+    if (!req.app.locals.db || process.env.POSTGRES_ENABLED !== 'true') {
       return res.status(500).json({ error: 'PostgreSQL is required for SIP investments' });
     }
     const { id } = req.params;
@@ -97,7 +98,7 @@ const getSIPInvestmentById = async (req, res) => {
 // Create a new SIP investment
 const createSIPInvestment = async (req, res) => {
   try {
-    if (!req.app.locals.db) {
+    if (!req.app.locals.db || process.env.POSTGRES_ENABLED !== 'true') {
       return res.status(500).json({ error: 'PostgreSQL is required for SIP investments' });
     }
     const pool = req.app.locals.db;
@@ -177,7 +178,7 @@ const createSIPInvestment = async (req, res) => {
 // Update an existing SIP investment
 const updateSIPInvestment = async (req, res) => {
   try {
-    if (!req.app.locals.db) {
+    if (!req.app.locals.db || process.env.POSTGRES_ENABLED !== 'true') {
       return res.status(500).json({ error: 'PostgreSQL is required for SIP investments' });
     }
     const { id } = req.params;
@@ -250,7 +251,7 @@ const updateSIPInvestment = async (req, res) => {
 // Delete a SIP investment
 const deleteSIPInvestment = async (req, res) => {
   try {
-    if (!req.app.locals.db) {
+    if (!req.app.locals.db || process.env.POSTGRES_ENABLED !== 'true') {
      return res.status(500).json({ error: 'PostgreSQL is required for SIP investments' });
     }
     const { id } = req.params;
