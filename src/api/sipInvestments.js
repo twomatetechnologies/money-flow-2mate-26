@@ -30,10 +30,6 @@ const mapRequestToDbColumns = (body) => {
 // Get all SIP investments with optional filters
 const getAllSIPInvestments = async (req, res) => {
   try {
-    // Check if we have a database connection (matching pattern from stocks.js)
-    if (!req.app.locals.db || process.env.POSTGRES_ENABLED !== 'true') {
-      return res.status(500).json({ error: 'PostgreSQL is required for SIP investments' });
-    }
     const pool = req.app.locals.db;
     // ... keep existing code (filtering logic, ensure it uses snake_case for DB columns)
     const { name, familyMemberId, type /* SIP Category */, fundType /* Asset Class */ } = req.query;
@@ -75,9 +71,6 @@ const getAllSIPInvestments = async (req, res) => {
 // Get a specific SIP investment by ID
 const getSIPInvestmentById = async (req, res) => {
   try {
-    if (!req.app.locals.db || process.env.POSTGRES_ENABLED !== 'true') {
-      return res.status(500).json({ error: 'PostgreSQL is required for SIP investments' });
-    }
     const { id } = req.params;
     const pool = req.app.locals.db;
     
@@ -98,9 +91,6 @@ const getSIPInvestmentById = async (req, res) => {
 // Create a new SIP investment
 const createSIPInvestment = async (req, res) => {
   try {
-    if (!req.app.locals.db || process.env.POSTGRES_ENABLED !== 'true') {
-      return res.status(500).json({ error: 'PostgreSQL is required for SIP investments' });
-    }
     const pool = req.app.locals.db;
     const body = req.body; // Expected to be camelCase from client
 
@@ -178,9 +168,6 @@ const createSIPInvestment = async (req, res) => {
 // Update an existing SIP investment
 const updateSIPInvestment = async (req, res) => {
   try {
-    if (!req.app.locals.db || process.env.POSTGRES_ENABLED !== 'true') {
-      return res.status(500).json({ error: 'PostgreSQL is required for SIP investments' });
-    }
     const { id } = req.params;
     const pool = req.app.locals.db;
     const body = req.body; // Expected to be camelCase from client
@@ -251,9 +238,6 @@ const updateSIPInvestment = async (req, res) => {
 // Delete a SIP investment
 const deleteSIPInvestment = async (req, res) => {
   try {
-    if (!req.app.locals.db || process.env.POSTGRES_ENABLED !== 'true') {
-     return res.status(500).json({ error: 'PostgreSQL is required for SIP investments' });
-    }
     const { id } = req.params;
     const pool = req.app.locals.db;
     
