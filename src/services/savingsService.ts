@@ -1,122 +1,79 @@
-import { v4 as uuidv4 } from 'uuid';
-import { SavingsAccount } from '@/types';
+import { executeQuery } from './db/dbConnector';
 import { createAuditRecord } from './auditService';
-import { isPostgresEnabled } from './db/dbConnector';
-import * as savingsDbService from './db/savingsDbService';
 
-const SAVINGS_STORAGE_KEY = 'savingsAccounts';
+// Define the SavingsAccount type interface
+interface SavingsAccount {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  accountType: 'Savings' | 'Current' | 'Salary' | 'Fixed Deposit' | 'Other';
+  balance: number;
+  interestRate: number;
+  familyMemberId: string;
+  branchName?: string;
+  ifscCode?: string;
+  nominees?: string[];
+  notes?: string;
+  lastUpdated: Date;
+}
 
-// Load savings accounts from localStorage
-const loadSavingsAccounts = (): SavingsAccount[] => {
-  try {
-    const stored = localStorage.getItem(SAVINGS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    console.error('Error loading savings accounts:', error);
-    return [];
-  }
-};
+const API_BASE_URL = '/savingsAccounts';
 
-// Save savings accounts to localStorage
-const saveSavingsAccounts = (accounts: SavingsAccount[]): void => {
-  try {
-    localStorage.setItem(SAVINGS_STORAGE_KEY, JSON.stringify(accounts));
-  } catch (error) {
-    console.error('Error saving savings accounts:', error);
-  }
-};
-
-// In-memory datastore with persistence
-let savingsAccounts = loadSavingsAccounts();
-
-// Check if we should use database operations
-const useDatabase = isPostgresEnabled();
-
-// Get all savings accounts
+// Get all savings accounts - PostgreSQL only
 export const getSavingsAccounts = async (): Promise<SavingsAccount[]> => {
-  if (useDatabase) {
-    return await savingsDbService.getSavingsAccounts();
+  try {
+    return await executeQuery<SavingsAccount[]>(API_BASE_URL, 'GET');
+  } catch (error) {
+    console.error('Error fetching savings accounts:', error);
+    throw new Error('Failed to fetch savings accounts. Database connection required.');
   }
-  
-  return Promise.resolve([...savingsAccounts]);
 };
 
-// Add a new savings account
+// Add a new savings account - PostgreSQL only
 export const addSavingsAccount = async (account: Partial<SavingsAccount>): Promise<SavingsAccount> => {
-  if (useDatabase) {
-    return await savingsDbService.addSavingsAccount(account);
+  try {
+    const newAccount = await executeQuery<SavingsAccount>(API_BASE_URL, 'POST', account);
+    createAuditRecord(newAccount.id, 'savingsAccount', 'create', newAccount);
+    return newAccount;
+  } catch (error) {
+    console.error('Error creating savings account:', error);
+    throw new Error('Failed to create savings account. Database connection required.');
   }
-  
-  const newAccount: SavingsAccount = {
-    id: uuidv4(),
-    bankName: account.bankName || '',
-    accountNumber: account.accountNumber || '',
-    accountType: account.accountType as SavingsAccount['accountType'] || 'Savings',
-    balance: account.balance || 0,
-    interestRate: account.interestRate || 0,
-    familyMemberId: account.familyMemberId || '',
-    branchName: account.branchName || '',
-    ifscCode: account.ifscCode || '',
-    nominees: account.nominees || [],
-    notes: account.notes || '',
-    lastUpdated: new Date(),
-  };
-  
-  savingsAccounts.push(newAccount);
-  saveSavingsAccounts(savingsAccounts);
-  createAuditRecord(newAccount.id, 'savingsAccount', 'create', newAccount);
-  return Promise.resolve(newAccount);
 };
 
-// Update a savings account
+// Update a savings account - PostgreSQL only
 export const updateSavingsAccount = async (id: string, updates: Partial<SavingsAccount>): Promise<SavingsAccount> => {
-  if (useDatabase) {
-    return await savingsDbService.updateSavingsAccount(id, updates);
+  try {
+    const updatedAccount = await executeQuery<SavingsAccount>(`${API_BASE_URL}/${id}`, 'PUT', updates);
+    createAuditRecord(id, 'savingsAccount', 'update', {
+      current: updatedAccount,
+      changes: updates
+    });
+    return updatedAccount;
+  } catch (error) {
+    console.error(`Error updating savings account ${id}:`, error);
+    throw new Error(`Failed to update savings account. Database connection required.`);
   }
-  
-  const index = savingsAccounts.findIndex(account => account.id === id);
-  if (index === -1) {
-    return Promise.reject(new Error('Savings account not found'));
-  }
-  
-  const originalAccount = { ...savingsAccounts[index] };
-  
-  savingsAccounts[index] = {
-    ...savingsAccounts[index],
-    ...updates,
-    lastUpdated: new Date()
-  };
-  
-  saveSavingsAccounts(savingsAccounts);
-  createAuditRecord(id, 'savingsAccount', 'update', {
-    previous: originalAccount,
-    current: savingsAccounts[index],
-    changes: updates
-  });
-  
-  return Promise.resolve(savingsAccounts[index]);
 };
 
-// Delete a savings account
-export const deleteSavingsAccount = async (id: string): Promise<void> => {
-  if (useDatabase) {
-    const response = await savingsDbService.deleteSavingsAccount(id);
-    if (!response) {
-      throw new Error('Failed to delete savings account');
-    }
-    return;
+// Delete a savings account - PostgreSQL only
+export const deleteSavingsAccount = async (id: string): Promise<boolean> => {
+  try {
+    await executeQuery<{ success: boolean }>(`${API_BASE_URL}/${id}`, 'DELETE');
+    createAuditRecord(id, 'savingsAccount', 'delete', { id });
+    return true;
+  } catch (error) {
+    console.error(`Error deleting savings account ${id}:`, error);
+    throw new Error(`Failed to delete savings account. Database connection required.`);
   }
-  
-  const index = savingsAccounts.findIndex(account => account.id === id);
-  if (index === -1) {
-    return Promise.reject(new Error('Savings account not found'));
+};
+
+// Get a savings account by ID - PostgreSQL only
+export const getSavingsAccountById = async (id: string): Promise<SavingsAccount | null> => {
+  try {
+    return await executeQuery<SavingsAccount | null>(`${API_BASE_URL}/${id}`, 'GET');
+  } catch (error) {
+    console.error(`Error fetching savings account ${id}:`, error);
+    throw new Error(`Failed to fetch savings account. Database connection required.`);
   }
-  
-  const deletedAccount = { ...savingsAccounts[index] };
-  savingsAccounts.splice(index, 1);
-  saveSavingsAccounts(savingsAccounts);
-  
-  // Create audit record after successful deletion
-  await createAuditRecord(id, 'savingsAccount', 'delete', deletedAccount);
-  return Promise.resolve();
 };

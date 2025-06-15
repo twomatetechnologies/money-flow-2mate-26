@@ -1,121 +1,119 @@
 import { v4 as uuidv4 } from 'uuid';
 import { ProvidentFund } from '@/types';
 import { createAuditRecord } from './auditService';
-import { isPostgresEnabled } from './db/dbConnector';
-import * as providentFundDbService from './db/providentFundDbService';
-
-// Mock data storage
-let providentFunds: ProvidentFund[] = [];
-
-const PF_STORAGE_KEY = 'providentFunds';
-
-// Initialize with sample data if needed
-const initializeProvidentFunds = () => {
-  const storedPFs = localStorage.getItem(PF_STORAGE_KEY);
-  if (storedPFs) {
-    try {
-      providentFunds = JSON.parse(storedPFs).map((pf: any) => ({
-        ...pf,
-        startDate: new Date(pf.startDate),
-        lastUpdated: new Date(pf.lastUpdated),
-      }));
-    } catch (error) {
-      console.error('Error parsing provident funds from localStorage:', error);
-      providentFunds = []; // Start with empty array instead of sample data
-    }
-  } else {
-    providentFunds = []; // Start with empty array instead of sample data
-  }
-};
-
-// Save provident funds to localStorage
-const saveProvidentFunds = () => {
-  localStorage.setItem(PF_STORAGE_KEY, JSON.stringify(providentFunds));
-};
-
-// Check if we should use database operations
-const useDatabase = isPostgresEnabled();
+import { executeQuery } from './db/dbConnector';
 
 // Get all provident funds
 export const getProvidentFunds = async (): Promise<ProvidentFund[]> => {
-  if (useDatabase) {
-    return await providentFundDbService.getProvidentFunds();
+  try {
+    return await executeQuery<ProvidentFund[]>('/provident-funds');
+  } catch (error) {
+    console.error('Error fetching provident funds:', error);
+    throw error;
   }
-  
-  if (providentFunds.length === 0) {
-    initializeProvidentFunds();
-  }
-  return [...providentFunds];
 };
 
-// Get a single provident fund by ID
-export const getProvidentFundById = async (id: string): Promise<ProvidentFund | undefined> => {
-  if (useDatabase) {
-    return await providentFundDbService.getProvidentFundById(id) || undefined;
+// Get a specific provident fund by ID
+export const getProvidentFundById = async (id: string): Promise<ProvidentFund | null> => {
+  try {
+    return await executeQuery<ProvidentFund>(`/provident-funds/${id}`);
+  } catch (error) {
+    console.error(`Error fetching provident fund ${id}:`, error);
+    throw error;
   }
-  
-  if (providentFunds.length === 0) {
-    initializeProvidentFunds();
-  }
-  return providentFunds.find(pf => pf.id === id);
 };
 
 // Create a new provident fund
-export const createProvidentFund = async (pfData: Omit<ProvidentFund, 'id'>): Promise<ProvidentFund> => {
-  if (useDatabase) {
-    return await providentFundDbService.addProvidentFund(pfData);
+export const createProvidentFund = async (pf: Partial<ProvidentFund>): Promise<ProvidentFund> => {
+  try {
+    const newPF = {
+      ...pf,
+      id: pf.id || `pf-${uuidv4()}`,
+      lastUpdated: new Date(),
+      startDate: pf.startDate || new Date()
+    };
+    
+    const result = await executeQuery<ProvidentFund>('/provident-funds', 'POST', newPF);
+    
+    // Create audit record
+    await createAuditRecord(
+      result.id,
+      'providentFund',
+      'create',
+      {
+        accountNumber: result.accountNumber,
+        type: result.type,
+        balance: result.balance
+      }
+    );
+    
+    return result;
+  } catch (error) {
+    console.error('Error creating provident fund:', error);
+    throw error;
   }
-  
-  const newPF: ProvidentFund = {
-    ...pfData,
-    id: uuidv4(),
-  };
-  providentFunds.push(newPF);
-  saveProvidentFunds();
-  createAuditRecord(newPF.id, 'providentFund', 'create', newPF);
-  return newPF;
 };
 
 // Update an existing provident fund
-export const updateProvidentFund = async (pfData: ProvidentFund): Promise<ProvidentFund> => {
-  if (useDatabase) {
-    return await providentFundDbService.updateProvidentFund(pfData.id, pfData);
+export const updateProvidentFund = async (id: string, updates: Partial<ProvidentFund>): Promise<ProvidentFund | null> => {
+  try {
+    // Get the original PF for audit
+    const originalPF = await getProvidentFundById(id);
+    
+    if (!originalPF) {
+      throw new Error(`Provident fund with ID ${id} not found`);
+    }
+    
+    // Include lastUpdated field
+    const updatesWithTimestamp = {
+      ...updates,
+      lastUpdated: new Date()
+    };
+    
+    const updatedPF = await executeQuery<ProvidentFund>(`/provident-funds/${id}`, 'PUT', updatesWithTimestamp);
+    
+    // Create audit record
+    await createAuditRecord(
+      id,
+      'providentFund',
+      'update',
+      {
+        original: originalPF,
+        current: updatedPF,
+        changes: Object.keys(updates)
+      }
+    );
+    
+    return updatedPF;
+  } catch (error) {
+    console.error(`Error updating provident fund ${id}:`, error);
+    throw error;
   }
-  
-  const index = providentFunds.findIndex(pf => pf.id === pfData.id);
-  if (index === -1) {
-    throw new Error('Provident Fund not found');
-  }
-  const originalPF = { ...providentFunds[index] };
-  providentFunds[index] = {
-    ...pfData,
-    lastUpdated: new Date()
-  };
-  saveProvidentFunds();
-  createAuditRecord(pfData.id, 'providentFund', 'update', {
-    previous: originalPF,
-    current: providentFunds[index],
-    changes: pfData
-  });
-  return providentFunds[index];
 };
 
 // Delete a provident fund
-export const deleteProvidentFund = async (id: string): Promise<void> => {
-  if (useDatabase) {
-    await providentFundDbService.deleteProvidentFund(id);
-    return;
+export const deleteProvidentFund = async (id: string): Promise<boolean> => {
+  try {
+    // Get the original PF for audit
+    const originalPF = await getProvidentFundById(id);
+    
+    if (!originalPF) {
+      throw new Error(`Provident fund with ID ${id} not found`);
+    }
+    
+    await executeQuery(`/provident-funds/${id}`, 'DELETE');
+    
+    // Create audit record
+    await createAuditRecord(
+      id,
+      'providentFund',
+      'delete',
+      { deleted: originalPF }
+    );
+    
+    return true;
+  } catch (error) {
+    console.error(`Error deleting provident fund ${id}:`, error);
+    throw error;
   }
-  
-  const index = providentFunds.findIndex(pf => pf.id === id);
-  if (index === -1) {
-    throw new Error('Provident Fund not found');
-  }
-  
-  const deletedPF = { ...providentFunds[index] };
-  providentFunds.splice(index, 1);
-  saveProvidentFunds();
-  
-  // Create audit record after successful deletion
-  await createAuditRecord(id, 'providentFund', 'delete', deletedPF);
 };

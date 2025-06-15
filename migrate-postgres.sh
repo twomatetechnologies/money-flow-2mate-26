@@ -192,6 +192,14 @@ CREATE TABLE IF NOT EXISTS app_users (
   last_login TIMESTAMP
 );
 
+-- Authentication Tokens
+CREATE TABLE IF NOT EXISTS auth_tokens (
+  token VARCHAR(36) PRIMARY KEY,
+  user_id VARCHAR(36) NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Insert some initial master data
 
 -- Family Members

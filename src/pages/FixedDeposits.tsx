@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Plus, Loader2 } from 'lucide-react';
-import { getFixedDeposits, addFixedDeposit, updateFixedDeposit, deleteFixedDeposit } from '@/services/fixedDepositService';
+import { getFixedDeposits, createFixedDeposit, updateFixedDeposit, deleteFixedDeposit } from '@/services/fixedDepositService';
 import { FixedDeposit } from '@/types';
 import FixedDepositForm from '@/components/fixedDeposits/FixedDepositForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +12,32 @@ import ImportExportMenu from '@/components/common/ImportExportMenu';
 import { formatIndianNumber } from '@/lib/utils';
 import { isPostgresEnabled } from '@/services/db/dbConnector';
 import { getActiveFamilyMembers } from '@/services/familyService';
+
+// Helper to map between database snake_case and UI camelCase
+const mapFieldsForUI = (fd: FixedDeposit) => ({
+  ...fd,
+  bankName: fd.bank_name,
+  accountNumber: fd.account_number,
+  interestRate: fd.interest_rate,
+  startDate: fd.start_date,
+  maturityDate: fd.maturity_date,
+  maturityAmount: fd.maturity_amount,
+  isAutoRenew: fd.is_auto_renewal,
+  familyMemberId: fd.family_member_id
+});
+
+// Helper to map from UI camelCase to database snake_case
+const mapFieldsForDB = (fd: any) => ({
+  ...fd,
+  bank_name: fd.bankName,
+  account_number: fd.accountNumber,
+  interest_rate: fd.interestRate,
+  start_date: fd.startDate,
+  maturity_date: fd.maturityDate,
+  maturity_amount: fd.maturityAmount,
+  is_auto_renewal: fd.isAutoRenew,
+  family_member_id: fd.familyMemberId
+});
 
 const FixedDeposits = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -43,7 +68,7 @@ const FixedDeposits = () => {
     setIsLoading(true);
     try {
       const data = await getFixedDeposits();
-      setFixedDeposits(data);
+      setFixedDeposits(data.map(mapFieldsForUI));
     } catch (error) {
       handleError(error, 'Failed to load fixed deposits');
     } finally {
@@ -80,17 +105,20 @@ const FixedDeposits = () => {
 
   const handleSubmit = async (data: Partial<FixedDeposit>) => {
     try {
+      // Convert from UI fields to DB fields
+      const dbData = mapFieldsForDB(data);
+      
       if (formMode === 'create') {
-        const newFd = await addFixedDeposit(data);
-        setFixedDeposits(prev => [...prev, newFd]);
+        const newFd = await createFixedDeposit(dbData);
+        setFixedDeposits(prev => [...prev, mapFieldsForUI(newFd)]);
         toast({
           title: 'Success',
           description: 'Fixed deposit added successfully',
         });
       } else if (editingFd) {
-        const updatedFd = await updateFixedDeposit(editingFd.id, data);
+        const updatedFd = await updateFixedDeposit(editingFd.id, dbData);
         if (updatedFd) {
-          setFixedDeposits(prev => prev.map(fd => fd.id === editingFd.id ? updatedFd : fd));
+          setFixedDeposits(prev => prev.map(fd => fd.id === editingFd.id ? mapFieldsForUI(updatedFd) : fd));
           toast({
             title: 'Success',
             description: 'Fixed deposit updated successfully',
@@ -198,7 +226,8 @@ const FixedDeposits = () => {
       
       for (const item of importedData) {
         try {
-          const fdData: Partial<FixedDeposit> = {
+          // Create UI object format first
+          const uiData: any = {
             bankName: item['Bank Name'],
             accountNumber: item['Account Number'],
             principal: parseFloat(item['Principal']) || 0,
@@ -212,7 +241,10 @@ const FixedDeposits = () => {
             lastUpdated: new Date()
           };
           
-          await addFixedDeposit(fdData);
+          // Convert to DB format
+          const dbData = mapFieldsForDB(uiData);
+          
+          await createFixedDeposit(dbData);
           successCount++;
         } catch (error) {
           errorCount++;

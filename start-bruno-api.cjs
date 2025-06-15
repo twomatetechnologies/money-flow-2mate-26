@@ -13,7 +13,10 @@ async function startServer() {
     process.env.POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || 'postgres123';
     process.env.POSTGRES_PORT = process.env.POSTGRES_PORT || '5432';
     
-    const { app } = await import('./src/api/bruno-server.js');
+    console.log('Attempting to import bruno-server.js...');
+    const brunoServerModule = await import('./src/api/bruno-server.js');
+    console.log('Import successful. Module contents:', Object.keys(brunoServerModule));
+    const { app } = brunoServerModule;
     const PORT = process.env.API_PORT || 8081;
 
     // Start the API server
@@ -33,6 +36,12 @@ async function startServer() {
     });
   } catch (error) {
     console.error('Failed to start server:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code
+    });
     process.exit(1);
   }
 }

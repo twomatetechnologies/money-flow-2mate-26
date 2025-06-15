@@ -1,29 +1,20 @@
-
 /**
  * Database connector utility to connect to PostgreSQL
  */
 import { handleError } from '@/utils/errorHandler';
 
-// Check if PostgreSQL is enabled
-export const isPostgresEnabled = (): boolean => {
-  try {
-    // Check if environment variables specify PostgreSQL (for Docker)
-    if (import.meta.env.POSTGRES_ENABLED === 'true') {
-      return true;
-    }
-    
-    // For Lovable preview compatibility, check if localStorage is available
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const postgresEnabled = localStorage.getItem('POSTGRES_ENABLED');
-      return postgresEnabled === 'true';
-    }
-    
-    // Default to false if no configuration is found
-    return false;
-  } catch (error) {
-    console.error('Error checking PostgreSQL status:', error);
-    return false;
+// Declare global window properties
+declare global {
+  interface Window {
+    DB_CONNECTION_ERROR?: boolean;
+    DB_USE_POSTGRES?: boolean;
+    USING_POSTGRES?: boolean;
   }
+}
+
+// PostgreSQL is always the data source (this function is kept for backwards compatibility)
+export const isPostgresEnabled = (): boolean => {
+  return true;
 };
 
 // Check if database connection has an error
@@ -36,19 +27,22 @@ export const hasConnectionError = (): boolean => {
   }
 };
 
+// Initialize database preferences - now a no-op since we only support PostgreSQL
+export const initDatabasePreferences = (): void => {
+  console.log('Initializing database preferences - PostgreSQL is now the only supported database');
+  // No action needed since we only use PostgreSQL now
+  try {
+    // Set global flags to indicate PostgreSQL is in use
+    window.DB_USE_POSTGRES = true;
+    window.USING_POSTGRES = true;
+  } catch (error) {
+    console.error('Error initializing database preferences:', error);
+  }
+};
+
 // Utility function to determine the API base URL
 export const getApiBaseUrl = (): string => {
   try {
-    // Check if there's a custom API base URL in settings
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const settings = localStorage.getItem('finance-app-settings');
-      if (settings) {
-        const parsedSettings = JSON.parse(settings);
-        if (parsedSettings && parsedSettings.apiBaseUrl) {
-          return parsedSettings.apiBaseUrl;
-        }
-      }
-    }
     // In development, use relative URL to leverage Vite's proxy
     return '';
   } catch (error) {
@@ -79,12 +73,6 @@ export const executeQuery = async <T>(
   data?: any
 ): Promise<T> => {
   try {
-    // Check if we should use localStorage instead of API
-    if (!isPostgresEnabled()) {
-      console.log('Using localStorage for data persistence instead of API');
-      throw new DatabaseError('PostgreSQL disabled, using localStorage', method, endpoint);
-    }
-
     const url = `${getApiBaseUrl()}/api${endpoint}`;
     
     console.log(`API Request: ${method} ${url}`);
@@ -144,57 +132,8 @@ export const executeQuery = async <T>(
       console.error('Database query error:', error);
     }
     
-    // For Lovable preview, fallback to localStorage
-    console.log('Falling back to in-memory storage for Lovable preview');
+    // Re-throw the error to be handled by the caller
     throw error;
-  }
-};
-
-// Initialize database connection preferences in localStorage
-export const initDatabasePreferences = (): void => {
-  try {
-    // For Docker environment, check for environment variables
-    if (import.meta.env.POSTGRES_ENABLED) {
-      const usePostgres = import.meta.env.POSTGRES_ENABLED === 'true';
-      localStorage.setItem('POSTGRES_ENABLED', usePostgres ? 'true' : 'false');
-      
-      if (typeof window !== 'undefined') {
-        window.POSTGRES_ENABLED = usePostgres;
-      }
-      return;
-    }
-    
-    // For Lovable preview, default to localStorage
-    if (typeof window !== 'undefined' && window.localStorage) {
-      // Only set if not already set
-      if (!localStorage.getItem('POSTGRES_ENABLED')) {
-        localStorage.setItem('POSTGRES_ENABLED', 'false');
-      }
-      
-      // Set window variable too if it exists
-      if (typeof window !== 'undefined') {
-        window.POSTGRES_ENABLED = localStorage.getItem('POSTGRES_ENABLED') === 'true';
-      }
-    }
-  } catch (error) {
-    console.error('Error initializing database preferences:', error);
-  }
-};
-
-// Toggle database source between PostgreSQL and localStorage
-export const toggleDatabaseSource = (usePostgres: boolean): void => {
-  try {
-    localStorage.setItem('POSTGRES_ENABLED', usePostgres ? 'true' : 'false');
-    
-    if (typeof window !== 'undefined') {
-      window.POSTGRES_ENABLED = usePostgres;
-    }
-    
-    // Reload to apply changes
-    window.location.reload();
-  } catch (error) {
-    console.error('Error toggling database source:', error);
-    handleError(error, 'Failed to toggle database source');
   }
 };
 
@@ -209,18 +148,21 @@ export const getPgAdminUrl = (): string => {
 export const testDatabaseConnection = async (): Promise<boolean> => {
   try {
     console.log('Testing database connection...');
-    
-    // For Lovable preview, skip actual testing
-    if (!isPostgresEnabled()) {
-      console.log('PostgreSQL disabled, skipping connection test');
-      return false;
-    }
-    
     await executeQuery('/health-check', 'GET');
     console.log('Database connection test successful');
     return true;
   } catch (error) {
     console.error('Database connection test failed:', error);
     return false;
+  }
+};
+
+// This is now a no-op function since we only support PostgreSQL
+// Kept for compatibility with existing code
+export const toggleDatabaseSource = (usePostgres: boolean): void => {
+  console.log('Database source toggling is no longer supported - PostgreSQL is now the only data source');
+  // No-op since we only support PostgreSQL now
+  if (!usePostgres) {
+    console.warn('Attempted to switch away from PostgreSQL, which is no longer supported');
   }
 };

@@ -1,37 +1,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { AuditRecord } from '@/types/audit';
-import { isPostgresEnabled, executeQuery } from './db/dbConnector';
+import { executeQuery } from './db/dbConnector';
 import { handleError, withErrorHandling } from '@/utils/errorHandler';
-
-// Load audit records from localStorage or initialize empty array
-const loadAuditRecords = (): AuditRecord[] => {
-  try {
-    const storedRecords = localStorage.getItem('auditRecords');
-    return storedRecords ? JSON.parse(storedRecords) : [];
-  } catch (error) {
-    handleError(error, 'Failed to load audit records', { 
-      severity: 'medium',
-      context: { source: 'localStorage' }
-    });
-    return [];
-  }
-};
-
-// Save audit records to localStorage
-const saveAuditRecords = (records: AuditRecord[]): void => {
-  try {
-    localStorage.setItem('auditRecords', JSON.stringify(records));
-  } catch (error) {
-    handleError(error, 'Failed to save audit records', { 
-      severity: 'medium',
-      context: { count: records.length }
-    });
-  }
-};
-
-// In-memory store with persistence
-let auditRecords: AuditRecord[] = loadAuditRecords();
 
 // Create an audit record
 export const createAuditRecord = async (
@@ -51,14 +22,8 @@ export const createAuditRecord = async (
   };
 
   try {
-    if (isPostgresEnabled()) {
-      // When using PostgreSQL, send the record to the API
-      await executeQuery('/audit-records', 'POST', record);
-    } else {
-      // When using localStorage, save locally
-      auditRecords.push(record);
-      saveAuditRecords(auditRecords);
-    }
+    // Send the record to the API
+    await executeQuery('/audit-records', 'POST', record);
     
     console.log(`Audit: [${action.toUpperCase()}] ${entityType} ${entityId}`);
     return record;
@@ -76,11 +41,7 @@ export const createAuditRecord = async (
 // Get audit records with error handling
 export const getAuditRecordsForEntity = withErrorHandling(
   async (entityId: string): Promise<AuditRecord[]> => {
-    if (isPostgresEnabled()) {
-      return await executeQuery<AuditRecord[]>(`/audit-records/entity/${entityId}`);
-    }
-    
-    return auditRecords.filter(record => record.entityId === entityId);
+    return await executeQuery<AuditRecord[]>(`/audit-records/entity/${entityId}`);
   },
   'Failed to fetch audit records for entity',
   { severity: 'low' }
@@ -88,11 +49,7 @@ export const getAuditRecordsForEntity = withErrorHandling(
 
 export const getAuditRecordsByType = withErrorHandling(
   async (entityType: string): Promise<AuditRecord[]> => {
-    if (isPostgresEnabled()) {
-      return await executeQuery<AuditRecord[]>(`/audit-records/type/${entityType}`);
-    }
-    
-    return auditRecords.filter(record => record.entityType === entityType);
+    return await executeQuery<AuditRecord[]>(`/audit-records/type/${entityType}`);
   },
   'Failed to fetch audit records by type',
   { severity: 'low' }
@@ -100,11 +57,7 @@ export const getAuditRecordsByType = withErrorHandling(
 
 export const getAllAuditRecords = withErrorHandling(
   async (): Promise<AuditRecord[]> => {
-    if (isPostgresEnabled()) {
-      return await executeQuery<AuditRecord[]>('/audit-records');
-    }
-    
-    return [...auditRecords];
+    return await executeQuery<AuditRecord[]>('/audit-records');
   },
   'Failed to fetch all audit records',
   { severity: 'low' }
@@ -112,12 +65,7 @@ export const getAllAuditRecords = withErrorHandling(
 
 export const clearAuditRecords = withErrorHandling(
   async (): Promise<void> => {
-    if (isPostgresEnabled()) {
-      await executeQuery('/audit-records', 'DELETE');
-    } else {
-      auditRecords = [];
-      saveAuditRecords(auditRecords);
-    }
+    await executeQuery('/audit-records', 'DELETE');
     console.log('All audit records cleared');
   },
   'Failed to clear audit records',

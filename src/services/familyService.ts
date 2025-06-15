@@ -1,6 +1,18 @@
-import { FamilyMember } from '@/types';
+import { createAuditRecord } from './auditService';
 
 const API_BASE_URL = '/api/family-members';
+
+// Define the FamilyMember interface
+interface FamilyMember {
+  id: string;
+  name: string;
+  relationship: string;
+  color: string;
+  dateOfBirth?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+}
 
 // Helper to parse dates from API response
 const parseFamilyMemberDates = (member: any): FamilyMember => ({
@@ -10,38 +22,7 @@ const parseFamilyMemberDates = (member: any): FamilyMember => ({
   updatedAt: new Date(member.updatedAt),
 });
 
-// In-memory datastore for family members
-let familyMembers: FamilyMember[] = [
-  {
-    id: "self-default",
-    name: "Self",
-    relationship: "Self",
-    color: "#3b82f6", // blue
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    isActive: true
-  },
-  {
-    id: "spouse-default",
-    name: "Spouse",
-    relationship: "Spouse",
-    color: "#ec4899", // pink
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    isActive: true
-  },
-  {
-    id: "parent-default",
-    name: "Parent",
-    relationship: "Parent",
-    color: "#14b8a6", // teal
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    isActive: true
-  }
-];
-
-// CRUD operations for Family Members
+// CRUD operations for Family Members - PostgreSQL only
 export const createFamilyMember = async (memberData: Omit<FamilyMember, 'id' | 'createdAt' | 'updatedAt'>): Promise<FamilyMember> => {
   const response = await fetch(API_BASE_URL, {
     method: 'POST',
@@ -55,7 +36,9 @@ export const createFamilyMember = async (memberData: Omit<FamilyMember, 'id' | '
     throw new Error(errorData.message || 'Failed to create family member');
   }
   const newMember = await response.json();
-  return parseFamilyMemberDates(newMember);
+  const parsedMember = parseFamilyMemberDates(newMember);
+  createAuditRecord(parsedMember.id, 'familyMember', 'create', parsedMember);
+  return parsedMember;
 };
 
 export const updateFamilyMember = async (id: string, updates: Partial<Omit<FamilyMember, 'id' | 'createdAt' | 'updatedAt'>>): Promise<FamilyMember | null> => {
@@ -72,7 +55,12 @@ export const updateFamilyMember = async (id: string, updates: Partial<Omit<Famil
     throw new Error(errorData.message || 'Failed to update family member');
   }
   const updatedMember = await response.json();
-  return parseFamilyMemberDates(updatedMember);
+  const parsedMember = parseFamilyMemberDates(updatedMember);
+  createAuditRecord(id, 'familyMember', 'update', {
+    current: parsedMember,
+    changes: updates
+  });
+  return parsedMember;
 };
 
 export const deleteFamilyMember = async (id: string): Promise<boolean> => {
@@ -87,11 +75,8 @@ export const deleteFamilyMember = async (id: string): Promise<boolean> => {
     // Rethrow a more specific error or return false based on how UI should react
     throw new Error(errorData.error || errorData.message || 'Failed to delete family member');
   }
+  createAuditRecord(id, 'familyMember', 'delete', { id });
   // Backend returns { success: true, message: ... } or 204 No Content usually
-  // If 200 with body:
-  // const result = await response.json();
-  // return result.success;
-  // If 204:
   return response.status === 200 || response.status === 204;
 };
 
@@ -122,26 +107,36 @@ export const getFamilyMembers = async (): Promise<FamilyMember[]> => {
 };
 
 export const getActiveFamilyMembers = async (): Promise<FamilyMember[]> => {
-  // The backend API GET /family-members currently returns all.
-  // We can add a query param ?isActive=true to the API later if needed for optimization.
-  // For now, fetch all and filter on the client.
+  // Fetch all and filter on the client
   console.log('Fetching active family members (all then filtering)');
   const allMembers = await getFamilyMembers();
   return allMembers.filter(member => member.isActive);
 };
 
-export const getDefaultFamilyMemberId = (): string => {
-  // This can remain client-side logic as it might be a user preference
-  // or a default setting not tied to a specific existing member's ID from DB,
-  // especially if it refers to a conceptual "Self" that might be created
-  // if not present. However, the backend seed data now includes 'fam-001' as 'Self'.
-  // Let's ensure this matches or can be configured.
-  // For now, keeping as is, but this might need adjustment based on how "default" is truly defined.
-  // The current `migrate-postgres.sh` creates 'fam-001' for 'John Smith' (Self).
-  // If we want a generic default, this might need to fetch a member named 'Self' or similar.
-  // Sticking to the old default "self-default" might cause issues if no such ID exists in DB.
-  // Let's assume for now, the UI will handle selecting a valid member.
-  // A better approach would be to fetch members and pick one, or have settings.
-  // For now, return a known ID from seed data if that's the intent.
-  return "fam-001"; // Assuming 'fam-001' is 'Self' or the primary user.
+export const getDefaultFamilyMemberId = async (): Promise<string> => {
+  try {
+    // Try to get the 'Self' member from the database
+    const members = await getActiveFamilyMembers();
+    const selfMember = members.find(m => m.relationship === 'Self');
+    if (selfMember) {
+      return selfMember.id;
+    }
+    
+    // If no 'Self' member found, return the first active member
+    if (members.length > 0) {
+      return members[0].id;
+    }
+    
+    // If no active members, return the first family member (active or not)
+    const allMembers = await getFamilyMembers();
+    if (allMembers.length > 0) {
+      return allMembers[0].id;
+    }
+    
+    // If no family members at all, return a fallback ID
+    return "fam-001"; // Assuming 'fam-001' is created in the seed data
+  } catch (error) {
+    console.error("Error getting default family member ID:", error);
+    return "fam-001"; // Fallback to a known ID
+  }
 };

@@ -1,68 +1,80 @@
 
-import { v4 as uuidv4 } from 'uuid';
-import { FinancialGoal, GoalProgress } from '@/types/goals';
+import { executeQuery } from './db/dbConnector';
+import { createAuditRecord } from './auditService';
 
-const GOALS_STORAGE_KEY = 'financialGoals';
+// Define the interfaces for Financial Goals
+interface FinancialGoal {
+  id: string;
+  name: string;
+  description?: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline: Date;
+  category: string;
+  priority: 'Low' | 'Medium' | 'High';
+  createdAt: Date;
+  lastUpdated: Date;
+  familyMemberId?: string;
+}
 
-const loadGoals = (): FinancialGoal[] => {
+interface GoalProgress {
+  percentageComplete: number;
+  monthlyRequired: number;
+  isOnTrack: boolean;
+}
+
+const API_BASE_URL = '/goals';
+
+// Create a new financial goal - PostgreSQL only
+export const createGoal = async (goal: Omit<FinancialGoal, 'id' | 'createdAt' | 'lastUpdated'>): Promise<FinancialGoal> => {
   try {
-    const stored = localStorage.getItem(GOALS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    const newGoal = await executeQuery<FinancialGoal>(API_BASE_URL, 'POST', goal);
+    createAuditRecord(newGoal.id, 'user', 'create', newGoal);
+    return newGoal;
   } catch (error) {
-    console.error('Error loading goals:', error);
-    return [];
+    console.error('Error creating financial goal:', error);
+    throw new Error('Failed to create financial goal. Database connection required.');
   }
 };
 
-const saveGoals = (goals: FinancialGoal[]): void => {
+// Update a financial goal - PostgreSQL only
+export const updateGoal = async (id: string, updates: Partial<FinancialGoal>): Promise<FinancialGoal | null> => {
   try {
-    localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goals));
+    const updatedGoal = await executeQuery<FinancialGoal>(`${API_BASE_URL}/${id}`, 'PUT', updates);
+    createAuditRecord(id, 'user', 'update', {
+      current: updatedGoal,
+      changes: updates
+    });
+    return updatedGoal;
   } catch (error) {
-    console.error('Error saving goals:', error);
+    console.error(`Error updating financial goal ${id}:`, error);
+    throw new Error(`Failed to update financial goal. Database connection required.`);
   }
 };
 
-let goals = loadGoals();
-
-export const createGoal = (goal: Omit<FinancialGoal, 'id' | 'createdAt' | 'lastUpdated'>): FinancialGoal => {
-  const newGoal: FinancialGoal = {
-    ...goal,
-    id: uuidv4(),
-    createdAt: new Date(),
-    lastUpdated: new Date()
-  };
-  goals.push(newGoal);
-  saveGoals(goals);
-  return newGoal;
+// Delete a financial goal - PostgreSQL only
+export const deleteGoal = async (id: string): Promise<boolean> => {
+  try {
+    await executeQuery<{ success: boolean }>(`${API_BASE_URL}/${id}`, 'DELETE');
+    createAuditRecord(id, 'user', 'delete', { id });
+    return true;
+  } catch (error) {
+    console.error(`Error deleting financial goal ${id}:`, error);
+    throw new Error(`Failed to delete financial goal. Database connection required.`);
+  }
 };
 
-export const updateGoal = (id: string, updates: Partial<FinancialGoal>): FinancialGoal | null => {
-  const index = goals.findIndex(goal => goal.id === id);
-  if (index === -1) return null;
-
-  goals[index] = {
-    ...goals[index],
-    ...updates,
-    lastUpdated: new Date()
-  };
-  
-  saveGoals(goals);
-  return goals[index];
+// Get all financial goals - PostgreSQL only
+export const getGoals = async (): Promise<FinancialGoal[]> => {
+  try {
+    return await executeQuery<FinancialGoal[]>(API_BASE_URL, 'GET');
+  } catch (error) {
+    console.error('Error fetching financial goals:', error);
+    throw new Error('Failed to fetch financial goals. Database connection required.');
+  }
 };
 
-export const deleteGoal = (id: string): boolean => {
-  const index = goals.findIndex(goal => goal.id === id);
-  if (index === -1) return false;
-  
-  goals.splice(index, 1);
-  saveGoals(goals);
-  return true;
-};
-
-export const getGoals = (): FinancialGoal[] => {
-  return goals;
-};
-
+// Calculate progress for a financial goal
 export const calculateGoalProgress = (goal: FinancialGoal): GoalProgress => {
   const percentageComplete = (goal.currentAmount / goal.targetAmount) * 100;
   const today = new Date();

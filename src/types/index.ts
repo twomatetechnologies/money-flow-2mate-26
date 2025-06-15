@@ -63,6 +63,18 @@ export interface FixedDeposit {
   principal?: number; // Often same as amount initially
   maturity_amount?: number;
   account_number?: string;
+  
+  // UI convenience fields (mapped from DB fields)
+  bankName?: string;
+  interestRate?: number;
+  startDate?: Date | string;
+  maturityDate?: Date | string;
+  isAutoRenew?: boolean;
+  familyMemberId?: string;
+  lastUpdated?: Date;
+  maturityAmount?: number;
+  accountNumber?: string;
+}
 }
 
 export interface SIPInvestment {

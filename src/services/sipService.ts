@@ -1,50 +1,22 @@
 import { v4 as uuidv4 } from 'uuid';
 import { SIPInvestment } from '@/types';
 import { createAuditRecord } from './auditService';
-import { isPostgresEnabled } from './db/dbConnector';
 import * as sipDbService from './db/sipDbService';
 
-// Initialize local storage data if needed
-let sipInvestments: SIPInvestment[] = [];
-
-// Check if we should use database operations
-const useDatabase = isPostgresEnabled();
-
 export const getSIPInvestments = (): Promise<SIPInvestment[]> => {
-  if (useDatabase) {
-    return sipDbService.getSIPInvestments();
-  }
-  
-  // If PostgreSQL is not enabled, this will always be empty for SIP module
-  return Promise.resolve([]);
+  return sipDbService.getSIPInvestments();
 };
 
 export const addSIPInvestment = (sip: Partial<SIPInvestment>): Promise<SIPInvestment> => {
-  if (useDatabase) {
-    return sipDbService.addSIPInvestment(sip);
-  }
-  
-  // If PostgreSQL is not enabled, return error
-  return Promise.reject(new Error('PostgreSQL is required for SIP investments'));
+  return sipDbService.addSIPInvestment(sip);
 };
 
 export const updateSIPInvestment = (id: string, updates: Partial<SIPInvestment>): Promise<SIPInvestment> => {
-  if (useDatabase) {
-    return sipDbService.updateSIPInvestment(id, updates);
-  }
-  
-  // If PostgreSQL is not enabled, return error
-  return Promise.reject(new Error('PostgreSQL is required for SIP investments'));
+  return sipDbService.updateSIPInvestment(id, updates);
 };
 
 export const deleteSIPInvestment = async (id: string): Promise<void> => {
-  if (useDatabase) {
-    await sipDbService.deleteSIPInvestment(id);
-    return;
-  }
-  
-  // If PostgreSQL is not enabled, return error
-  throw new Error('PostgreSQL is required for SIP investments');
+  await sipDbService.deleteSIPInvestment(id);
 };
 
 // Export SIP investments

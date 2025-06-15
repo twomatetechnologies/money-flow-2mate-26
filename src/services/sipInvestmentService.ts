@@ -1,93 +1,61 @@
 
-import { v4 as uuidv4 } from 'uuid';
 import { SIPInvestment } from '@/types';
 import { createAuditRecord } from './auditService';
+import { executeQuery } from './db/dbConnector';
 
-const SIP_STORAGE_KEY = 'sipInvestments';
+const API_BASE_URL = '/sipInvestments';
 
-// Load SIP investments from localStorage
-const loadSipInvestments = (): SIPInvestment[] => {
+// CRUD operations for SIP Investments - PostgreSQL only
+export const createSIP = async (sip: Partial<SIPInvestment>): Promise<SIPInvestment> => {
   try {
-    const stored = localStorage.getItem(SIP_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    const newSIP = await executeQuery<SIPInvestment>(API_BASE_URL, 'POST', sip);
+    createAuditRecord(newSIP.id, 'sip', 'create', newSIP);
+    return newSIP;
   } catch (error) {
-    console.error('Error loading SIP investments:', error);
-    return [];
+    console.error('Error creating SIP investment:', error);
+    throw new Error('Failed to create SIP investment. Database connection required.');
   }
 };
 
-// Save SIP investments to localStorage
-const saveSipInvestments = (investments: SIPInvestment[]): void => {
+export const updateSIP = async (id: string, updates: Partial<SIPInvestment>): Promise<SIPInvestment | null> => {
   try {
-    localStorage.setItem(SIP_STORAGE_KEY, JSON.stringify(investments));
+    const updatedSIP = await executeQuery<SIPInvestment>(`${API_BASE_URL}/${id}`, 'PUT', updates);
+    createAuditRecord(id, 'sip', 'update', {
+      current: updatedSIP,
+      changes: updates
+    });
+    return updatedSIP;
   } catch (error) {
-    console.error('Error saving SIP investments:', error);
+    console.error(`Error updating SIP investment ${id}:`, error);
+    throw new Error(`Failed to update SIP investment. Database connection required.`);
   }
 };
 
-// In-memory datastore with persistence
-let sipInvestments = loadSipInvestments();
-
-// CRUD operations for SIP Investments
-export const createSIP = (sip: Partial<SIPInvestment>): SIPInvestment => {
-  // Set default values for any missing required fields
-  const newSIP: SIPInvestment = {
-    name: sip.name || 'Unnamed SIP',
-    type: sip.type || 'Mutual Fund',
-    amount: sip.amount || 0,
-    frequency: sip.frequency || 'Monthly',
-    startDate: sip.startDate || new Date(),
-    duration: sip.duration || 12,
-    currentValue: sip.currentValue || 0,
-    returns: sip.returns || 0,
-    returnsPercent: sip.returnsPercent || 0,
-    familyMemberId: sip.familyMemberId || 'self-default',
-    id: uuidv4()
-  };
-  
-  sipInvestments.push(newSIP);
-  saveSipInvestments(sipInvestments);
-  createAuditRecord(newSIP.id, 'sip', 'create', newSIP);
-  return newSIP;
+export const deleteSIP = async (id: string): Promise<boolean> => {
+  try {
+    await executeQuery<{ success: boolean }>(`${API_BASE_URL}/${id}`, 'DELETE');
+    createAuditRecord(id, 'sip', 'delete', { id });
+    return true;
+  } catch (error) {
+    console.error(`Error deleting SIP investment ${id}:`, error);
+    throw new Error(`Failed to delete SIP investment. Database connection required.`);
+  }
 };
 
-export const updateSIP = (id: string, updates: Partial<SIPInvestment>): SIPInvestment | null => {
-  const index = sipInvestments.findIndex(sip => sip.id === id);
-  if (index === -1) return null;
-  
-  const originalSIP = { ...sipInvestments[index] };
-  
-  sipInvestments[index] = {
-    ...sipInvestments[index],
-    ...updates
-  };
-  
-  saveSipInvestments(sipInvestments);
-  createAuditRecord(id, 'sip', 'update', {
-    previous: originalSIP,
-    current: sipInvestments[index],
-    changes: updates
-  });
-  
-  return sipInvestments[index];
+export const getSIPById = async (id: string): Promise<SIPInvestment | null> => {
+  try {
+    return await executeQuery<SIPInvestment | null>(`${API_BASE_URL}/${id}`, 'GET');
+  } catch (error) {
+    console.error(`Error fetching SIP investment ${id}:`, error);
+    throw new Error(`Failed to fetch SIP investment. Database connection required.`);
+  }
 };
 
-export const deleteSIP = (id: string): boolean => {
-  const index = sipInvestments.findIndex(sip => sip.id === id);
-  if (index === -1) return false;
-  
-  const deletedSIP = sipInvestments[index];
-  sipInvestments.splice(index, 1);
-  
-  saveSipInvestments(sipInvestments);
-  createAuditRecord(id, 'sip', 'delete', deletedSIP);
-  return true;
-};
-
-export const getSIPById = (id: string): SIPInvestment | null => {
-  return sipInvestments.find(sip => sip.id === id) || null;
-};
-
-export const getSIPInvestments = (): Promise<SIPInvestment[]> => {
-  return Promise.resolve(sipInvestments);
+export const getSIPInvestments = async (): Promise<SIPInvestment[]> => {
+  try {
+    return await executeQuery<SIPInvestment[]>(API_BASE_URL, 'GET');
+  } catch (error) {
+    console.error('Error fetching SIP investments:', error);
+    throw new Error('Failed to fetch SIP investments. Database connection required.');
+  }
 };
