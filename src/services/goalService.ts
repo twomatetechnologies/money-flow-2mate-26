@@ -76,9 +76,17 @@ export const getGoals = async (): Promise<FinancialGoal[]> => {
 
 // Calculate progress for a financial goal
 export const calculateGoalProgress = (goal: FinancialGoal): GoalProgress => {
+  // Safely handle null or undefined values
+  if (!goal) {
+    return { percentageComplete: 0, monthlyRequired: 0, isOnTrack: false };
+  }
+
   const percentageComplete = (goal.currentAmount / goal.targetAmount) * 100;
   const today = new Date();
-  const deadline = new Date(goal.deadline);
+  
+  // Ensure deadline is a Date object
+  const deadline = goal.deadline instanceof Date ? goal.deadline : new Date(goal.deadline);
+  
   const monthsLeft = (deadline.getFullYear() - today.getFullYear()) * 12 + 
                     (deadline.getMonth() - today.getMonth());
   
@@ -86,9 +94,24 @@ export const calculateGoalProgress = (goal: FinancialGoal): GoalProgress => {
     ? (goal.targetAmount - goal.currentAmount) / monthsLeft 
     : 0;
   
+  // Ensure createdAt is a Date object before calling getTime()
+  // Use a try-catch to handle potential invalid date strings
+  let createdAtDate;
+  try {
+    createdAtDate = goal.createdAt instanceof Date ? goal.createdAt : new Date(goal.createdAt);
+    // Validate that the date is valid
+    if (isNaN(createdAtDate.getTime())) {
+      createdAtDate = new Date(); // Fallback to current date if invalid
+      console.warn('Invalid createdAt date detected in goal, using current date as fallback');
+    }
+  } catch (error) {
+    console.error('Error parsing createdAt date:', error);
+    createdAtDate = new Date(); // Fallback to current date
+  }
+  
   const expectedProgress = (monthsLeft <= 0) ? 100 :
-    ((Date.now() - goal.createdAt.getTime()) / 
-     (deadline.getTime() - goal.createdAt.getTime())) * 100;
+    ((Date.now() - createdAtDate.getTime()) / 
+     (deadline.getTime() - createdAtDate.getTime())) * 100;
   
   const isOnTrack = percentageComplete >= expectedProgress;
 

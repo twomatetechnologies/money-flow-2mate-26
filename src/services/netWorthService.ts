@@ -45,16 +45,44 @@ export const getNetWorth = async (): Promise<NetWorthData> => {
       // getOtherAssets() // Placeholder
     ]);
 
+    // Define a safe parsing function for numeric values that might be strings
+    const safeParseFloat = (value: any): number => {
+      if (value === null || value === undefined) return 0;
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string') return parseFloat(value) || 0;
+      return 0;
+    };
+
     const stocksValue = (Array.isArray(stocksData) ? stocksData : []).reduce((sum, stock) => {
       // Ensure stock.value is used if present, otherwise calculate from currentPrice and quantity
-      const value = typeof stock.value === 'number' ? stock.value : (stock.currentPrice || 0) * (stock.quantity || 0);
+      // Handle the case where stock.value is a string (with quotes) instead of a number
+      return sum + safeParseFloat(stock.value || 
+                   (safeParseFloat(stock.currentPrice) * safeParseFloat(stock.quantity)));
+    }, 0);
+    
+    const fixedDepositsValue = (Array.isArray(fixedDepositsData) ? fixedDepositsData : []).reduce((sum, fd) => {
+      const value = safeParseFloat(fd.principal);
       return sum + value;
     }, 0);
-
-    const fixedDepositsValue = (Array.isArray(fixedDepositsData) ? fixedDepositsData : []).reduce((sum, fd) => sum + (fd.principal || 0), 0);
-    const sipValue = (Array.isArray(sipInvestmentsData) ? sipInvestmentsData : []).reduce((sum, sip) => sum + (sip.currentValue || 0), 0);
-    const goldValue = (Array.isArray(goldInvestmentsData) ? goldInvestmentsData : []).reduce((sum, gold) => sum + (gold.value || 0), 0);
-    const providentFundValue = (Array.isArray(providentFundsData) ? providentFundsData : []).reduce((sum, pf) => sum + (pf.totalBalance || 0), 0);
+    
+    const sipValue = (Array.isArray(sipInvestmentsData) ? sipInvestmentsData : []).reduce((sum, sip) => {
+      const value = safeParseFloat(sip.currentValue);
+      return sum + value;
+    }, 0);
+    
+    const goldValue = (Array.isArray(goldInvestmentsData) ? goldInvestmentsData : []).reduce((sum, gold) => {
+      const value = safeParseFloat(gold.value);
+      return sum + value;
+    }, 0);
+    
+    const providentFundValue = (Array.isArray(providentFundsData) ? providentFundsData : []).reduce((sum, pf) => {
+      // Use index signature to access properties that might have different names
+      const pfAny = pf as any;
+      const balance = pfAny.total_balance !== undefined ? pfAny.total_balance : 
+                     (pfAny.totalBalance !== undefined ? pfAny.totalBalance : 0);
+      return sum + safeParseFloat(balance);
+    }, 0);
+    
     const otherAssetsValue = 0; // No service for 'other' assets yet
 
     const totalNetWorth = stocksValue + fixedDepositsValue + sipValue + goldValue + providentFundValue + otherAssetsValue;
