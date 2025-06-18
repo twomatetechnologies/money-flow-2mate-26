@@ -42,6 +42,7 @@ Money Flow Guardian is a comprehensive personal finance management application d
 - **Two-Factor Authentication**: Enhanced security for personal data
 - **Dockerized Deployment**: Easy setup with Docker and Docker Compose
 - **Database Support**: PostgreSQL integration for persistent data storage
+- **Robust Stock Price Updates**: Multiple API providers with automatic fallback mechanism
 
 ---
 
@@ -229,6 +230,9 @@ For detailed documentation about the application, please see the [Documentation]
 
 - [Getting Started](./docs/getting-started.md)
 - [Features Overview](./docs/features/README.md)
+  - [Stock Price API Integration](./docs/features/stock-price-api-integration.md)
+  - [Gold Investments](./docs/features/gold-investments.md)
+  - [SIP PostgreSQL Implementation](./docs/features/sip-postgresql-implementation.md)
 - [Architecture](./docs/architecture.md)
 - [API Documentation](./docs/api/README.md)
 - [User Guide](./docs/user-guide/README.md)

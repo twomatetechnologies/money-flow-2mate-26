@@ -1,14 +1,19 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Import } from 'lucide-react';
+import { Plus, Import, RefreshCw } from 'lucide-react';
 
 interface StocksPageHeaderProps {
   onAddStock: () => void;
   onImportClick: () => void;
+  onRefreshPrices: () => void;
 }
 
-const StocksPageHeader: React.FC<StocksPageHeaderProps> = ({ onAddStock, onImportClick }) => {
+const StocksPageHeader: React.FC<StocksPageHeaderProps> = ({ 
+  onAddStock, 
+  onImportClick,
+  onRefreshPrices
+}) => {
   return (
     <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800 mb-2">
       <div>
@@ -18,6 +23,9 @@ const StocksPageHeader: React.FC<StocksPageHeaderProps> = ({ onAddStock, onImpor
         </p>
       </div>
       <div className="flex space-x-2">
+        <Button variant="outline" size="sm" onClick={onRefreshPrices} className="h-8 text-xs">
+          <RefreshCw className="mr-1 h-3 w-3" /> Refresh Prices
+        </Button>
         <Button variant="outline" size="sm" onClick={onImportClick} className="h-8 text-xs">
           <Import className="mr-1 h-3 w-3" /> Import
         </Button>

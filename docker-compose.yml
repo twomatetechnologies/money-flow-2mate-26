@@ -44,6 +44,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres123
       - API_PORT=8081
+      - FMP_API_KEY=wBPziir7XFSKm4WIZpLGx6nyF5TmN4XC
+      - ALPHA_VANTAGE_API_KEY=LR78N65XUDF2EZDB
     depends_on:
       db:
         condition: service_healthy

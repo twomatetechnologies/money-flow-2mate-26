@@ -1,30 +1,122 @@
-import { Stock } from '@/types';
-import { availableProviders, BatchPriceResult } from '../api/stockApiProviders';
+/**
+ * JavaScript version of stockBatchPriceService
+ * Serves as a bridge between JS and TS modules for the API
+ */
+
+import { availableProviders } from './stockApiProviders.js';
+import enhancedPriceService from './enhancedStockPriceService.js';
+import stockPriceMonitor from './stockPriceMonitor.js';
 
 // Track API provider failure counts to know when to switch providers
-const providerFailureCounts: Record<string, number> = {};
+const providerFailureCounts = {};
 // Track current provider index
 let currentProviderIndex = 0;
 
 /**
- * Validate stock price data to ensure it's reasonable
- * @param symbol The stock symbol
- * @param price The price to validate
- * @returns true if the price is valid, false otherwise
+ * Map database stock symbols to API provider symbols
+ * @param {string} symbol The stock symbol from the database
+ * @returns {string} The symbol formatted for API providers
  */
-const validateStockPrice = (symbol: string, price: number | null): boolean => {
-  if (price === null) return false;
+const mapSymbolForAPI = (symbol) => {
+  // Indian stock symbols mapping
+  const indianStocks = {
+    'HDFCBANK': 'HDFCBANK.NS',
+    'LT': 'LT.NS',
+    'TCS': 'TCS.NS',
+    'RELIANCE': 'RELIANCE.NS',
+    'INFY': 'INFY.NS',
+    'WIPRO': 'WIPRO.NS',
+    'BHARTIARTL': 'BHARTIARTL.NS',
+    'SBIN': 'SBIN.NS',
+    'ICICIBANK': 'ICICIBANK.NS',
+    'KOTAKBANK': 'KOTAKBANK.NS',
+    'ITC': 'ITC.NS',
+    'HINDUNILVR': 'HINDUNILVR.NS',
+    'NESTLEIND': 'NESTLEIND.NS',
+    'ASIANPAINT': 'ASIANPAINT.NS',
+    'MARUTI': 'MARUTI.NS',
+    'BAJFINANCE': 'BAJFINANCE.NS',
+    'HCLTECH': 'HCLTECH.NS',
+    'TECHM': 'TECHM.NS',
+    'ULTRACEMCO': 'ULTRACEMCO.NS',
+    'TITAN': 'TITAN.NS',
+    'SUNPHARMA': 'SUNPHARMA.NS',
+    'DRREDDY': 'DRREDDY.NS',
+    'COALINDIA': 'COALINDIA.NS',
+    'NTPC': 'NTPC.NS',
+    'POWERGRID': 'POWERGRID.NS',
+    'ONGC': 'ONGC.NS',
+    'GRASIM': 'GRASIM.NS',
+    'JSWSTEEL': 'JSWSTEEL.NS',
+    'TATASTEEL': 'TATASTEEL.NS',
+    'HINDALCO': 'HINDALCO.NS',
+    'ADANIPORTS': 'ADANIPORTS.NS',
+    'BPCL': 'BPCL.NS',
+    'IOC': 'IOC.NS',
+    'HEROMOTOCO': 'HEROMOTOCO.NS',
+    'BAJAJ-AUTO': 'BAJAJ-AUTO.NS',
+    'M&M': 'M&M.NS',
+    'EICHERMOT': 'EICHERMOT.NS',
+    'TATACONSUM': 'TATACONSUM.NS',
+    'BRITANNIA': 'BRITANNIA.NS',
+    'DIVISLAB': 'DIVISLAB.NS',
+    'CIPLA': 'CIPLA.NS',
+    'APOLLOHOSP': 'APOLLOHOSP.NS',
+    'INDIGO': 'INDIGO.NS',
+    'SPICEJET': 'SPICEJET.NS',
+    'JUBLFOOD': 'JUBLFOOD.NS',
+    'PEL': 'PEL.NS',
+    'WHIRLPOOL': 'WHIRLPOOL.NS',
+    'GODREJCP': 'GODREJCP.NS',
+    'PIDILITIND': 'PIDILITIND.NS',
+    'BERGEPAINT': 'BERGEPAINT.NS',
+    'AKZONOBEL': 'AKZONOBEL.NS',
+    'INDIGOPNTS': 'INDIGOPNTS.NS',
+    'HINDCOPPER': 'HINDCOPPER.NS',
+    'HAL': 'HAL.NS',
+    'IEX': 'IEX.NS',
+    'BSEL': 'BSEL.NS'
+  };
+  
+  // Check if it's an Indian stock
+  if (indianStocks[symbol]) {
+    console.log(`Mapping Indian stock symbol: ${symbol} -> ${indianStocks[symbol]}`);
+    return indianStocks[symbol];
+  }
+  
+  // For US stocks and others, return as-is
+  return symbol;
+};
+
+/**
+ * Map API provider symbols back to database symbols
+ * @param {string} apiSymbol The symbol returned from API providers
+ * @returns {string} The symbol as stored in the database
+ */
+const mapSymbolFromAPI = (apiSymbol) => {
+  // Remove .NS, .BO suffixes for Indian stocks
+  if (apiSymbol.endsWith('.NS') || apiSymbol.endsWith('.BO')) {
+    return apiSymbol.replace(/\.(NS|BO)$/, '');
+  }
+  
+  // For other stocks, return as-is
+  return apiSymbol;
+};
+
+/**
+ * Validate stock price data to ensure it's reasonable
+ * @param {string} symbol The stock symbol
+ * @param {number|null} price The price to validate
+ * @returns {boolean} true if the price is valid, false otherwise
+ */
+const validateStockPrice = (symbol, price) => {
+  if (price === null || price === undefined) return false;
   
   // Basic validation: price must be positive and reasonable
   if (price <= 0 || price > 1000000) {
     console.warn(`Invalid price for ${symbol}: ${price} - outside reasonable range`);
     return false;
   }
-  
-  // Additional validation could be added here, like:
-  // - Compare with previous known price to detect wild swings
-  // - Validate currency and formatting
-  // - Check if price is in the expected range for this type of stock
   
   return true;
 };
@@ -49,11 +141,8 @@ const selectProvider = () => {
 /**
  * Process symbols in batches according to the provider's batch size constraints
  */
-const processBatches = async (
-  symbols: string[], 
-  provider: typeof availableProviders[0]
-): Promise<BatchPriceResult> => {
-  const result: BatchPriceResult = {};
+const processBatches = async (symbols, provider) => {
+  const result = {};
   const { batchSize, batchDelay, name } = provider;
   
   try {
@@ -63,16 +152,27 @@ const processBatches = async (
       
       const batch = symbols.slice(i, i + batchSize);
       
-      // Fetch this batch of symbols
-      const batchResult = await provider.fetchPrices(batch);
+      // Map database symbols to API symbols
+      const mappedBatch = batch.map(symbol => mapSymbolForAPI(symbol));
+      console.log(`[${name}] Original batch:`, batch);
+      console.log(`[${name}] Mapped batch:`, mappedBatch);
       
-      // Validate each price and merge into result
-      for (const symbol of batch) {
-        const price = batchResult[symbol];
-        if (validateStockPrice(symbol, price)) {
-          result[symbol] = price;
+      // Fetch this batch of symbols using mapped symbols
+      const batchResult = await provider.fetchPrices(mappedBatch);
+      console.log(`[${name}] Batch result:`, batchResult);
+      
+      // Validate each price and merge into result using original symbols
+      for (let j = 0; j < batch.length; j++) {
+        const originalSymbol = batch[j];
+        const mappedSymbol = mappedBatch[j];
+        const price = batchResult[mappedSymbol];
+        
+        console.log(`[${name}] Processing ${originalSymbol} (${mappedSymbol}): price=${price}`);
+        
+        if (validateStockPrice(originalSymbol, price)) {
+          result[originalSymbol] = price;
         } else {
-          result[symbol] = null;
+          result[originalSymbol] = null;
         }
       }
       
@@ -110,7 +210,7 @@ const processBatches = async (
     return symbols.reduce((acc, symbol) => {
       acc[symbol] = null;
       return acc;
-    }, {} as BatchPriceResult);
+    }, {});
   }
 };
 
@@ -119,20 +219,22 @@ const processBatches = async (
  * This function groups stock symbols and fetches them in batches to reduce API calls
  * If one provider fails, it will try the next available provider
  * 
- * @param symbols Array of stock symbols to fetch prices for
- * @returns Object with stock symbols as keys and prices as values
+ * @param {string[]} symbols Array of stock symbols to fetch prices for
+ * @returns {Object} Object with stock symbols as keys and prices as values
  */
-export const fetchBatchStockPrices = async (symbols: string[]): Promise<BatchPriceResult> => {
+export const fetchBatchStockPrices = async (symbols) => {
+  console.log('[stockBatchPriceService] Starting fetchBatchStockPrices with symbols:', symbols);
   if (!symbols.length) return {};
 
-  const result: BatchPriceResult = {};
+  const result = {};
   const startedProviderIndex = currentProviderIndex;
-  const failedSymbols: string[] = [];
+  const failedSymbols = [];
   
   // Try each provider until we get results or run out of providers
   do {
     const provider = selectProvider();
-    console.log(`Using stock data provider: ${provider.name}`);
+    console.log(`[stockBatchPriceService] Using stock data provider: ${provider.name}`);
+    console.log(`[stockBatchPriceService] Provider API key: ${provider.apiKey ? '***' + provider.apiKey.slice(-4) : 'none required'}`);
     
     // Process all symbols with the current provider
     const providerResults = await processBatches(symbols, provider);
@@ -186,5 +288,6 @@ export const fetchBatchStockPrices = async (symbols: string[]): Promise<BatchPri
     }
   }
   
+  console.log('[stockBatchPriceService] Final results:', result);
   return result;
 };

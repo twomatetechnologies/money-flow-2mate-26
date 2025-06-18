@@ -405,6 +405,72 @@ const Stocks = () => {
     toast({ title: "Export Successful", description: "Stock portfolio exported as Excel." });
   };
 
+  // Function to manually update stock prices
+  const handleRefreshPrices = async () => {
+    try {
+      // Show a loading toast
+      toast({
+        title: "Refreshing Prices",
+        description: "Fetching the latest stock prices...",
+      });
+      
+      // Extract all symbols from stocks
+      const symbols = safeStocks.map(stock => stock.symbol);
+      
+      console.log('Refreshing prices for symbols:', symbols);
+      
+      if (symbols.length === 0) {
+        toast({
+          title: "No Stocks Found",
+          description: "Add stocks to your portfolio first.",
+          variant: "default",
+        });
+        return;
+      }
+      
+      // Use our price service to fetch updated prices (this is a direct call, not the interval based one)
+      const response = await fetch('/api/stocks/refresh-prices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ symbols }),
+      });
+      
+      const batchPricesResponse = await response.json();
+      console.log('Refresh response from API:', batchPricesResponse);
+      
+      if (!batchPricesResponse || !batchPricesResponse.prices || Object.keys(batchPricesResponse.prices).length === 0) {
+        toast({
+          title: "Update Failed",
+          description: "Could not fetch latest prices. API limit may have been reached.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Count how many prices were successfully updated
+      const updatedCount = batchPricesResponse.updated || 0;
+      
+      // Refresh the stock list to show updated prices
+      await fetchStocks();
+      
+      // Show success message
+      toast({
+        title: "Prices Updated",
+        description: `Successfully updated ${updatedCount} of ${symbols.length} stock prices.`,
+        variant: updatedCount === 0 ? "destructive" : "default",
+      });
+    } catch (error) {
+      console.error('Error refreshing stock prices:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh stock prices. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center py-12">
@@ -438,7 +504,11 @@ const Stocks = () => {
 
   return (
     <div className="space-y-3">
-      <StocksPageHeader onAddStock={handleAddStock} onImportClick={handleImportClick} />
+      <StocksPageHeader 
+        onAddStock={handleAddStock} 
+        onImportClick={handleImportClick} 
+        onRefreshPrices={handleRefreshPrices}
+      />
 
       {safeStocks.length === 0 ? (
         <StocksEmptyState onAddStock={handleAddStock} onImportClick={handleImportClick} />

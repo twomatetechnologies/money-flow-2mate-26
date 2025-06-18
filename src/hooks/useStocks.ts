@@ -1,9 +1,65 @@
 import { useState, useEffect, useRef } from 'react';
-import { StockHolding } from '@/types';
+import { Stock } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/contexts/SettingsContext';
 import { getStocks, createStock, updateStock, deleteStock } from '@/services/stockService'; // This uses stockDbService
-import { startStockPriceMonitoring, simulateStockPriceUpdates } from '@/services/stockPriceService';
+import { startStockPriceMonitoring } from '@/services/stockPriceService';
+
+// StockHolding interface that maps to the UI representation of a Stock
+interface StockHolding {
+  id: string;
+  symbol: string;
+  name?: string;
+  quantity: number;
+  averageBuyPrice: number;
+  currentPrice: number;
+  purchaseDate?: Date | string;
+  sector?: string;
+  familyMemberId?: string;
+  notes?: string;
+  lastUpdated?: Date;
+  value?: number;
+  change?: number;
+  changePercent?: number;
+}
+
+// Helper function to map Stock (DB model) to StockHolding (UI model)
+const mapStockToStockHolding = (stock: Stock): StockHolding => {
+  return {
+    id: stock.id,
+    symbol: stock.symbol,
+    name: stock.company_name,
+    quantity: Number(stock.quantity) || 0,
+    averageBuyPrice: Number(stock.purchase_price) || 0,
+    currentPrice: Number(stock.current_price) || 0,
+    purchaseDate: stock.purchase_date,
+    sector: stock.sector,
+    familyMemberId: stock.family_member_id,
+    notes: stock.notes,
+    lastUpdated: stock.last_updated ? new Date(stock.last_updated) : undefined,
+    value: Number(stock.value) || 0,
+    // Calculate change and changePercent if not provided
+    change: (stock.current_price || 0) - (stock.purchase_price || 0),
+    changePercent: stock.purchase_price ? ((stock.current_price || 0) - stock.purchase_price) / stock.purchase_price * 100 : 0
+  };
+};
+
+// Helper function to map StockHolding (UI model) back to Stock (DB model) for updates
+const mapStockHoldingToStock = (stockHolding: Partial<StockHolding>): Partial<Stock> => {
+  const result: Partial<Stock> = {};
+
+  if (stockHolding.symbol !== undefined) result.symbol = stockHolding.symbol;
+  if (stockHolding.name !== undefined) result.company_name = stockHolding.name;
+  if (stockHolding.quantity !== undefined) result.quantity = stockHolding.quantity;
+  if (stockHolding.averageBuyPrice !== undefined) result.purchase_price = stockHolding.averageBuyPrice;
+  if (stockHolding.currentPrice !== undefined) result.current_price = stockHolding.currentPrice;
+  if (stockHolding.purchaseDate !== undefined) result.purchase_date = stockHolding.purchaseDate;
+  if (stockHolding.sector !== undefined) result.sector = stockHolding.sector;
+  if (stockHolding.familyMemberId !== undefined) result.family_member_id = stockHolding.familyMemberId;
+  if (stockHolding.notes !== undefined) result.notes = stockHolding.notes;
+  
+  return result;
+};
 
 export const useStocks = () => {
   const [stocks, setStocks] = useState<StockHolding[]>([]);
@@ -23,29 +79,17 @@ export const useStocks = () => {
       setError(null);
       
       console.log('Fetching stocks data using stockService...');
-      const data = await getStocks(); // Data from stockService (which uses stockDbService)
-                                      // should now be correctly mapped StockHolding[]
+      const data = await getStocks();
       console.log('Received stocks data:', data);
       
       const safeData = Array.isArray(data) ? data : [];
       
-      // Data from getStocks() should already conform to StockHolding.
-      // We apply final defaults here for robustness.
-      const processedData = safeData.map(stock => ({
-        ...stock, // Spread the already well-formed stock object
-        id: stock.id || `temp-${Math.random().toString(36).substr(2, 9)}`,
-        symbol: stock.symbol || 'Unknown',
-        name: stock.name || 'Unknown Stock',
-        quantity: Number(stock.quantity) || 0,
-        averageBuyPrice: Number(stock.averageBuyPrice) || 0,
-        currentPrice: Number(stock.currentPrice) || 0,
-        value: Number(stock.value) || 0, // This should be correctly calculated by DB
-        change: Number(stock.change) || 0,
-        changePercent: Number(stock.changePercent) || 0,
-        sector: stock.sector || 'Uncategorized',
-        familyMemberId: stock.familyMemberId || '',
-        lastUpdated: stock.lastUpdated ? new Date(stock.lastUpdated) : new Date()
-      }));
+      // Map DB Stock models to UI StockHolding models
+      const processedData = safeData.map(stock => {
+        const mappedStock = mapStockToStockHolding(stock);
+        console.log(`Mapped stock ${stock.symbol}: DB currentPrice=${stock.current_price}, UI currentPrice=${mappedStock.currentPrice}`);
+        return mappedStock;
+      });
       
       setStocks(processedData);
       setDisplayedStocks(processedData);
@@ -58,7 +102,7 @@ export const useStocks = () => {
       toast({
         title: "Error",
         description: "Failed to load stocks data. Please check your connection and try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -190,42 +234,26 @@ export const useStocks = () => {
       (async () => {
         try {
           const threshold = settings?.stockPriceAlertThreshold || 5;
-          console.log('Starting stock price monitoring with threshold:', threshold);
           
+          // Initialize stock price monitoring
           stopMonitoringFn = await startStockPriceMonitoring(threshold);
-          console.log("Using real market data for stock prices");
           monitoringInitializedRef.current = true;
         } catch (error) {
-          console.error('Error starting real stock monitoring, falling back to simulation:', error);
-          try {
-            const threshold = settings?.stockPriceAlertThreshold || 5;
-            stopMonitoringFn = await simulateStockPriceUpdates(threshold);
-            console.log("Using simulated market data for stock prices");
-            monitoringInitializedRef.current = true;
-            
-            toast({
-              title: "Using Simulated Data",
-              description: "Could not connect to live market data. Using simulated stock prices instead.",
-              variant: "default",
-            });
-          } catch (simError) {
-            console.error('Error setting up stock simulation:', simError);
-          }
+          console.error('Error initializing stock price monitoring:', error);
         }
       })();
       
       return () => {
-        if (typeof stopMonitoringFn === 'function') {
+        if (stopMonitoringFn) {
           stopMonitoringFn();
-          monitoringInitializedRef.current = false;
         }
       };
     }
-  }, [settings?.stockPriceAlertThreshold]);
+  }, [settings]);
 
   useEffect(() => {
     applyFiltersAndSort();
-  }, [stocks, currentSort, currentDirection, activeFilters]);
+  }, [stocks, activeFilters, currentSort, currentDirection]);
 
   return {
     stocks,

@@ -15,6 +15,7 @@ import * as familyMembers from './familyMembers.js';
 import * as insurance from './insurance.js';
 import * as goldInvestments from './goldInvestments.js';
 import * as goals from './goals.js';
+import refreshStockPrices from './stocks/refresh-prices.js';
 
 const router = express.Router();
 
@@ -95,6 +96,22 @@ router.get('/stocks/:id', stocks.getStockById);
 router.post('/stocks', stocks.createStock);
 router.put('/stocks/:id', stocks.updateStock);
 router.delete('/stocks/:id', stocks.deleteStock);
+
+// Add route for refreshing stock prices
+router.post('/stocks/refresh-prices', refreshStockPrices);
+
+// Stock price scheduler routes 
+router.get('/stocks/scheduler/status', (req, res) => {
+  // This route is implemented directly in server.js
+  // Just forwarding the request
+  req.app.get('/api/stocks/scheduler/status')(req, res);
+});
+
+router.post('/stocks/scheduler/force-update', (req, res) => {
+  // This route is implemented directly in server.js
+  // Just forwarding the request
+  req.app.post('/api/stocks/scheduler/force-update')(req, res);
+});
 
 // Provident Funds routes (kebab-case)
 router.get('/provident-funds', providentFunds.getAllProvidentFunds);

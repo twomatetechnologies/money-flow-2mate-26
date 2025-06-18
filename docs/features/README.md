@@ -8,6 +8,7 @@ Money Flow Guardian offers a comprehensive set of features for personal finance 
 1. [Dashboard](./dashboard.md)
 2. [Investment Tracking](#investment-tracking)
    - [Stocks](#stocks)
+   - [Stock Price API Integration](./stock-price-api-integration.md)
    - [Gold Investments](./gold-investments.md)
    - [Fixed Deposits](#fixed-deposits)
    - [SIP Investments](#sip-investments)

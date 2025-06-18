@@ -1,4 +1,3 @@
-
 /**
  * Simple Express server for local development
  */
@@ -8,6 +7,9 @@ import morgan from 'morgan';
 import { v4 as uuidv4 } from 'uuid';
 import pg from 'pg';
 import routes from './routes.js';
+import stockPriceScheduler from './stockPriceScheduler.js';
+import enhancedPriceService from './enhancedStockPriceService.js';
+import stockPriceMonitor from './stockPriceMonitor.js';
 
 // Create Express server
 const app = express();
@@ -175,6 +177,55 @@ app.get('/api/health-check', async (_req, res) => {
 // Mount API routes under /api prefix
 app.use('/api', routes);
 
+// Stock price scheduler status endpoint
+app.get('/api/stocks/scheduler/status', async (req, res) => {
+  try {
+    const schedulerStatus = stockPriceScheduler.getStatus();
+    const monitorHealth = stockPriceMonitor.getHealthStatus();
+    const serviceHealth = await enhancedPriceService.healthCheck();
+    
+    res.json({
+      scheduler: schedulerStatus,
+      monitor: monitorHealth,
+      service: serviceHealth,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Failed to get scheduler status:', error);
+    res.status(500).json({ error: 'Failed to get scheduler status', message: error.message });
+  }
+});
+
+// Force a stock price update
+app.post('/api/stocks/scheduler/force-update', async (req, res) => {
+  try {
+    const { symbols } = req.body;
+    
+    let result;
+    if (symbols && Array.isArray(symbols) && symbols.length > 0) {
+      // Update specific symbols
+      console.log(`Forcing update for specific symbols: ${symbols.join(', ')}`);
+      result = await stockPriceScheduler.updateSymbols(symbols);
+    } else {
+      // Update all stocks
+      console.log('Forcing update for all stocks');
+      result = await stockPriceScheduler.updateAllStocks('manual');
+    }
+    
+    res.json({
+      success: result.success,
+      message: `Update ${result.success ? 'completed' : 'failed'}`,
+      updated: result.updated || 0,
+      failed: result.failed || 0,
+      errors: result.errors || [],
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Failed to force scheduler update:', error);
+    res.status(500).json({ error: 'Failed to force update', message: error.message });
+  }
+});
+
 // Custom error types
 class ValidationError extends Error {
   constructor(message) {
@@ -244,6 +295,15 @@ app.AuthorizationError = AuthorizationError;
 // Initialize the database connection
 initializeDatabase().then(() => {
   console.log('Database initialization complete');
+  
+  // Initialize the stock price scheduler after database is connected
+  try {
+    console.log('Initializing stock price scheduler...');
+    stockPriceScheduler.start();
+    console.log('Stock price scheduler initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize stock price scheduler:', error);
+  }
 }).catch(err => {
   console.error('Failed to initialize database:', err);
 });
