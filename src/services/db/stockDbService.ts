@@ -14,10 +14,10 @@ const mapApiStockToFrontend = (apiStock: any): StockHolding => {
   return {
     id: apiStock.id,
     symbol: apiStock.symbol,
-    name: apiStock.companyName || apiStock.name, // API uses companyName, frontend uses name
+    name: apiStock.companyName || apiStock.company_name || apiStock.name, // API uses companyName, DB uses company_name
     quantity: Number(apiStock.quantity) || 0,
-    averageBuyPrice: Number(apiStock.purchasePrice || apiStock.averageBuyPrice) || 0, // API uses purchasePrice
-    currentPrice: Number(apiStock.currentPrice) || 0,
+    averageBuyPrice: Number(apiStock.purchasePrice || apiStock.purchase_price || apiStock.averageBuyPrice) || 0, // API uses purchasePrice
+    currentPrice: Number(apiStock.currentPrice || apiStock.current_price) || 0,
     // 'value' from API is the DB generated value: quantity * COALESCE(current_price, purchase_price)
     value: Number(apiStock.value) || 0,
     // 'change' and 'changePercent' might not be directly from this API/DB.
@@ -25,8 +25,10 @@ const mapApiStockToFrontend = (apiStock: any): StockHolding => {
     change: Number(apiStock.change) || 0,
     changePercent: Number(apiStock.changePercent) || 0,
     sector: apiStock.sector,
-    lastUpdated: apiStock.lastUpdated ? new Date(apiStock.lastUpdated) : new Date(),
-    familyMemberId: apiStock.familyMemberId,
+    lastUpdated: apiStock.lastUpdated || apiStock.last_updated ? new Date(apiStock.lastUpdated || apiStock.last_updated) : new Date(),
+    familyMemberId: apiStock.familyMemberId || apiStock.family_member_id,
+    purchaseDate: apiStock.purchaseDate || apiStock.purchase_date,
+    notes: apiStock.notes
   };
 };
 

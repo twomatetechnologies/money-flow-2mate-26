@@ -84,15 +84,9 @@ export const useStocks = () => {
       
       const safeData = Array.isArray(data) ? data : [];
       
-      // Map DB Stock models to UI StockHolding models
-      const processedData = safeData.map(stock => {
-        const mappedStock = mapStockToStockHolding(stock);
-        console.log(`Mapped stock ${stock.symbol}: DB currentPrice=${stock.current_price}, UI currentPrice=${mappedStock.currentPrice}`);
-        return mappedStock;
-      });
-      
-      setStocks(processedData);
-      setDisplayedStocks(processedData);
+      // The stockService.getStocks() already returns StockHolding objects, no need to map again
+      setStocks(safeData);
+      setDisplayedStocks(safeData);
     } catch (error) {
       console.error('Error fetching stocks:', error);
       setError('Failed to load stocks data');

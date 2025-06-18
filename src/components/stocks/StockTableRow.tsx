@@ -37,14 +37,23 @@ const StockTableRow: React.FC<StockTableRowProps> = ({ stock, index, onEdit, onD
     <TableRow 
       key={stock.id || `stock-${index}`}
       className={cn(
-        index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50 dark:bg-slate-800/70"
+        "hover:bg-slate-50 dark:hover:bg-slate-800",
+        index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/50 dark:bg-slate-800/50"
       )}
     >
-      <TableCell className="font-semibold text-primary">{stock.symbol || 'Unknown'}</TableCell>
-      <TableCell>{stock.name || 'Unknown'}</TableCell>
-      <TableCell className="text-right">{quantity.toLocaleString()}</TableCell>
-      <TableCell className="text-right">₹{averageBuyPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-      <TableCell className="text-right">₹{currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+      <TableCell className="font-semibold text-primary">{stock.symbol || 'N/A'}</TableCell>
+      <TableCell className="font-medium">
+        <div className="truncate max-w-[200px]" title={stock.name || stock.symbol || 'Unknown'}>
+          {stock.name || stock.symbol || 'Unknown Company'}
+        </div>
+      </TableCell>
+      <TableCell className="text-right font-medium">{quantity.toLocaleString()}</TableCell>
+      <TableCell className="text-right">
+        ₹{averageBuyPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+      </TableCell>
+      <TableCell className="text-right font-medium">
+        ₹{currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+      </TableCell>
       <TableCell className="text-right">
         <div className="flex items-center justify-end">
           {changePercent >= 0 ? (
@@ -60,19 +69,29 @@ const StockTableRow: React.FC<StockTableRowProps> = ({ stock, index, onEdit, onD
           </span>
         </div>
       </TableCell>
-      <TableCell className="text-right font-semibold text-slate-700 dark:text-slate-200">₹{value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-      <TableCell className="text-right">
-        <span className={cn(
-          "font-medium",
-          gain >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'
-        )}>
-          {gain >= 0 ? '+' : ''}₹{gain.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ({gainPercent.toFixed(2)}%)
-        </span>
+      <TableCell className="text-right font-semibold">
+        ₹{value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
       </TableCell>
-      <TableCell className="text-left">
+      <TableCell className="text-right">
+        <div className="flex flex-col items-end">
+          <span className={cn(
+            "font-medium",
+            gain >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'
+          )}>
+            {gain >= 0 ? '+' : ''}₹{gain.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+          </span>
+          <span className={cn(
+            "text-sm",
+            gain >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'
+          )}>
+            ({gainPercent.toFixed(2)}%)
+          </span>
+        </div>
+      </TableCell>
+      <TableCell className="text-center">
         <FamilyMemberDisplay memberId={stock.familyMemberId || ''} />
       </TableCell>
-      <TableCell>
+      <TableCell className="sticky right-0 bg-white dark:bg-slate-900">
         <div className="flex justify-center space-x-1">
           <TooltipProvider>
             <Tooltip>

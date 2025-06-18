@@ -47,6 +47,24 @@ export interface Stock {
   gain_loss?: number; // Calculated: value - investment_value
 }
 
+// UI representation of a Stock for display purposes
+export interface StockHolding {
+  id: string;
+  symbol: string;
+  name?: string; // mapped from company_name
+  quantity: number;
+  averageBuyPrice: number; // mapped from purchase_price
+  currentPrice: number; // mapped from current_price
+  purchaseDate?: Date | string;
+  sector?: string;
+  familyMemberId?: string; // mapped from family_member_id
+  notes?: string;
+  lastUpdated?: Date;
+  value?: number;
+  change?: number;
+  changePercent?: number;
+}
+
 export interface FixedDeposit {
   id: string;
   bank_name: string;
@@ -74,7 +92,6 @@ export interface FixedDeposit {
   lastUpdated?: Date;
   maturityAmount?: number;
   accountNumber?: string;
-}
 }
 
 export interface SIPInvestment {
