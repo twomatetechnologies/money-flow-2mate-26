@@ -168,6 +168,7 @@ export interface NetWorthData {
     sip: number;
     gold: number;
     providentFund: number;
+    savingsAccounts: number; 
     other: number;
   };
   history: {

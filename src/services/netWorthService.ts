@@ -4,6 +4,7 @@ import { getFixedDeposits } from './fixedDepositService';
 import { getSIPInvestments } from './sipInvestmentService';
 import { getGoldInvestments } from './goldInvestmentService';
 import { getProvidentFunds } from './providentFundService';
+import { getSavingsAccounts } from './savingsService';
 // Assuming getOtherAssets might be a future service, for now, 'other' will be 0.
 
 // Helper function to generate a simple history based on the current total
@@ -34,7 +35,8 @@ export const getNetWorth = async (): Promise<NetWorthData> => {
       fixedDepositsData,
       sipInvestmentsData,
       goldInvestmentsData,
-      providentFundsData
+      providentFundsData,
+      savingsAccountsData
       // otherAssetsData // Placeholder for future 'other' assets
     ] = await Promise.all([
       getStocks(),
@@ -42,6 +44,7 @@ export const getNetWorth = async (): Promise<NetWorthData> => {
       getSIPInvestments(),
       getGoldInvestments(),
       getProvidentFunds(),
+      getSavingsAccounts()
       // getOtherAssets() // Placeholder
     ]);
 
@@ -83,9 +86,13 @@ export const getNetWorth = async (): Promise<NetWorthData> => {
       return sum + safeParseFloat(balance);
     }, 0);
     
+    const savingsAccountsValue = (Array.isArray(savingsAccountsData) ? savingsAccountsData : []).reduce((sum, account) => {
+      return sum + safeParseFloat(account.balance);
+    }, 0);
+    
     const otherAssetsValue = 0; // No service for 'other' assets yet
 
-    const totalNetWorth = stocksValue + fixedDepositsValue + sipValue + goldValue + providentFundValue + otherAssetsValue;
+    const totalNetWorth = stocksValue + fixedDepositsValue + sipValue + goldValue + providentFundValue + savingsAccountsValue + otherAssetsValue;
 
     const netWorthBreakdown = {
       stocks: stocksValue,
@@ -93,6 +100,7 @@ export const getNetWorth = async (): Promise<NetWorthData> => {
       sip: sipValue,
       gold: goldValue,
       providentFund: providentFundValue,
+      savingsAccounts: savingsAccountsValue,
       other: otherAssetsValue,
     };
 
@@ -115,6 +123,7 @@ export const getNetWorth = async (): Promise<NetWorthData> => {
         sip: 0,
         gold: 0,
         providentFund: 0,
+        savingsAccounts: 0,
         other: 0,
       },
       history: generateHistory(0),

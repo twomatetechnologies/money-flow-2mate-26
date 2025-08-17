@@ -2,48 +2,52 @@
  * Savings Accounts API Implementation
  */
 import { v4 as uuidv4 } from 'uuid';
-
-// In-memory data store for development
-let savingsAccounts = [];
+import { pool } from './crudService.js';
 
 // Get all savings accounts with optional filters
-const getAllSavingsAccounts = (req, res) => {
+const getAllSavingsAccounts = async (req, res) => {
   try {
     const { bankName, familyMemberId } = req.query;
-    let filteredAccounts = [...savingsAccounts];
+    let query = 'SELECT * FROM savings_accounts WHERE 1=1';
+    const values = [];
     
     if (bankName) {
-      filteredAccounts = filteredAccounts.filter(sa => sa.bankName.toLowerCase().includes(bankName.toLowerCase()));
+      query += ' AND LOWER(bank_name) LIKE LOWER($' + (values.length + 1) + ')';
+      values.push(`%${bankName}%`);
     }
     
     if (familyMemberId) {
-      filteredAccounts = filteredAccounts.filter(sa => sa.familyMemberId === familyMemberId);
+      query += ' AND family_member_id = $' + (values.length + 1);
+      values.push(familyMemberId);
     }
     
-    res.json(filteredAccounts);
+    const result = await pool.query(query, values);
+    res.json(result.rows);
   } catch (error) {
+    console.error('Error in getAllSavingsAccounts:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
 // Get a specific savings account by ID
-const getSavingsAccountById = (req, res) => {
+const getSavingsAccountById = async (req, res) => {
   try {
     const { id } = req.params;
-    const account = savingsAccounts.find(sa => sa.id === id);
+    const result = await pool.query('SELECT * FROM savings_accounts WHERE id = $1', [id]);
     
-    if (!account) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: `Savings account with ID ${id} not found` });
     }
     
-    res.json(account);
+    res.json(result.rows[0]);
   } catch (error) {
+    console.error('Error in getSavingsAccountById:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
 // Create a new savings account
-const createSavingsAccount = (req, res) => {
+const createSavingsAccount = async (req, res) => {
   try {
     const {
       bankName,
@@ -63,71 +67,116 @@ const createSavingsAccount = (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const newAccount = {
-      id: `sa-${uuidv4().slice(0, 8)}`,
+    const id = `sa-${uuidv4().slice(0, 8)}`;
+    const query = `
+      INSERT INTO savings_accounts (
+        id, bank_name, account_number, account_type, balance,
+        interest_rate, branch_name, ifsc_code, family_member_id,
+        nominees, notes, last_updated
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+      RETURNING *
+    `;
+
+    const values = [
+      id,
       bankName,
       accountNumber,
-      accountType: accountType || 'Savings',
+      accountType || 'Savings',
       balance,
       interestRate,
-      branchName: branchName || '',
-      ifscCode: ifscCode || '',
+      branchName || '',
+      ifscCode || '',
       familyMemberId,
-      nominees: Array.isArray(nominees) ? nominees : [],
-      notes: notes || '',
-      lastUpdated: new Date().toISOString()
-    };
+      Array.isArray(nominees) ? nominees : [],
+      notes || ''
+    ];
 
-    savingsAccounts.push(newAccount);
-    res.status(201).json(newAccount);
+    const result = await pool.query(query, values);
+    res.status(201).json(result.rows[0]);
   } catch (error) {
+    console.error('Error in createSavingsAccount:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
 // Update an existing savings account
-const updateSavingsAccount = (req, res) => {
+const updateSavingsAccount = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const {
+      bankName,
+      accountNumber,
+      accountType,
+      balance,
+      interestRate,
+      branchName,
+      ifscCode,
+      familyMemberId,
+      nominees,
+      notes
+    } = req.body;
 
-    const accountIndex = savingsAccounts.findIndex(sa => sa.id === id);
+    const query = `
+      UPDATE savings_accounts 
+      SET 
+        bank_name = COALESCE($1, bank_name),
+        account_number = COALESCE($2, account_number),
+        account_type = COALESCE($3, account_type),
+        balance = COALESCE($4, balance),
+        interest_rate = COALESCE($5, interest_rate),
+        branch_name = COALESCE($6, branch_name),
+        ifsc_code = COALESCE($7, ifsc_code),
+        family_member_id = COALESCE($8, family_member_id),
+        nominees = COALESCE($9, nominees),
+        notes = COALESCE($10, notes),
+        last_updated = NOW()
+      WHERE id = $11
+      RETURNING *
+    `;
 
-    if (accountIndex === -1) {
+    const values = [
+      bankName,
+      accountNumber,
+      accountType,
+      balance,
+      interestRate,
+      branchName,
+      ifscCode,
+      familyMemberId,
+      Array.isArray(nominees) ? nominees : undefined,
+      notes,
+      id
+    ];
+
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: `Savings account with ID ${id} not found` });
     }
 
-    // Update all fields, but preserve id
-    savingsAccounts[accountIndex] = {
-      ...savingsAccounts[accountIndex],
-      ...updateData,
-      lastUpdated: new Date().toISOString()
-    };
-
-    res.json(savingsAccounts[accountIndex]);
+    res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
 // Delete a savings account
-const deleteSavingsAccount = (req, res) => {
+const deleteSavingsAccount = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // First find the account to delete for audit purposes
-    const accountToDelete = savingsAccounts.find(sa => sa.id === id);
+    // Delete the account and check if it existed
+    const result = await pool.query('DELETE FROM savings_accounts WHERE id = $1 RETURNING id', [id]);
     
-    if (!accountToDelete) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: `Savings account with ID ${id} not found` });
     }
-    
-    // Remove the account
-    savingsAccounts = savingsAccounts.filter(sa => sa.id !== id);
     
     // Return success with empty body
     res.status(200).json({ success: true });
   } catch (error) {
+    console.error('Error in deleteSavingsAccount:', error);
     res.status(500).json({ error: error.message });
   }
 };
